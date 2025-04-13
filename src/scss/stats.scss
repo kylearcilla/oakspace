@@ -1,5 +1,6 @@
 .stats {
     display: flex;
+    overflow: auto;
 
     &--light .stat__label {
         @include text-style(0.4);

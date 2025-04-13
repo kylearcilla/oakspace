@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { STATUS_COLORS } from "$lib/utils-colors";
-	import { formatDateLong } from "$lib/utils-date";
-	import { getHabitStreak, getHabitMonthData } from "$lib/utils-habits";
+    import { formatDateLong } from "$lib/utils-date"
+	import { STATUS_COLORS } from "$lib/utils-colors"
+	import { getHabitStreak, getHabitMonthData, viewHabit } from "$lib/utils-habits"
 
     export let habit: Habit
     export let monthIdx: number
@@ -41,7 +41,6 @@
                 }
             }
         }
-
         weeklyHeatMap = weeklyHeatMap
         getStatusColors()
     }
@@ -79,9 +78,12 @@
             <div class="habit-card__symbol">
                 {habit.symbol}
             </div>
-            <div class="habit-card__name">
+            <button 
+                class="habit-card__name"
+                on:click={() => viewHabit(habit)}
+            >
                 {habit.name}
-            </div>
+            </button>
         </div>
         <div>
             <div class="habit-card__detail">
@@ -95,14 +97,6 @@
                 <span style:font-size="1.3rem">{streak}×</span>
             </div>
         </div>
-        {#if habit.caption}
-            <div 
-                title="Yearl to date"
-                class="habit-card__caption"
-            >
-                {habit.caption}
-            </div>
-        {/if}
     </div>
     <div class="habit-card__right">
         <div class="cal" class:cal--light={light}>
@@ -169,8 +163,6 @@
         
         --x-mark-color: var(--missed-color);
 
-        // --x-mark-color: rgb(255, 255, 255, 0.2);
-
         &--light {
             background-color: rgba(var(--textColor1), 0.0185);
             border: 1.5px dashed rgba(var(--textColor1), 0.12);
@@ -183,9 +175,6 @@
         }
         &--light &__detail span {
             color: rgb(var(--textColor1), 0.7);
-        }
-        &--light &__caption {
-            @include text-style(0.4);
         }
         &--light .cal__dow {
             @include text-style(1);
@@ -209,9 +198,6 @@
         }
         &--tall &__header {
             margin: 0px 5px 6px 0px;
-        }
-        &--tall &__caption {
-            display: none;
         }
         &--tall &__name {
             max-width: 140px;
@@ -238,6 +224,10 @@
             @include text-style(1, var(--fw-400-500), 1.38rem);
             @include elipses-overflow;
             max-width: 100px;
+
+            &:hover {
+                text-decoration: underline;
+            }
         }
         &__detail {
             margin: 0px 32px 8px 0px;
@@ -257,10 +247,6 @@
             color: rgba(var(--status-color-1), 1);
             border-radius: 12px;
             padding: 2.5px 11px 3.5px 11px;
-        }
-        &__caption {
-            @include abs-bottom-left(13px, 14px);
-            @include text-style(0.3, var(--fw-400-500), 1.25rem);
         }
     }
     .cal {

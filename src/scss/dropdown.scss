@@ -247,6 +247,9 @@
             opacity: 0.8;
             margin-right: 1px;
         }
+        &--txt {
+            width: auto;
+        }
         &:first-child:not(:only-child) {
             margin-right: 9px;
         }

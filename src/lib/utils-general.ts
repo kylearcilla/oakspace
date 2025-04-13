@@ -1,6 +1,6 @@
 import { APIErrorCode, LogoIcon } from "./enums"
 import type { APIError } from "./errors"
-import { TEST_TAGS } from "./mock-data"
+import { TEST_TAGS } from "./mock-data-tags"
 import { toast } from "./utils-toast"
 
 /**
@@ -619,7 +619,7 @@ export function extractQuadCSSValue(val: CSSMultiDimPxVal | undefined) {
  * Context menu or an element being dragged and dropped.
  * 
  * @param dims          - Float element width and height (does not have to be compeletely accurate)
- * @param cursorPos     - Current cursor position (in terms of the parent) where menu was invoked. 
+ * @param cursorPos     - Current cursor position (relative to the parent) where menu was invoked. 
  * 
  * @param containerDims - Height and width dimensions of the container element.
  *                        This container is the menu will be position relatively of.
@@ -896,7 +896,6 @@ export function floatCompare(args: { x: number, y: number, digits?: number, op: 
           throw new Error(`Invalid comparison operator: ${op}`)
   }
 }
-
 export function getTagFromName(name: string) {
   return TEST_TAGS.find(tag => tag.name === name)
 }

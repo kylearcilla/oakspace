@@ -67,7 +67,7 @@
 
     .routines-page {
         height: 100%;
-        padding: 18px 0px 0px 25px;
+        padding: 10px 0px 0px 25px;
 
         &--light &__title {
             @include text-style(1);
@@ -79,7 +79,7 @@
         
         &__title {
             margin-bottom: 13px;
-            @include text-style(1, var(--fw-400-500), 1.8rem);
+            @include text-style(1, var(--fw-400-500), 1.8rem, "Geist Mono");
         }
         &__tabs {
             @include flex(center);

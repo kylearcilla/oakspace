@@ -101,14 +101,16 @@
 	}
 	function getHabitRenderData({ idx, outofBounds, day }: { idx: number, outofBounds: boolean, day: Date }) {
 		const idxData = data[idx - idxOffset] as HabitHeatMapData
-
-		if (outofBounds || !idxData || idxData.due < 1) {
+		if (outofBounds || !idxData) {
 			return { opacity: 0, show: false, day }
 		}
-
-		const { due, trueDone: done } = idxData
-		const val = due === 0 ? 0 : Math.min(done / due, 1)
 		
+		const { due, trueDone: done, noData } = idxData
+		const val = due === 0 ? 0 : Math.min(done / due, 1)
+
+		if (noData) {
+			return { opacity: 0, show: false, day }
+		}
 		return {
 			day,
 			show: true,
@@ -245,10 +247,8 @@
 							{@const { show, opacity, day, emoji } = getRenderData({ idx: dayIdx, light, single, data })}
 							{@const sameDay = isSameDay(new Date(), day)}
 							{@const color = type === 'habits' ? `rgba(var(--heatMapColor), ${opacity})` : ''}
-
 							{@const hasGoal = type === 'goals' && emoji}
-							{@const hasGoalOpacity = light ? 0 : 1}
-
+							
 							<button
 								class="heat-map__cell-container"
 								class:no-box-shadow={type === 'goals'}
@@ -266,7 +266,7 @@
 									class:heat-map__cell--today={sameDay}
 									style:--ahead-opacity={opacityAhead}
 									style:--color={opacity > 0 ? color : 'auto'}
-									style:--goal-fill={hasGoal ? hasGoalOpacity : sameDay ? goalsSameDayOpacity : goalPastOpacity}
+									style:--goal-fill={hasGoal ? 0 : sameDay ? goalsSameDayOpacity : goalPastOpacity}
 								>
 									<div class="heat-map__cell-content" class:no-bg={hasGoal && (emojis || light)}>
 										{#if hasGoal}
@@ -379,7 +379,6 @@
 
 			&--goal &-content {
 				background-color: rgba(var(--goal-fill-color), var(--goal-fill));
-				color: var(--starColor);
 				@include circle(4px);
 				@include text-style(_, 200, 3.5rem);
 			}
@@ -388,7 +387,7 @@
 				background-color: rgba(var(--textColor1), var(--goal-today-opacity));
 			}
 			&--emoji &-content {
-				font-size: 1.3rem;
+				font-size: 1.7rem;
 				color: white;
 			}
 			&--has-goal &-content {
@@ -439,7 +438,7 @@
 		@include center;
 		height: 20px;
 		width: 10px;
-		z-index: 2;
+		z-index: 10000;
 
 		&--light &__content {
 			border: 1.5px solid rgba(var(--textColor1), 0.065);

@@ -14,11 +14,11 @@
     $: light = !$themeState.isDarkTheme
 
     let calendar = new DatePickerCalendar(options)
-	let errorMsg = ""
     let nowYear = new Date().getFullYear()
     let typeOptions = false
-    let inputText = ""
     let dateType = options.dateType
+	let errorMsg = ""
+    let inputText = ""
 
     function onDayUpdate(day: Date) {
         inputText = calendar.formatDateByType(day)
@@ -41,7 +41,7 @@
         dateType = optn as "day" | "month" | "year" | "quarter"
         calendar.setDateType(dateType)
 
-        onUpdate({ date: pickedDate!, dateType })
+        onUpdate({ date: pickedDate, dateType })
         submitUserInput()
 
         typeOptions = false
@@ -147,10 +147,8 @@
         --cancel-btn-opacity: 0.025;
 
         &--light {
-            @include contrast-bg("bg-3");
-        }
-        &--light {
             --cancel-btn-opacity: 0.065;
+            @include contrast-bg("bg-3");
         }
         &--light &__ok {
             color: var(--modalBgColor) !important;
@@ -182,12 +180,12 @@
             position: relative;
         }
         &__due-type {
-            @include text-style(0.3, 400, 1.335rem);
+            @include text-style(0.3, var(--fw-400-500), 1.335rem);
             margin-left: 4px;
         }
         &__input-error-msg {
-            @include text-style(_, 400, 1.25rem);
-            color: rgba(212, 115, 115, 0.8);
+            @include text-style(_, var(--fw-400-500), 1.25rem);
+            color: var(--error-color);
             padding: 4px 0px 1px 12px;
         }
         &__btns-container {

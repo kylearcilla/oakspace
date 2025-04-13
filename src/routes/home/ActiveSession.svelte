@@ -251,6 +251,7 @@
                 <div style:position="relative">
                     <button
                         data-dmenu-id="session"
+                        class="session__settings-btn"
                         class:ambient-blur={styling != "clear"}
                         class:ambient-clear={styling === "clear"}
                         on:click={() => dropdown = !dropdown}
@@ -261,7 +262,7 @@
                         />
                     </button>
                     <DropdownList 
-                        id={"session"}
+                        id="session"
                         isHidden={!dropdown} 
                         options={{
                             listItems:
@@ -284,10 +285,7 @@
                                 },
                                 { 
                                     name: "Change Font Style",
-                                    rightIcon: { 
-                                        type: "svg",
-                                        icon: Icon.ChevronRight
-                                    },
+                                    childId: "font-styles",
                                     onPointerOver: () => {
                                         fontStylesOpen = closing ? false : true
                                     },
@@ -304,13 +302,12 @@
                                     name: "Cancel Session" 
                                 }
                             ],
-                            position: { 
-                                top: "36px", 
-                                left: "-56px"
+                            styling: {
+                                width: "175px"
                             },
-                            parentContext: {
-                                container: rightContainerRef,
-                                childId: "font-styles"
+                            position: { 
+                                top: "35px", 
+                                left: "-56px"
                             },
                             onListItemClicked: ({ name }) => {
                                 onListItemClicked(name)
@@ -322,9 +319,11 @@
                     />
 
                     <DropdownList 
-                        id={"font-styles"}
+                        id="font-styles"
+                        childId="font-styles"
                         isHidden={!fontStylesOpen || !dropdown}
                         options={{
+                            parentId: "session",
                             pickedItem: manager.fontStyle,
                             listItems: [
                                 { name: "Default" },
@@ -338,13 +337,8 @@
                                 onFontStyleOptnClicked(name.toLowerCase())
                             },
                             position: { 
-                                top: "140px", 
-                                left: "105px",
-                            },
-                            parent: {
-                                id: "goals-menu",
-                                optnIdx: 2,
-                                optnName: "Change Status"
+                                top: "115px", 
+                                left: "120px",
                             },
                             onDismount: () => {
                                 closing = false
@@ -492,7 +486,7 @@
             }
         }
         &__control-btn {
-            @include text-style(0.45, var(--fw-400-500), 1.45rem, "Geist Mono");
+            @include text-style(0.45, var(--fw-400-500), 1.45rem);
             padding: 5px 20px 7px 20px;
             border-radius: 20px;
             margin-right: 7px;
@@ -501,6 +495,9 @@
                 opacity: 0.55;
                 cursor: not-allowed !important;
             }
+        }
+        &__settings-btn {
+            @include circle(30px);
         }
         &__tasks {
             width: clamp(520px, 65%, 600px);

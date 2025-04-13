@@ -2,6 +2,7 @@
 	import DropdownBtn from "./DropdownBtn.svelte"
 	import DropdownList from "./DropdownList.svelte"
 
+    export let id: string = ""
     export let item: DropdownMenuOption
 
     let isActive = false
@@ -12,7 +13,7 @@
     <div class="btn">
         <DropdownBtn 
             {isActive}
-            id={item.name}
+            {id}
             options={{
                 title: pickedItem || "",
                 onClick: () => {
@@ -24,8 +25,8 @@
             }}
         />
     </div>
-    <DropdownList 
-        id={item.name}
+    <DropdownList
+        {id}
         isHidden={!isActive}
         options={{
             pickedItem: item.pickedItem,

@@ -8,6 +8,9 @@ import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
 
 /* global ui */
 export const globalContext = writable<GlobalContext>({
+    user: {
+        createdAt: new Date()
+    },
     leftBarOpen: true,
     rightBarOpen: true,
     rightBarFixed: false,

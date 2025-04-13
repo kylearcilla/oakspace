@@ -1,4 +1,5 @@
- <script lang="ts">
+
+<script lang="ts">
     import { onMount } from "svelte"
 
     import { Icon } from "$lib/enums"
@@ -14,15 +15,14 @@
 
 	import Modal from "$components/Modal.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
-	import TagPicker from "$components/TagPicker.svelte"
 	import TasksList from "$components/TasksList.svelte"
 	import TimePicker from "$components/TimePicker.svelte"
 	import SettingsBtn from "$components/SettingsBtn.svelte"
 	import ConfirmBtns from "$components/ConfirmBtns.svelte"
 	import DropdownBtn from "$components/DropdownBtn.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
+	import TagPickerBtn from "$components/TagPickerBtn.svelte"
 	import ConfirmationModal from "$components/ConfirmationModal.svelte"
-	import TagPickerBtn from "$components/TagPickerBtn.svelte";
 
     const { MAX_BLOCK_DESCRIPTION, MIN_BLOCK_DURATION_MINS, MAX_BLOCK_TITLE } = RoutinesManager
     const MAX_ACTION_ITEMS = 12
@@ -69,7 +69,7 @@
         singleLine: true,
         maxLength: MAX_BLOCK_TITLE,
         handlers: {
-            onInputHandler: () => toggleEditMade(),
+            onInputHandler: () => title !== block.title && toggleEditMade()
         }
     })
     new TextEditorManager({ 
@@ -79,7 +79,7 @@
         allowFormatting: false,
         maxLength: MAX_BLOCK_DESCRIPTION,
         handlers: {
-            onInputHandler: () => toggleEditMade()
+            onInputHandler: () => description !== block.description && toggleEditMade()
         }
     })
     
@@ -117,19 +117,19 @@
         pickedCoreItemIdx = idx
         block = { ...block, activity: CORE_OPTIONS[pickedCoreItemIdx][0] }
 
-        toggleEditMade()
+        activity !== block.activity && toggleEditMade()
     }
     function onRemoveCore() {
         block = { ...block, activity: null }
         pickedCoreItemIdx = -1
 
-        toggleEditMade()
+        activity !== block.activity && toggleEditMade()
     }
     function onChooseColor(color: Color | null) {
         if (!color) return
 
         block = { ...block, color }
-        toggleEditMade()
+        color !== block.color && toggleEditMade()
     }
     function validateTime(startTime: number, endTime: number) {
         if (!blocks) return
@@ -309,12 +309,12 @@
                     </div>
                 </button>
                 <SettingsBtn 
-                    id={"block-settings"}
+                    id="block-settings"
                     onClick={() => settingsOpen = !settingsOpen}
                 /> 
             </div>
             <DropdownList 
-                id={"block-settings"}
+                id="block-settings"
                 isHidden={!settingsOpen} 
                 options={{
                     listItems: [
@@ -345,7 +345,7 @@
                         top: "40px", right: "0px" 
                     },
                     styling: { 
-                        width: "150px" 
+                        minWidth: "150px" 
                     },
                     onListItemClicked: ({ name }) => {
                         optnClicked(name)
@@ -393,7 +393,7 @@
                                 }}
                                 onSet={(time) => { 
                                     startTime = time
-                                    toggleEditMade()
+                                    startTime !== block.startTime && toggleEditMade()
                                 }}
                             />
                         </div>
@@ -408,7 +408,7 @@
                                 }}
                                 onSet={(time) => { 
                                     endTime = time
-                                    toggleEditMade()
+                                    endTime !== block.endTime && toggleEditMade()
                                 }}
                             />
                         </div>
@@ -578,8 +578,8 @@
     @import "../../../scss/dropdown.scss";
 
     .edit-routine {
-        height: auto;
-        width: 480px;
+        max-width: 500px;
+        width: 90vw;
         padding: 0px;
         position: relative;
 
@@ -600,14 +600,15 @@
             @include text-style(1);
         }
         &--no-tasks  {
-            width: 400px;
+            max-width: 450px;
         }
         &--no-tasks &__description {
             min-height: 120px;
-            margin-bottom: 40px
+            margin-bottom: 30px;
+            max-height: 250px;
         }
         &--no-desc {
-            width: 450px;
+            max-width: 470px;
         }
         &__header {
             @include flex(center, space-between);
@@ -677,6 +678,7 @@
             }
         }
         &__description {
+            min-height: 60px;
             max-height: 100px;
             margin-bottom: 10px;
             font-size: 1.35rem;
@@ -686,7 +688,7 @@
         }
         &__list-header {
             width: 100%;
-            padding: 2px 20px 1px 20px;
+            padding: 2px 20px 0px 20px;
             @include flex(center, space-between);
         }
         &__list-body {
@@ -695,7 +697,7 @@
             overflow-y: scroll;
             min-height: 100px;
             max-height: 280px;
-            margin: 5px 0px 10px 0px;
+            margin: 0px 0px 10px 0px;
 
             &--empty {
                 min-height: 100px;

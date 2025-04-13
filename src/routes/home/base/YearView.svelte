@@ -1,61 +1,62 @@
 <script lang="ts">
-    import { onMount } from "svelte"
-
-	import { habitTracker, themeState } from "$lib/store"
-	import { YEAR_THOUGHT_ENTRY } from "$lib/mock-data"
-	import { getMaskedGradientStyle } from "$lib/utils-general"
+	import { getHabitsYearData } from "$lib/utils-habits"
+    import { goalTracker, habitTracker, themeState } from "$lib/store"
+	import { getGoalHeatMap, getPeriodData, getPinnedGoals, reorderPinned } from "$lib/utils-goals"
     
-    import TextEntry from "./TextEntry.svelte"
+    import TextEntry from "../../../components/TextEntry.svelte"
     import HeatMap from "$components/HeatMap.svelte"
+	import PinnedGoals from "../../../components/PinnedGoals.svelte"
 	import ProgressBar from "$components/ProgressBar.svelte"
 
-    export let currYear: number
+    export let year: number
     export let goalsHeatMap: YearHeatMapData[]
-    export let options: {
-        yearsAgoIdx: number
-        showTextEntry: boolean
-        showYear: boolean
-        emojis: boolean
-    }
+    export let options: YearViewOptions
+
+    const SMALL_WIDTH = 700
+
+    let pinnedGoals: Goal[]
     let habits: Habit[]
     let habitsHeatMap: HabitHeatMapData[]
     let habitsMetrics: HabitYearMetrics
-    let habitsActiveStreak: HabitActiveStreak
+    let yearEntry: TextEntryOptions | null = null
+    let width = 0
 
     $: showTextEntry = options.showTextEntry
     $: showYear = options.showYear
     $: isLight = !$themeState.isDarkTheme
 
+    $: onYearUpdate(year)
 
     habitTracker.subscribe((data) => {
         habits = data.habits
-        habitsMetrics = data.yearMetrics!
-        habitsHeatMap = data.yearHeatMap!
-        habitsActiveStreak = data.activeStreak!
+        initHabitData()
     })
+    goalTracker.subscribe(() => initGoalData())
 
-    const SMALL_WIDTH = 700
-    let date = new Date(2025, 0, 1)
-    let width = 0
-    let gradient = ""
-    let goalsListRef: HTMLElement | null = null
-
-    function handleScroll(elem: HTMLElement | null) {
-        if (!elem) return
-
-        const { styling } = getMaskedGradientStyle(elem, {
-            head: {
-                end: "50px"
-            },
-            tail: {
-                start: "50%",
-                end: "100%"
-            }
-        })
-        gradient = styling
+    async function onYearUpdate(_: number) {
+        initGoalData()
+        initHabitData()
     }
 
-    onMount(() => handleScroll(goalsListRef))
+    async function initHabitData() {
+        const h_data = await getHabitsYearData(year)
+
+        habitsMetrics = h_data.yearMetrics
+        habitsHeatMap = h_data.yearHeatMap
+    }
+
+    function initGoalData() {
+        goalsHeatMap = getGoalHeatMap(year)
+        pinnedGoals = getPinnedGoals()
+
+        const data = getPeriodData({ year: year, period: "all" })
+        yearEntry = data.entry
+    }
+
+    function onPinnedGoalReorder(src: Goal, target: Goal) {
+        reorderPinned(src, target)
+        pinnedGoals = getPinnedGoals()
+    }
 </script>
 
 <div 
@@ -65,66 +66,63 @@
     bind:clientWidth={width}
 >
     {#if showYear}
-        <h1>
-            {YEAR_THOUGHT_ENTRY.date.getFullYear()}
-        </h1>
+        <h1>{year}</h1>
     {/if}
-    {#if showTextEntry}
-        <div style:margin="0px 0px 0px 0px">
+    {#if showTextEntry && yearEntry}
+        <div style:margin="4px 0px 0px 0px">
             <TextEntry 
                 id="yr"
                 zIndex={50}
-                entry={YEAR_THOUGHT_ENTRY}
+                entry={yearEntry}
             />
         </div>
     {/if}
     <div class="yr-view__goals">
-        <div class="yr-view__header">
+        <div class="flx-sb" style:display="none">
             <h4>Goals</h4>
-            <div class="yr-view__progress">
-                <ProgressBar progress={0.3} />
-                <span>3 of 10</span>
+            <div class="flx">
+                <div class="yr-view__progress">
+                    <ProgressBar progress={0.3} />
+                    <div class="fraction">
+                        {7}<div class="fraction__slash">/</div> {10}
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="divider"></div>
+        {#if options.pinnedGoals}
+            <div class="divider" class:hidden={!options.showYear && !options.showTextEntry}></div>
+            <div style:margin="12px 0px 0px 0px">
+                <PinnedGoals 
+                    goals={pinnedGoals} 
+                    onReorder={(src, target) => {
+                        onPinnedGoalReorder(src, target)
+                    }}
+                />
+            </div>
+        {/if}
         <div class="yr-view__heat-map" style:margin-top="15px">
             <HeatMap 
+                {year} 
                 type="goals" 
-                year={currYear} 
                 data={goalsHeatMap} 
                 options={{ emojis: options.emojis }}
             />
         </div>
     </div>
     <div class="yr-view__habits">
-        <h4>Habits</h4>
         <div class="divider"></div>
-
-        {#if habitsMetrics && habitsActiveStreak && habits.length > 0}
+        <div class="yr-view__txt">
+            {#if year ===  new Date().getFullYear()}
+                Your habit performance this year.
+            {:else}
+                Your habits performance for {year}.
+            {/if}
+        </div>
+        {#if habitsMetrics && habits.length > 0}
             {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = habitsMetrics}
             {@const zero = habitsDue === 0}
-            {@const now = currYear === new Date().getFullYear()}
-            {@const streak = now && zero ? "--" : habitsActiveStreak.count}
 
-            <div 
-                class="yr-view__stats stats"
-                class:stats--light={isLight}
-            >
-                <div 
-                    class="stat"  style:margin-right="32px"
-                >
-                    <div class="stat__bottom">
-                        <div class="flx">
-                            <span class="stat__value">
-                                {streak}
-                            </span>
-                            <span class="stat__unit">
-                                {streak === "--" ? "" : streak === 1 ? "day" : "days"}
-                            </span>
-                        </div>
-                        <span class="stat__label">Active Streak</span>
-                    </div>     
-                </div>
+            <div class="yr-view__stats stats" class:stats--light={isLight}>
                 <div class="stat" style:margin-right="35px">
                     <div class="stat__bottom">
                         <div class="flx">
@@ -183,20 +181,21 @@
         {/if}
 
         <div class="yr-view__heat-map">
-            <HeatMap 
-                type="habits"
-                data={habitsHeatMap}
-                year={currYear}
-                options={{
-                    single: habits.length === 1
-                }}
-            />
+            {#if habitsHeatMap  }
+                <HeatMap 
+                    {year}
+                    type="habits"
+                    data={habitsHeatMap}
+                    options={{
+                        single: habits.length === 1
+                    }}
+                />
+            {/if}
         </div>
     </div>
 </div>
 
 <style lang="scss">
-    @import "../../../scss/goals.scss";
     @import "../../../scss/stats.scss";
 
     .yr-view {
@@ -227,11 +226,11 @@
         }
 
         h1 {
-            @include text-style(1, var(--fw-400-500), 2.25rem);
-            margin: 11px 0px 4px 0px;
+            @include text-style(1, var(--fw-400-500), 2.25rem, "Geist Mono");
+            margin: 9px 0px -6px 0px;
         }
         h4 {
-            @include text-style(1, var(--fw-400-500), 1.65rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.75rem);
         }
         &__header {
             @include flex(center,space-between);
@@ -239,6 +238,7 @@
         }
         &__progress {
             display: flex;
+            float: left;
 
             span {
                 @include text-style(0.35, var(--fw-400-500), 1.3rem);
@@ -246,13 +246,17 @@
             }
         }
         &__goals {
-            margin-top: 10px;
+            margin-top: 5px;
         }
         &__habits {
             margin-top: 30px;
         }
         &__heat-map {
             width: 100%;
+        }
+        &__txt {
+            @include text-style(0.35, var(--fw-400-500), 1.4rem);
+            margin: 9px 0px 12px 0px;
         }
         &__stats {
             margin: 13px 0px 25px 0px;
@@ -270,20 +274,19 @@
             @include text-style(0.8, var(--fw-400-500), 1.5rem);
         }
     }
+    .fraction {
+        @include text-style(0.35, var(--fw-400-500), 1.25rem);
+        margin-left: 14px;
+
+        &__slash { 
+            font-size: 1.1rem !important;
+            font-weight: 500;
+            margin: 0px 6px;
+        }
+    }
 
     .divider {
         border-top: var(--divider-border);
         margin: 12px 0px 0px 0px;
-    }
-
-    .goal-m {
-        margin-bottom: 6px;
-
-        &__title {
-            @include truncate-lines(1);
-        }
-        &__left {
-            margin-left: 0px;
-        }
     }
 </style>

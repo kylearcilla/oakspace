@@ -1,19 +1,20 @@
 <script lang="ts">
     import { onMount } from "svelte"
-	import { goalTracker, themeState } from "$lib/store"
+	import { themeState } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
 	import { toast } from "$lib/utils-toast"
-	import { GOALS } from "$lib/mock-data-goals"
+	import { getYearBounds } from "$lib/utils-home"
 	import { TextEditorManager } from "$lib/inputs"
 	import { datePicker, imageUpload } from "$lib/pop-ups"
 	import { formatDateLong, isSameDay } from "$lib/utils-date"
 	import { clamp, isVoid, kebabToNormal, normalToKebab, randomArrayElem } from "$lib/utils-general"
-	import { addGoal, closeViewGoal, getDueDateDistStr, MAX_YEAR, MIN_YEAR, updateGoal } from "$lib/utils-goals"
+	import { addGoal, closeViewGoal, deleteGoal, getDueDateDistStr, updateGoal } from "$lib/utils-goals"
 
     import Modal from "./Modal.svelte"
 	import Loader from "./Loader.svelte"
 	import SvgIcon from "./SVGIcon.svelte"
+	import ImgModal from "./ImgModal.svelte"
 	import TasksList from "./TasksList.svelte"
 	import DropdownBtn from "./DropdownBtn.svelte"
 	import SettingsBtn from "./SettingsBtn.svelte"
@@ -21,7 +22,6 @@
 	import TagPickerBtn from "./TagPickerBtn.svelte"
 	import AccomplishedIcon from "./AccomplishedIcon.svelte"
 	import ConfirmationModal from "./ConfirmationModal.svelte"
-	import ImgModal from "../routes/home/base/ImgModal.svelte";
 
     export let goal: Goal
     export let type: "new" | "edit" = "edit"
@@ -185,31 +185,6 @@
     }
 
     /* connclude */
-    function onAttemptClose() {
-        if (saving) {
-            return
-        }
-        else if (editHasBeenMade) {
-            confirmContext = "unsaved"
-        }
-        else {
-            close()
-        }
-    }
-    async function saveAndClose() {
-        try {
-            saving = true
-            await saveData()
-            initToast("info")
-        }
-        catch(e: any) {
-            initToast("error")
-        }
-        finally {
-            close()
-            saving = false
-        }
-    }
     async function saveData() {
         const update = {
             name, description, tag, status,
@@ -227,12 +202,49 @@
             await addGoal(newGoal)
         }
     }
-    function close() {
-        confirmContext = null
-        // wait for abs float elem to close first
-        requestAnimationFrame(() => closeViewGoal())
+    async function close() {
+        try {
+            if (confirmContext === "delete") {
+                saving = true
+                await deleteGoal(goal)
+                initDeleteToast({ goal, success: true })
+            }
+        }
+        catch(e: any) {
+            initDeleteToast({ goal, success: false })
+        }
+        finally {
+            confirmContext = null
+            saving = false
+            // wait for abs float elem to close first
+            requestAnimationFrame(() => closeViewGoal())
+        }
     }
-
+    function onAttemptClose() {
+        if (saving) {
+            return
+        }
+        else if (editHasBeenMade) {
+            confirmContext = "unsaved"
+        }
+        else {
+            close()
+        }
+    }
+    async function saveAndClose() {
+        try {
+            saving = true
+            await saveData()
+            initEditToast("info")
+        }
+        catch(e: any) {
+            initEditToast("error")
+        }
+        finally {
+            close()
+            saving = false
+        }
+    }
     /* utils */
     function getDueDateStr() {
         return getDueDateDistStr({ due, dueType, type: "date", min: false }).dueStr
@@ -254,6 +266,8 @@
         const onUpdate = status ? updateCompletedDate : updateDueDate
         const pickedDate = status ? completedDate! : due
 
+        const { minDate, maxDate } = getYearBounds()
+
         datePicker.init({
             id: context,
             onClose: () => {
@@ -264,19 +278,24 @@
                 pickedDate,
                 onUpdate,
                 options: {
-                    minDate: new Date(MIN_YEAR, 0, 1),
-                    maxDate: new Date(MAX_YEAR, 11, 31),
-                    dateType: status ? undefined : dueType
+                    minDate, maxDate, dateType: status ? undefined : dueType
                 }
             }
         })
     }
-    function initToast(context: "info" | "error") {
+    function initEditToast(context: "info" | "error") {
         const editMessage = context === "info" ? "Your changes have been saved." : "Error saving your changes."
         const newMessage = context === "info" ? "New goal created!." : "Error creating your goal."
 
         toast(context, { 
             message: type === "new" ? newMessage : editMessage,
+            contextId: "goal-view-modal",
+            groupExclusive: true
+        })
+    }
+    function initDeleteToast({ goal, success }: { goal: Goal, success: boolean }) {
+        toast("info", { 
+            message: success ? `"${goal.name}" deleted.` : "Error deleting goal.",
             contextId: "goal-view-modal",
             groupExclusive: true
         })
@@ -299,6 +318,7 @@
     }}
 >
     <div 
+        bind:clientWidth={width}
         class="goal"
         class:goal--no-img={!img}
         class:goal--header-img={img?.type === "header"}
@@ -306,7 +326,6 @@
         class:goal--no-tasks={!allowTasks}
         class:goal--light={light}
         class:goal--min={width < SMALL_WIDTH}
-        bind:clientWidth={width}
         style:--side-padding={SIDE_PADDING}
     >   
         <div class="goal__top" style:flex-direction={img?.type === "float-right" ? "row-reverse" : "row"}>
@@ -535,7 +554,7 @@
                                     ],
                                     pickedItem: kebabToNormal(status),
                                     position: { 
-                                        top: "32px", left: "0px" 
+                                        top: "34px", left: "0px" 
                                     },
                                     styling: {
                                         width: "130px"

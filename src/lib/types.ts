@@ -113,11 +113,7 @@ type BaseEventDetail = {
 
 type BaseDispatcher = (type: "base", detail: BaseEventDetail, options?: DispatchOptions) => boolean
 
-type WeeklHabits = {
-    emojis: boolean
-    dayProgress: boolean
-
-}
+type MonthDetailsView = "overview" | "goals" | "habits" | "yr-view"
 
 type ThoughtEntry = {
     icon: {
@@ -136,6 +132,63 @@ type Bulletin = {
     noteIdx: number
 }
 
+type OverviewOptions = {
+    animPhotos: boolean
+    textBlock: boolean
+    showImgs: boolean
+    habitsMark: boolean
+    focusTime: boolean
+}
+
+type YearViewOptions = {
+    emojis: boolean
+    showTextEntry: boolean
+    showYear: boolean
+    pinnedGoals: boolean
+}
+
+type EditEntry = DayEntry & {
+    g_context: { str: string, checked: number, total: number, items: Goal[] }
+    h_context: { str: string, checked: number, total: number } | null
+    s_context: { str: string, focusMins: number, items: Session[] } | null
+}
+
+type BaseViewOptions = {
+    banner: {
+        show: boolean
+        img: {
+            src: string
+            center: number
+        }
+    }
+    header: BaseHeaderViewOptions
+    entry: TextEntryOptions
+    leftMargin: boolean
+}
+
+type BaseHeaderViewOptions = {
+    showEntry: boolean
+    pos: "top" | "side"
+    icon: {
+        src: string
+        type: "img" | "emoji"
+        show: boolean
+    }
+}
+
+type BaseLeftMarginView = {
+    habitsView: "month" | "today"
+    bulletin: BulletinOptions
+}
+
+type BulletinOptions = {
+    imgSrc: string
+    hasNotes: boolean
+    contentsOnHover: boolean
+    notes: string[]
+    height: number
+    noteIdx: number
+}
 
 /* icon picker */
 
@@ -239,14 +292,16 @@ type ModalOptions = {
 }
 
 
-/* Activity Calendar */
+/* øverview Calendar */
 
 type DayEntry = {
     date: Date
-    highlightImg: HighlightImg | null
-    focusMins: number
-    habits: number
-    goals?: any[]
+    img: string | null
+    currMonth: boolean
+    focusMins: number | null
+    sessions?: Session[] | null
+    habits: { checked: number, total: number, trueChecked: number } | null
+    goals: Goal[] | null
 }
 
 type DayEntryUpdatePayload = {
@@ -308,7 +363,7 @@ type OffsetPoint = {
 
 type HotKeyCombo = string[]
 
-type DropDownOptionIconType = "default" | "fa" | "logo" | "unit" | "hotkey" | "right-arrow" | "check" | "svg"
+type DropDownOptionIconType = "default" | "fa" | "logo" | "unit" | "hotkey" | "right-arrow" | "check" | "svg" | "txt"
 
 type DropdownOptnIcon = {
     type: DropDownOptionIconType
@@ -620,6 +675,9 @@ type KeyContext = {
 type HotkeyContext = "side-bar" | "default"  
 
 type GlobalContext = {
+    user: {
+        createdAt: Date
+    }
     leftBarOpen: boolean
     leftBarFixed: boolean
     rightBarOpen: boolean
@@ -740,12 +798,6 @@ type VertScrollStatus = {
     }
 }
 
-/* Tasks */
-type TaskGroup = {
-    title: string,
-    tasks: Task[]
-}
-
 /* Session Stuff */
 
 type Session = {
@@ -860,6 +912,11 @@ type TasksListOptions = {
         listHeight?: CSSUnitVal
         checkboxDim?: CSSUnitVal
     }
+}
+
+type TaskGroup = {
+    title: string,
+    tasks: Task[]
 }
 
 /* todoist api  */
@@ -983,7 +1040,6 @@ type Habit = {
     streak: number
     frequency: number
     createdAt: Date
-    data: string
     freqType: "daily" | "day-of-week" | "per-week"
     timeOfDay: "morning" | "afternoon" | "evening" | "all-day"
     img: ImgHeader | null
@@ -1061,6 +1117,21 @@ type HabitHeatMapDay = {
     beyondBounds?: boolean
 }
 
+type HabitPageOptions = {
+    leftMargin: boolean
+    showIcon: boolean
+    heatmap: boolean
+    yearEntry: boolean
+    monthEntry: boolean
+    linkImgBanner: boolean
+    viewStyling: "table" | "card"
+}
+
+type HabitCardOptions = {
+    style: "tall" | "wide"
+    xAsChecked: boolean
+}
+
 type HabitTableOptions = {
     view: "default" | "time-of-day"
     stats: boolean
@@ -1074,6 +1145,7 @@ type HabitTableOptions = {
     }
 }
 
+type 
 
 /* Youtube Stuff */
 type GoogleAuthResponse = {
@@ -1295,15 +1367,17 @@ type GoalsPageOptions = {
     heatmap: boolean
     heatmapEmojis: boolean
     carousel: boolean
-    marginLeftView: {
-        showPinned: boolean
-        showNext: boolean
-        showOverdue: boolean
-        heights: {
-            pinnedHeight: number
-            upcomingHeight: number
-            overdueHeight: number
-        }
+    marginLeftView: MarginLeftViewOptions
+}
+
+type MarginLeftViewOptions = {
+    showPinned: boolean
+    showNext: boolean
+    showOverdue: boolean
+    heights: {
+        pinnedHeight: number
+        upcomingHeight: number
+        overdueHeight: number
     }
 }
 

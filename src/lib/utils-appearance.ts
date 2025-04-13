@@ -11,6 +11,10 @@ const STYLES = {
     light: "rgba(var(--textColor1), 0.1)",
     dark: "rgba(var(--textColor1), 0.05)"
   },
+  errorColor: {
+    light: "#cc6666",
+    dark: "#fba4a4"
+  },
   confirmBtn: {
     light: {
       color1: "#f4d5cd",
@@ -117,7 +121,9 @@ export function setRootColors(name: string, theme: ThemeStyling) {
     const deleteColor1 = STYLES.confirmBtn[isDark ? "dark" : "light"].color1
     const deleteColor2 = STYLES.confirmBtn[isDark ? "dark" : "light"].color2
     const deleteColor3 = STYLES.confirmBtn[isDark ? "dark" : "light"].color3
-  
+
+    const errorColor = STYLES.errorColor[isDark ? "dark" : "light"]
+
     styleTag.innerHTML = `
       :root {
           --bg-1: ${theme.bg1};
@@ -133,7 +139,7 @@ export function setRootColors(name: string, theme: ThemeStyling) {
           --modalBgColor: ${theme.modalBgColor};
           --modalBgAccentColor: ${theme.modalBgAccentColor};
           --bentoBoxBgColor: ${theme.bentoBoxBgColor};
-          --bentoBoxBorder: ${theme.bentoBoxBorder};
+          --bentoBoxBorder: ${theme.bentoBoxorder};
           --bentoBoxShadow: ${theme.bentoBoxShadow};
           --sessionBlockColor: ${theme.sessionBlockColor};
           --navMenuBgColor: ${theme.navMenuBgColor};
@@ -159,6 +165,7 @@ export function setRootColors(name: string, theme: ThemeStyling) {
           --confirm-color-1: ${deleteColor1};
           --confirm-color-2: ${deleteColor2};
           --confirm-color-3: ${deleteColor3};
+          --error-color: ${errorColor};
     `
     headTag.appendChild(styleTag)
   }

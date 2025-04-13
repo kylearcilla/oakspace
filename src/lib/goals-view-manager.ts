@@ -1,10 +1,9 @@
 import { globalContext, goalTracker } from "./store"
 import { get, writable, type Writable } from "svelte/store"
 
-import { toast } from "./utils-toast"
-import { TEST_TAGS } from "./mock-data"
+import { TEST_TAGS } from "./mock-data-tags"
 import { initFloatElemPos, isEditTextElem, getElemById, isVoid, getTagFromName } from "./utils-general"
-import { groupSwitchUpdate, handleStoreUpdate, moveGoalDate, moveGoalDueDay, pinGoal, reorderPinned, setPeriodPinned, setViewGoal, STATUSES, unpinGoal, updateGoalIdx } from "./utils-goals"
+import { moveGoalDate, pinGoal, reorderPinned, setPeriodPinned, setViewGoal, STATUSES, toggleGoalStatus, unpinGoal, updateGoalIdx } from "./utils-goals"
 import { deleteGoal, getDateFromTimeFrame, getGroupIdx, getNextTimeFrame, getPeriodData, getPeriodType, getPinnedGoals, getYearProgress, moveGoal } from "./utils-goals"
 
 export type _Goal = Goal & { secIdx: number, idx: number }
@@ -17,13 +16,13 @@ const TAGS: Tag[] = TEST_TAGS
 
 
 /**
- * Manages the goals interface uis (GoalsList + GoalsBoard).
+ * Manages the goals interface uis (GoalsList + GoalsBoard) in home & goals page.
  */
 export class GoalsViewManager {
     goals: Goal[]
     state: Writable<GoalsViewState>
     uiState: Writable<GoalsViewUIState>
-
+    
     timeFrame: { year: number, period: string }
 
     /* ui state */
@@ -113,6 +112,10 @@ export class GoalsViewManager {
         this.update({ viewProgress, yrProgress, pinnedGoal, sortedGoals })
     }
 
+    getPeriodData() {
+        return getPeriodData({ year: this.timeFrame.year, period: this.timeFrame.period })
+    }
+
     setViewPeriod({ year, period }: { year: number, period: string }) {
         this.timeFrame = { year, period }
         const data = getPeriodData({ year, period })
@@ -144,8 +147,8 @@ export class GoalsViewManager {
             this.sections = ["*"]
         }
 
-    this.initSecMap()
-    this.sortedGoals = this.sectionGoals()
+        this.initSecMap()
+        this.sortedGoals = this.sectionGoals()
         this.closedSections = new Array(this.sections.length).fill(false)
 
         this.update({ 
@@ -259,14 +262,7 @@ export class GoalsViewManager {
     }
 
     removeGoal(goal: Goal) {
-        const pinnedGoal = get(this.state).pinnedGoal
-
-        if (pinnedGoal?.id === goal.id) {
-            this.periodPinGoal(null)
-        }
-
         deleteGoal(goal)
-        this.update({ pinnedGoals: getPinnedGoals() })
     }
 
     periodPinGoal(goal: Goal | null, updateCache = false ) {
@@ -277,33 +273,10 @@ export class GoalsViewManager {
         }
     }
 
-    moveGoalDueDay(goal: Goal, newDueDate: Date) {
-        moveGoalDueDay(goal, newDueDate)
-    }
-
     /* status management */
 
     toggleGoalStatus(goal: Goal, newStatus?: "accomplished" | "in-progress" | "not-started") {
-        if (goal.status === newStatus) return
-
-        const oldStatus = goal.status
-        goal.status =  newStatus ? newStatus : goal.status === "accomplished" ? "in-progress" : "accomplished"
-
-        if (goal.status === "accomplished") {
-            goal.completedDate = new Date()
-        }
-        else {
-            goal.completedDate = null
-        }
-        
-
-        groupSwitchUpdate({ 
-            goal, 
-            grouping: "status",
-            sSection: oldStatus, 
-            tSection: goal.status
-        })
-        handleStoreUpdate(goal)
+        toggleGoalStatus(goal, newStatus)
     }
 
     /**
@@ -482,15 +455,19 @@ export class GoalsViewManager {
                 const goal = this.dragSrc!
                 const nbrPinGoal = target!.data as Goal
 
+                // reorder within pinned list
                 if (!isVoid(goal.pinIdx)) {
                     this.reorderPinnedGoals(goal, nbrPinGoal)
                     this.closeDrag()
                     return
                 }
+                // adding a new pinned goal to list
+                else {
+                    goal.pinIdx = nbrPinGoal.pinIdx
+                    pinGoal(goal, nbrPinGoal.pinIdx!)
+                    this.update({ pinnedGoals: getPinnedGoals() })
+                }
                 
-                goal.pinIdx = nbrPinGoal.pinIdx
-                pinGoal(goal, nbrPinGoal.pinIdx!)
-                this.update({ pinnedGoals: getPinnedGoals() })
             }
             // moving goal to a different month
             else if (type === "month") {

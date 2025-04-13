@@ -18,7 +18,7 @@ export const GOALS: Goal[] = [
       {
         id: "0",
         name: "Reach conversational fluency in French",
-        due: new Date("2025-01"),
+        due: new Date("2025-01-01T00:00:00"),
         dueType: "month",
         description: "Reach conversational fluency in French by the end of the year.",
         tag: TEST_TAGS[0],
@@ -45,7 +45,7 @@ export const GOALS: Goal[] = [
       {
         id: "1",
         name: "Run a 6 minute mile",
-        due: new Date("2025-01"),
+        due: new Date("2025-01-01T00:00:00"),
         dueType: "day",
         description: "Run a 6 minute mile by the end of the year.",
         tag: TEST_TAGS[6],
@@ -59,7 +59,7 @@ export const GOALS: Goal[] = [
          tag: 0
         },
         q_order: {
-         default: 0,
+         default: 4,
          status: 0,
          tag: 0
         },
@@ -86,7 +86,7 @@ export const GOALS: Goal[] = [
         },
         tag: TEST_TAGS[3],
         y_order: {
-         default: 0,
+         default: 11,
          status: 3,
          tag: 0
         },
@@ -108,7 +108,7 @@ export const GOALS: Goal[] = [
         creationDate: new Date("2025-03-01"),
         dueType: "day",
         big: true,
-        due: new Date("2025-03-22"),
+        due: new Date("2025-03-3"),
         status: "not-started",
         tasks: [],
         img: { 
@@ -118,13 +118,13 @@ export const GOALS: Goal[] = [
         },
         tag: TEST_TAGS[9],
         y_order: {
-         default: 1,
+         default: 12,
          status: 5,
          tag: 0
         },
         q_order: {
          default: 1,
-         status: 0,
+         status: 1,
          tag: 0
         },
         m_order: {
@@ -136,7 +136,7 @@ export const GOALS: Goal[] = [
       {
         id: "4",
         name: "Read 12 Books This Year",
-        due: new Date("2025-03-15"),
+        due: new Date("2025-03-13"),
         dueType: "year",
         description: "Read one book every month and complete all 12 by the end of the year.",
         tag: TEST_TAGS[10],
@@ -150,12 +150,12 @@ export const GOALS: Goal[] = [
         },
         y_order: {
           default: 2,
-          status: 0,
+          status: 1,
           tag: 0
         },
         q_order: {
           default: 2,
-          status: 0,
+          status: 1,
           tag: 0
         },
         m_order: {
@@ -175,14 +175,14 @@ export const GOALS: Goal[] = [
         tasks: [],
         status: "accomplished",
         img: null,
-        completedDate: new Date("2025-03-7"),
+        completedDate: new Date("2025-03-5"),
         y_order: {
           default: 3,
           status: 0,
           tag: 0
         },
         q_order: {
-         default: 0,
+         default: 5,
          status: 1,
          tag: 0
         },
@@ -193,7 +193,7 @@ export const GOALS: Goal[] = [
         }
       },
       {
-        id: "6",
+        id: "99",
         name: "30-Minute Daily Movement",
         due: new Date("2024-04-31"),
         dueType: "day",
@@ -208,9 +208,9 @@ export const GOALS: Goal[] = [
           center: 50
         },
         y_order: {
-         default: 6,
-        status: 0,
-         tag: 0
+         default: 0,
+         status: 0,
+          tag: 0
         },
         q_order: {
          default: 0,
@@ -218,7 +218,7 @@ export const GOALS: Goal[] = [
          tag: 0
         },
         m_order: {
-            default: 3,
+            default: 0,
             status: 0,
             tag: 0
         }
@@ -307,7 +307,7 @@ export const GOALS: Goal[] = [
         status: "not-started",
         y_order: {
           default: 6,
-          status: 1,
+          status: 6,
           tag: 0
         },
         q_order: {
@@ -375,30 +375,30 @@ export const GOALS: Goal[] = [
         },
         m_order: {
           default: 0,
-          status: 0,
+          status: 0,   
           tag: 0
         }
     },
       {
         id: "12",
-        name: "Publish 10 marketing videos",
+        name: "Learn to cook soup.",
         due: new Date("2025-8-10"),
-        completedDate: new Date("2025-03-22"),
+        completedDate: new Date("2025-03-19"),
         dueType: "quarter", 
         description: "Social medias for projects. Find Inspiration, create content, publish.",
         tasks: [],
         img: { 
-          src: "https://i.pinimg.com/736x/18/86/7c/18867cb31f36820b8908b1f462ab8b70.jpg",
+          src: "https://i.pinimg.com/originals/05/06/36/05063693753ce6f49c6b05fa16b05b93.gif",
           type: "float-left",
           center: 50
         },
-        tag: TEST_TAGS[1],
+        tag: TEST_TAGS[3],
         creationDate: new Date("2025-03-01"),
         status: "accomplished",
         y_order: {
           default: 9,
           status: 2,
-          tag: 4
+          tag: 1
         },
         q_order: {
           default: 0,
@@ -425,7 +425,7 @@ export const GOALS: Goal[] = [
         y_order: {
          default: 10,
          status: 4,
-         tag: 5
+         tag: 4
         },
         q_order: {
          default: 0,

@@ -531,8 +531,6 @@
         }
         &__content {
             background-color: var(--sessionBlockColor) !important;
-            padding-left: 9px;
-            border-radius: 9px;
         }
         &__title {
             @include text-style(1);
@@ -541,7 +539,7 @@
             @include text-style(0.35);
         }
         &__spine {
-            display: none;
+            background-color: rgba(var(--textColor1), 0.5);
         }
         &__checkbox {
             background-color: rgba(var(--textColor1), 0.05);
@@ -608,7 +606,7 @@
         &__checkbox {
             @include square(16px, 6px);
             @include center;
-            margin-right: 5px;
+            margin: 0px 6px 0px 4px;
             background-color: rgba(var(--block-color-1), 0.1);
             display: none;
             

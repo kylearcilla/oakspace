@@ -353,7 +353,7 @@
                             {@const offsetIdx = viewOptn === "today" ? 0 : dayIdx}
                             <div 
                                 class="now-line"
-                                style:top={`calc(${(currTime.minutes / 1440) * 100}% - 2px)`}
+                                style:top={`calc(${(currTime.minutes / 1440) * 100}% - 0px)`}
                                 style:left={`calc(((100% / ${daysInView.length}) * ${offsetIdx} + 0px)`}
                                 style:width={`calc((100% / ${daysInView.length}) + 0.5px)`}
                             >
@@ -541,7 +541,7 @@
                         options={{
                             listItems: EDIT_BLOCK_OPTIONS,
                             styling: { 
-                                width: "140px",
+                                minWidth: "130px",
                                 zIndex: 100
                             },
                             onClickOutside:() => { 

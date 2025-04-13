@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 
-	import { Icon } from "$lib/enums";
 	import { themeState } from "$lib/store"
 	import { iconPicker } from "$lib/pop-ups"
 	import { TextEditorManager } from "$lib/inputs"
-	import { formatPlural, capitalize, getElemPadding } from "$lib/utils-general";
+	import { formatPlural, capitalize, getElemPadding } from "$lib/utils-general"
 	import { clickOutside, findElemVertSpace, getMaskedGradientStyle } from "$lib/utils-general"
     
 	import DropdownList from "$components/DropdownList.svelte"
@@ -14,22 +13,6 @@
     export let zIndex: number
     export let id: string
     let { styling, icon, truncate } = entry
-
-    const ICON_SIZE_OPTN =  { 
-        name: "Icon Size",
-        rightIcon: { 
-            type: "svg" as const,
-            icon: Icon.ChevronRight
-        },
-        childId: `${id}--img-sizes`,
-        onPointerOver: () => {
-            imgSizeOpen = true
-        },
-        onPointerLeave: () => {
-            imgSizeOpen = false
-        },
-        divider: true
-    }
 
     // when style changes, apple when unfocused
     let toStyle = styling 
@@ -129,7 +112,7 @@
             txtBottomPadding = "0px"
         }
         else if (styling === "has-marker" && !icon) {
-            margin = "0px 0px 20px 0px"
+            margin = "0px 0px 10px 0px"
             padding = "5px 12px 5px 16px"
             txtBottomPadding = "0px"
         }
@@ -241,6 +224,7 @@
     function onIconSizeChange(size: string) {
         icon!.size = size.toLowerCase() as "small" | "big"
         imgSizeOpen = false
+        imgOpen = false
     }
 
     onMount(() => {
@@ -361,7 +345,7 @@
                     }
                 ],
                 styling: { 
-                    width: "140px",
+                    minWidth: "140px",
                     zIndex: 1
                 },
                 position: { 
@@ -379,7 +363,7 @@
             isHidden={!imgOpen}
             options={{
                 styling: { 
-                    width: "140px",
+                    minWidth: "140px",
                     zIndex: 1,
                 },
                 position: { 
@@ -390,7 +374,17 @@
                     { 
                         name: icon ? "Replace Icon" : "Add Icon"
                     },
-                    ...(icon && icon.type === "img" ? [ICON_SIZE_OPTN] : []),
+                    {
+                        name: icon && icon.type === "img" ? "Icon Size" : "",
+                        childId: `${id}--img-sizes`,
+                        onPointerOver: () => {
+                            imgSizeOpen = true
+                        },
+                        onPointerLeave: () => {
+                            imgSizeOpen = false
+                        },
+                        divider: true
+                    },
                     {
                         name: icon ? "Remove" : ""
                     },
@@ -411,7 +405,8 @@
         />
     
         <DropdownList 
-            id={`${id}--img-sizes`}
+            id={`${id}--img-dmenu`}
+            childId={`${id}--img-sizes`}
             isHidden={!imgSizeOpen}
             options={{
                 pickedItem: capitalize(icon?.size ?? ""),
@@ -420,18 +415,14 @@
                     { name: "Big" },
                 ],
                 styling:  { 
-                    width: "100px",
-                    zIndex: 2,
+                    minWidth: "90px",
+                    zIndex: 2
                 },
                 position: { 
                     bottom: "-70px", 
                     left: `152px`,
                 },
-                parent: {
-                    id: `${id}--img-dmenu`,
-                    optnIdx: 1,
-                    optnName: "Image Size"
-                },
+                parentId: `${id}--img-dmenu`,
                 onListItemClicked: ({ name: size }) => {
                     onIconSizeChange(size)
                 },
@@ -445,7 +436,8 @@
 </div>
 
 <style global lang="scss">
-    @import "../../../scss/inputs.scss";
+    @import "../scss/inputs.scss";
+
     @mixin background {
         background-color: rgba(var(--textColor1), 0.035);
         background-color: var(--textEntryBgColor);
@@ -555,7 +547,7 @@
             }
         }
         &__count {
-            @include text-style(0.1, var(--fw-400-500), 1.25rem, "Geist Mono");
+            @include text-style(0.1, var(--fw-400-500), 1.25rem);
         }
         &__details button {
             @include text-style(0.7, var(--fw-400-500), 1.35rem);

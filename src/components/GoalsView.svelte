@@ -11,7 +11,7 @@
     import GoalsList from "./GoalsList.svelte"
 	import GoalsBoard from "./GoalsBoard.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
-	import AccomplishedIcon from "$components/AccomplishedIcon.svelte";
+	import AccomplishedIcon from "$components/AccomplishedIcon.svelte"
 
     export let manager: GoalsViewManager
     export let options: GoalsViewOptions
@@ -19,7 +19,7 @@
     export let context: "page" | "home" = "page"
 
     $: light = !$themeState.isDarkTheme
-    $: nextTimeFrame = getPushTime(timeFrame)
+    $: nextTimeFrame = _getNextTimeFrame(timeFrame)
 
     let state: GoalsViewState | null = null
     let uiState: GoalsViewUIState | null = null
@@ -46,12 +46,12 @@
             snippetHeight = snippetRef.clientHeight
         })
     }
-    function getPushTime(time: { year: number, period: string }) {
-        const nextTimeFrame = getNextTimeFrame(time)
+    function _getNextTimeFrame(time: { year: number, period: string }) {
+        const next = getNextTimeFrame(time)
         const period = time.period
-        const diffYear = nextTimeFrame.year != time.year
+        const diffYear = next.year != time.year
         
-        return period === "all" ? nextTimeFrame.year : diffYear ? nextTimeFrame.year : capitalize(nextTimeFrame.period)
+        return period === "all" ? next.year : diffYear ? next.year : capitalize(next.period)
     }
     function onListItemClicked(goal: Goal | null, newStatus: string) {
         if (!goal) return
@@ -261,12 +261,12 @@
         @include flex(flex-start, space-between);
         gap: 25px;
         
+        &--light &__pinned span {
+            @include text-style(0.3);
+        }
         &--page {
             border-top: var(--divider-border);
             padding-top: 12px;
-        }
-        &--light &__pinned span {
-            @include text-style(0.3);
         }
         &--sm {
             display: block;

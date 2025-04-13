@@ -185,12 +185,12 @@
             margin-top: 0px;
         }
         &--light {
-            border: var(--card-light-border);
+            @include contrast-bg("bg-3");
         }
         &--light &__due {
             @include text-style(0.2);
         }
-        &--light &__description {
+        &--light &__description {     
             @include text-style(0.55);
         }
         &--light &__due {
@@ -201,7 +201,7 @@
             box-shadow: none;
         }
         &--completed {
-            opacity: 0.4;
+            opacity: 0.65;
         }
         &--completed &__title {
             text-decoration: line-through;
@@ -229,7 +229,7 @@
             }
         }
         &__due {
-            @include text-style(0.5, var(--fw-400-500), 1.15rem, "Geist Mono");
+            @include text-style(0.5, var(--fw-400-500), 1.3rem);
             white-space: nowrap;
             background-color: rgba(var(--textColor1), 0.02);
             padding: 4px 9px;

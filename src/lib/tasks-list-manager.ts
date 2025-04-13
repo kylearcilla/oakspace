@@ -1266,8 +1266,6 @@ export class TasksListManager {
         const { allowDuplicate } = settings
         const hasSubtasks = settings.subtasks && this.isAtMaxDepth(focusTask!)
         const options = {
-            context: "modal",
-            fixPos: true,
             listItems: [
                 { 
                     name: focusTask?.description ? "" :  "Add Description"
@@ -1343,6 +1341,5 @@ export class TasksListManager {
                 options
             }
          })
-
     }
 }

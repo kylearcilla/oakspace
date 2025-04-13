@@ -1,37 +1,31 @@
 <script lang="ts">
 	import { onMount } from "svelte"
 	import type { Writable } from "svelte/store"
-	import { goalTracker, habitTracker, themeState } from "$lib/store"
+	import { goalTracker, themeState } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
-    import { initData as initHabitsData } from "$lib/utils-habits"
-	import { getGoalHeatMap, PERIODS } from "$lib/utils-goals"
+	import { PERIODS } from "$lib/utils-goals"
 	import { GoalsViewManager } from "$lib/goals-view-manager"
-    import { formatDatetoStr, getWeekPeriodStr, months } from "$lib/utils-date"
-	import { capitalize, clickOutside, getElemById, getHozSpace, getMaskedGradientStyle, kebabToNormal, normalToKebab } from "$lib/utils-general"
+	import { getYearBounds, loadMonthView, saveMonthView } from "$lib/utils-home"
+    import { getNextMonth, getPrevMonth, getWeekPeriodStr, months } from "$lib/utils-date"
+	import { getElemById, getHozSpace, getMaskedGradientStyle, kebabToNormal, normalToKebab } from "$lib/utils-general"
 
 	import YearView from "./YearView.svelte"
-	import GoalsView from "./GoalsView.svelte"
 	import Overview from "./Overview.svelte"
 	import WeeklyHabits from "./WeeklyHabits.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
-	import ToggleBtn from "$components/ToggleBtn.svelte"
-	import BounceFade from "$components/BounceFade.svelte"
+	import GoalsView from "$components/GoalsView.svelte"
 	import SettingsBtn from "$components/SettingsBtn.svelte"
-	import DropdownBtn from "$components/DropdownBtn.svelte"
 	import ProgressBar from "$components/ProgressBar.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 
-    type MonthDetailsView = "overview" | "goals" | "habits" | "yr-view"
-
     /* view options */
-    let overview = {
+    let overviewView: OverviewOptions = {
         animPhotos: true,
         textBlock: true,
         showImgs: true,
         habitsMark: true,
         focusTime: false,
-        heading: false
     }
     let goalsView: GoalsViewOptions = {
         view: "list",
@@ -62,23 +56,19 @@
             percentage: false
         }
     }
-    let yearView = {
-        yearsAgoIdx: 0,
+    let yearView: YearViewOptions = {
         emojis: true,
         showTextEntry: true,
         showYear: false,
-        pinnedGoals: false
+        pinnedGoals: true
     }
 
     let currView: MonthDetailsView = "overview"
     let options: MonthDetailsView | null = null
-    let overviewType: "monthly" | "daily" = "monthly"
-    let leftArrow: HTMLButtonElement | null = null
-    let rightArrow: HTMLButtonElement | null = null
     let headerBtnsRef: HTMLElement | null = null
     let today = new Date()
-    let timeFrame: { year: number, period: string }
-
+    let { minDate, maxDate } = getYearBounds()
+    
     let goalsInit = false
     let goalsViewManager: GoalsViewManager | null = null
     let goalsViewState: Writable<GoalsViewState>
@@ -86,28 +76,32 @@
     let btnHighlighter = {
         width: 0, left: 0
     }
-    let habitsMetrics: HabitYearMetrics
-    let habitsHeatMap: HabitHeatMapData[]
-
-    let moAgoIdx = 0
-    let weeksAgoIdx = 0
+    
     let width = 0
     let renderFlag = false
     
-    let activityIdx = 2
-    let gradient = ""
+    let currMonth = today // for overview and goals
+    let currYear = today.getFullYear() // for year view
+    let weeksAgoIdx = 0 // for habits
+    let timeFrame: { year: number, period: string }
     
-    let subMenu: "g-group" | "g-progress" | "h-view" | "d-view" | "g-due" | null = null
+    let leftArrow: HTMLButtonElement | null = null
+    let rightArrow: HTMLButtonElement | null = null
+    
+    let gradient = ""
+
+    initOptions()
     
     $: isLight = !$themeState.isDarkTheme
-    $: viewProgress = $goalsViewState?.viewProgress
-    $: yrProgress = $goalsViewState?.yrProgress
 
+    $: currMoStr = months[currMonth.getMonth()]
+    $: isMoCurrYr = currMonth.getFullYear() === today.getFullYear()
+
+    $: gm_progress = $goalsViewState?.viewProgress
+    
     $: if ($goalTracker.init && !goalsInit) initGoalsView()
+    $: saveMonthView({ overviewView, goalsView, habitView, yearView })
 
-    $: if (currView != undefined) {
-        onArrowBtnClicked()
-    }
     $: if (width && headerBtnsRef && width < 500) {
         requestAnimationFrame(() => handleScroll(headerBtnsRef))
     }
@@ -115,21 +109,57 @@
         gradient = ""
     }
 
+    function updateTimeFrame() {
+        timeFrame = { 
+            year: currMonth.getFullYear(), 
+            period: months[currMonth.getMonth()].slice(0, 3).toLowerCase()
+        }
+        
+        // update goals
+        goalsViewManager!.setViewPeriod({ ...timeFrame })
+        goalTracker.update(data => ({ ...data, view: goalsViewManager }))
+    }
+    function initOptions() {
+        const { overview, goals, habits, year } = loadMonthView()
+
+        if (overview) overviewView = overview
+        if (goals) goalsView = goals
+        if (habits) habitView = habits
+        if (year) yearView = year
+    }
+    function initGoalsView() {
+        if (goalsInit) return
+        const currYear = today.getFullYear()
+        const viewPeriod = PERIODS[today.getMonth()]
+
+        goalsViewManager = new GoalsViewManager({ 
+            goals: [], 
+            grouping: goalsView.list.grouping,
+            timeFrame: { year: currYear, period: viewPeriod }
+        })
+
+        goalsViewState = goalsViewManager.state
+        goalsInit = true
+        updateTimeFrame()
+    }
     function viewOption(optn: string, val?: string) {
         const type = goalsView.view
 
         /* overview */
-        if (optn === "Show Month") {
-            overview.heading = !overview.heading
-        }
-        else if (optn === "Text Block") {
-            overview.textBlock = !overview.textBlock
+        if (optn === "Text Block") {
+            overviewView.textBlock = !overviewView.textBlock
         }
         else if (optn === "Show Images") {
-            overview.showImgs = !overview.showImgs
+            overviewView.showImgs = !overviewView.showImgs
         }
         else if (optn === "Dynamic Img Spacing") {
-            overview.animPhotos = !overview.animPhotos
+            overviewView.animPhotos = !overviewView.animPhotos
+        }
+        else if (optn === "100% Habits") {
+            overviewView.habitsMark = !overviewView.habitsMark
+        }
+        else if (optn === "Focus Time") {
+            overviewView.focusTime = !overviewView.focusTime
         }
         /* goals */
         else if (optn === "View Type") {
@@ -180,67 +210,59 @@
         else if (optn === "Show Year") {
             yearView.showYear = !yearView.showYear
         }
+        else if (optn === "Pinned Goals") {
+            yearView.pinnedGoals = !yearView.pinnedGoals
+        }
     }
-
-    function onGoalSubListClicked({ name }) {
-        const optn = normalToKebab(name)
-
-        if (subMenu === "g-group") {
-            const grouping = optn as "status" | "tag" | "none"
-
-            if (goalsView.view === "list") {
-                goalsView.list.grouping = grouping === "none" ? "default" : grouping
-            } 
-            else {
-                goalsView.board.grouping = grouping as "status" | "tag"
-            }
-        }
-        else if (subMenu === "g-due") {
-            const viewType = goalsView.view
-            goalsView[viewType].dueType = optn as "date" | "distance"
-        }
-        else if (subMenu === "h-view") {
-            habitView.view = optn as "default" | "time-of-day"
-        }
-
-        goalsView = goalsView
-        subMenu = null
-        optionsOpen = false
-    }
-    function onArrowBtnClicked(direction?: "left" | "right") {
+    function onArrowBtnClicked(dir?: "left" | "right") {
         if (leftArrow == null || rightArrow == null) return
-        let leftArrowDisabled = false
-        let rightArrowDisabled = false
 
-        if (currView === "overview") {
-            if (direction === "left") {
-                moAgoIdx--
+        if (currView === "yr-view") {
+            if (dir === "left") {
+                currYear--
             }
-            else if (direction === "right") {
-                moAgoIdx++
+            else if (dir === "right") {
+                currYear++
             }
-            updateTimeFrame()
+            allowArrowHandler("year")
         }
         else if (currView === "habits") {
-            if (direction === "left") {
+            if (dir === "left") {
                 weeksAgoIdx = Math.min(5, weeksAgoIdx + 1)
             }
-            else if (direction === "right") {
+            else if (dir === "right") {
                 weeksAgoIdx = Math.max(0, weeksAgoIdx - 1)
             }
-
-            leftArrowDisabled = weeksAgoIdx === 5
-            rightArrowDisabled = weeksAgoIdx === 0
+            allowArrowHandler("weeks")
         }
-
-        leftArrow!.disabled = leftArrowDisabled
-        rightArrow!.disabled = rightArrowDisabled
+        else {
+            currMonth = dir === "left" ? getPrevMonth(currMonth) : getNextMonth(currMonth)
+            updateTimeFrame()
+            allowArrowHandler("month")
+        }
     }
+    function allowArrowHandler(context: "year" | "month" | "weeks") {
+        if (context === "year") {
+            leftArrow!.disabled = currYear <= minDate.getFullYear()
+            rightArrow!.disabled = currYear >= maxDate.getFullYear()
+        }
+        else if (context === "month") {
+            leftArrow!.disabled = currMonth <= minDate
+            rightArrow!.disabled = currMonth >= maxDate
+        }
+        else if (context === "weeks") {
+            leftArrow!.disabled = weeksAgoIdx === 5
+            rightArrow!.disabled = weeksAgoIdx === 0
+        }
+    }
+
+    /* listeners */
     function onViewBtnClicked(view: MonthDetailsView) {
         currView = view
-        const btnElem = getElemById(`month-view--${view}`)
+        const btnElem = getElemById(`month-view--${view}`)!
         const width = btnElem.clientWidth
-        const scrollLeft = headerBtnsRef.scrollLeft
+        const today = new Date()
+        const scrollLeft = headerBtnsRef!.scrollLeft
         const left = getHozSpace({ 
             left:  { 
                 elem: btnElem.parentElement!,
@@ -254,8 +276,18 @@
 
         btnHighlighter.width = width - 2
         btnHighlighter.left  = Math.max(left, 0) + scrollLeft
+
+        currYear = today.getFullYear()
+        currMonth = today
+        weeksAgoIdx = 0
+        leftArrow!.disabled = false
+        rightArrow!.disabled = false
+
+        updateTimeFrame()
     }
-    function handleScroll(elem: HTMLElement) {
+    function handleScroll(elem: HTMLElement | null) {
+        if (!elem) return
+
         const { styling } = getMaskedGradientStyle(elem, {
             isVertical: false,
             head: {
@@ -268,57 +300,12 @@
         })
         gradient = styling
     }
-    function updateTimeFrame() {
-        const currentDate = new Date()
-        const currentYear = currentDate.getFullYear()
-        const currentMonth = currentDate.getMonth()
-        
-        const monthsToGoBack = moAgoIdx
-        const totalMonths = currentYear * 12 + currentMonth - monthsToGoBack
-        
-        const targetYear = Math.floor(totalMonths / 12)
-        const targetMonth = totalMonths % 12
-        
-        timeFrame = { 
-            year: targetYear, 
-            period: months[targetMonth].substring(0, 3).toLowerCase()
-        }
-        
-        // update goals
-        goalsViewManager!.setViewPeriod({ ...timeFrame })
-        goalTracker.update(data => ({ ...data, view: goalsViewManager }))
-
-        // update habit data
-        initHabitsData(currentYear, currentMonth)
-    }
-
-    function initGoalsView() {
-        if (goalsInit) return
-        const currYear = today.getFullYear()
-        const viewPeriod = PERIODS[today.getMonth()]
-
-        goalsViewManager = new GoalsViewManager({ 
-            goals: [], 
-            grouping: goalsView.list.grouping,
-            timeFrame: { year: currYear, period: viewPeriod }
-        })
-
-        goalsViewState = goalsViewManager.state
-        goalsInit = true
-
-        goalsViewState.subscribe(() => {
-            goalsHeatMap = getGoalHeatMap(currYear)
-        })
-
-        updateTimeFrame()
-    }
 
     onMount(() => {
         handleScroll(headerBtnsRef!)
         requestAnimationFrame(() => onViewBtnClicked(currView))
     })
 </script>
-
 
 <div 
     class={`month-view month-view--${currView}`}
@@ -378,15 +365,15 @@
                         {#if currView === "overview"}
                             <div 
                                 style:margin="4px -1px 0px 12px"
-                                style:font-size="1.3rem"
-                                style:font-family="Geist Mono"
-                            >
-                                {formatDatetoStr(today, { month: "long" })}
+                                style:font-size="1.4rem"
+                            >   
+                                <span>{currMoStr}</span>
+                                <span class:hidden={isMoCurrYr}>{currMonth.getFullYear()}</span>
                             </div>
                         {:else if currView === "habits"}
                             <div 
                                 style:font-size="1.4rem" 
-                                style:margin="5px 0px 0px 0px"
+                                style:margin="3px 0px 0px 0px"
                             >
                                 {#if weeksAgoIdx === 0} 
                                     This Week
@@ -396,27 +383,28 @@
                                 {/if}
                             </div>
                         {:else if currView === "goals"}
-                            {@const progress = goalsView.progress}
                             <div 
-                                class="flx-center" 
-                                style:margin="0px 0px -2px 0px"
+                                class="flx-center"
+                                style:margin="4px -1px 0px 12px"
+                                style:font-size="1.4rem"
+                                data-month={currMonth}
                             >
-                                <div style:margin-top="5px">
-                                    <ProgressBar {progress}/>
+                                <div style:margin="1px 12px 0px 0px">
+                                    <ProgressBar progress={gm_progress}/>
                                 </div>
-                                <span 
-                                    style:margin="4px -1px 0px 12px"
-                                    style:font-size="1.4rem"
-                                >
-                                    {formatDatetoStr(today, { month: "short" })}
+                                <span>
+                                    {currMoStr}
+                                </span>
+                                <span class:hidden={isMoCurrYr} style:margin-left="9px">
+                                    {currMonth.getFullYear()}
                                 </span>
                             </div>
                         {:else if currView === "yr-view"}
                             <div 
-                                style:font-size="1.4rem"
-                                style:margin="5px 0px 0px 0px"
+                                style:font-size="1.5rem"
+                                style:margin="3px 0px 0px 0px"
                             >
-                                {today.getFullYear()}
+                                {currYear}
                             </div>
                         {/if}
                     </div>
@@ -429,13 +417,15 @@
                         >
                             <div style:margin-left={"-2px"}>
                                 <SvgIcon 
-                                    icon={Icon.ChevronLeft} options={{ scale: 1.4 }}
+                                    icon={Icon.ChevronLeft} 
+                                    options={{ scale: 1.4 }}
                                 />
                             </div>
                         </button>
                         <button 
                             bind:this={rightArrow}
                             on:click={() => onArrowBtnClicked("right")}
+                            disabled={currView === "yr-view" && currYear === today.getFullYear()}
                             class="month-view__arrow"
                             style:margin-left="10px"
                         >
@@ -449,7 +439,7 @@
                         style:margin="0px 0px -2px 9px"
                     >
                         <SettingsBtn 
-                            id={"month-view"}
+                            id="month-view"
                             onClick={() => options = options ? null : currView}
                         />
                     </div>
@@ -466,13 +456,8 @@
                             sectionName: "Month View",
                         },
                         { 
-                            name: "Show Month",
-                            active: overview.heading,
-                            onToggle: () => viewOption("Show Month")
-                        },
-                        { 
                             name: "Text Block",
-                            active: overview.textBlock,
+                            active: overviewView.textBlock,
                             divider: true,
                             onToggle: () => viewOption("Text Block")
                         },
@@ -481,13 +466,13 @@
                         },
                         { 
                             name: "Show Images",
-                            active: overview.showImgs,
-                            divider: !overview.showImgs,
+                            active: overviewView.showImgs,
+                            divider: !overviewView.showImgs,
                             onToggle: () => viewOption("Show Images")
                         },
                         { 
-                            name: "Dynamic Spacing",
-                            active: overview.animPhotos,
+                            name: overviewView.showImgs ? "Dynamic Spacing" : "",
+                            active: overviewView.animPhotos,
                             divider: true,
                             onToggle: () => viewOption("Dynamic Img Spacing")
                         },
@@ -496,12 +481,12 @@
                         },
                         { 
                             name: "100% Habits",
-                            active: overview.habitsMark,
-                            onToggle: () => viewOption("Perfect Habits")
+                            active: overviewView.habitsMark,
+                            onToggle: () => viewOption("100% Habits")
                         },
                         { 
                             name: "Focus Time",
-                            active: overview.focusTime,
+                            active: overviewView.focusTime,
                             onToggle: () => viewOption("Focus Time")
                         }
                     ],
@@ -513,7 +498,7 @@
                         minWidth: "170px",
                     },
                     position: { 
-                        top: "25px",
+                        top: "28px",
                         right: "0px",
                     }
                 }}
@@ -539,6 +524,7 @@
                         { 
                             name: "Grouping",
                             pickedItem: kebabToNormal(goalsView[goalsView.view].grouping),
+                            divider: true,
                             items: [
                                 { name: goalsView.view === "list" ? "Default" : "" },
                                 { name: "Status" },
@@ -581,7 +567,7 @@
                         minWidth: "170px",
                     },
                     position: { 
-                        top: "25px",
+                        top: "28px",
                         right: "0px",
                     }
                 }}
@@ -611,6 +597,9 @@
                                 { name: "Minimal" }
                             ],
                             onListItemClicked: ({ name }) => viewOption("Checkbox", normalToKebab(name))
+                        },
+                        {
+                            sectionName: "Details",
                         },
                         { 
                             name: "Emojis",
@@ -642,10 +631,10 @@
                     },
                     styling:  { 
                         zIndex: 200,
-                        width: "170px",
+                        minWidth: "170px",
                     },
                     position: { 
-                        top: "25px",
+                        top: "28px",
                         right: "0px",
                     }
                 }}
@@ -654,7 +643,7 @@
             <!-- year view -->
             <DropdownList 
                 id={"month-view"}
-                isHidden={options != "habits"}
+                isHidden={options != "yr-view"}
                 options={{
                     listItems: [
                         {
@@ -668,6 +657,7 @@
                         { 
                             name: "Show Year",
                             active: yearView.showYear,
+                            divider: true,
                             onToggle: () => viewOption("Show Year")
                         },
                         {
@@ -689,10 +679,10 @@
                     },
                     styling:  { 
                         zIndex: 200,
-                        width: "170px",
+                        minWidth: "145px",
                     },
                     position: { 
-                        top: "25px",
+                        top: "28px",
                         right: "0px",
                     }
                 }}
@@ -702,15 +692,7 @@
         <div class="month-view__details-view">
             {#if currView === "overview" && goalsViewManager}
                 <div style:margin-top="10px">
-                    <Overview 
-                        {timeFrame}
-                        goalsManager={goalsViewManager}
-                        options={overview}
-                        onDayClicked={(dayIdx) => {
-                            overviewType = "daily"
-                            activityIdx  = dayIdx
-                        }} 
-                    />
+                    <Overview {timeFrame} options={overviewView}/>
                 </div>
             {:else if currView === "habits"}
                 <WeeklyHabits 
@@ -728,7 +710,7 @@
                 </div>
             {:else if timeFrame}
                 <YearView 
-                    currYear={timeFrame.year}
+                    year={currYear} 
                     goalsHeatMap={goalsHeatMap}
                     options={yearView}
                 />
@@ -783,7 +765,7 @@
         /* month view header */
         &__details-view {
             overflow: visible;
-            margin: 0px 0px 0px -35px;
+            margin: 0px 0px 100px -35px;
             padding-left: 35px;
         }
         &__details-header {
@@ -867,7 +849,7 @@
             height: 18px;
 
             span {
-                margin: 0px 8px;
+                display: inline-block;
             }
             * {
                 font-weight: var(--fw-400-500);

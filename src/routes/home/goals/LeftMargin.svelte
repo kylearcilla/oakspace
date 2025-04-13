@@ -13,16 +13,7 @@
     const MIN_HEIGHT = 40
 
     export let manager: GoalsViewManager
-    export let options: {
-        showPinned: boolean
-        showNext: boolean
-        showOverdue: boolean
-        heights: {
-            pinnedHeight: number
-            upcomingHeight: number
-            overdueHeight: number
-        }
-    }
+    export let options: MarginLeftViewOptions
 
     let { pinnedHeight, upcomingHeight, overdueHeight } = options.heights
     let topHeight = 0
@@ -282,24 +273,26 @@
                 style={`height: ${overdueHeight}px; ${overdueGradient}`}
                 on:scroll={() => scrollHandler(overdueRef)}
             >
-                {#each overdueGoals as goal}
-                    {@const { due, name } = goal}
-                    <li>
-                        <button 
-                            class="left-margin__snippet"
-                            on:click={() => setViewGoal(goal)}
-                        >
-                            <div class="left-margin__snippet-title">
-                                {name}
-                            </div>
-                            <div class="flx">
-                                <span>
-                                    {getTimeDistanceStr({ date: due, format: "short", sign: true })}
-                                </span>
-                            </div>
-                        </button>
-                    </li>
-                {/each}
+                <ul>
+                    {#each overdueGoals as goal}
+                        {@const { due, name } = goal}
+                        <li>
+                            <button 
+                                class="left-margin__snippet"
+                                on:click={() => setViewGoal(goal)}
+                            >
+                                <div class="left-margin__snippet-title">
+                                    {name}
+                                </div>
+                                <div class="flx">
+                                    <span>
+                                        {getTimeDistanceStr({ date: due, format: "short", sign: true })}
+                                    </span>
+                                </div>
+                            </button>
+                        </li>
+                    {/each}
+                </ul>
             </div>
             <div 
                 data-group="overdue"
@@ -360,11 +353,9 @@
         position: relative;
 
         --border-opacity: 0.09;
-        --red-color: #fba4a4;
 
         &--light {
             --border-opacity: 0.2;
-            --red-color: #cc6666;
         }
         &--light &__snippet {
             opacity: 1;
@@ -403,16 +394,16 @@
         }
         &__snippet-group {
             margin: 0px 0px 7px 0px;
-            overflow: scroll;
+            overflow: auto;
             @include flex-col(flex-start);
             position: relative;
         }
         &__snippet-group[data-group="overdue"] {
             .left-margin__snippet {
-                color: var(--red-color);
+                color: var(--error-color);
             }
             span {
-                color: var(--red-color);
+                color: var(--error-color);
                 opacity: 0.65;
             }
         }

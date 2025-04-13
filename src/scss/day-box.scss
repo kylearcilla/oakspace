@@ -72,7 +72,7 @@ $hour-block-height: 50px;
         @include abs-top-left(0px, 0.5px);
     }
     svg path {
-        stroke: rgba(var(--textColor1), 0.1);
+        stroke: rgba(var(--textColor1), 0.055);
     }
 }
 

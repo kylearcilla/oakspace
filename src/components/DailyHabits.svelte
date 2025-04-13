@@ -1,18 +1,25 @@
 <script lang="ts">
-    import { habitTracker } from "$lib/store"
+    import { habitTracker, themeState } from "$lib/store"
 	import { toggleCompleteHabit, getDayHabitData } from "$lib/utils-habits"
 
+    export let date = new Date()
+    export let context: "overview" | "side-menu" = "side-menu"
     const store = habitTracker
     const currMonth = new Date()
 
     $: habits = $store.habits
+    $: isLight = !$themeState.isDarkTheme
 
     habitTracker.subscribe(store => habits = store.habits)
 </script>
 
-<div class="dh">
+<div 
+    class="dh" 
+    class:dh--overview={context === "overview"}
+    class:dh--light={isLight}
+>
     {#each habits as habit, habitIdx}
-        {@const { due, done } = getDayHabitData(habit)}
+        {@const { due, done } = getDayHabitData(habit, date)}
 
         <div class="dh__habit">
             <div>
@@ -22,7 +29,7 @@
                     class:cell--first-row={habitIdx === 0}
                 >
                     <button 
-                        on:click={() => toggleCompleteHabit({ habit, date: currMonth, currMonth })}
+                        on:click={() => toggleCompleteHabit({ habit, date, currMonth })}
                         class="dh__habit-box"
                         class:dh__habit-box--not-required={!due}
                         class:dh__habit-box--checked={done}
@@ -56,6 +63,28 @@
     .dh {
         margin-top: 6px;
 
+        --box-opacity: 0.06;
+
+        &--overview {
+            --box-opacity: 0.04;
+        }
+        &--overview &__habit-box {
+            @include square(15px);
+        }
+        &--overview &__habit-name {
+            font-size: 1.35rem;
+        }
+        &--overview &__habit-symbol {
+            font-size: 1.3rem;
+            margin-right: 9px;
+        }
+        &--light {
+            --box-opacity: 0.065;
+        }
+        &--light#{&}--overview {
+            --box-opacity: 0.08;
+        }
+
         &__habit {
             @include flex(center);
             padding: 0px 0px 0px 1px;
@@ -77,17 +106,17 @@
             font-size: 1.4rem;
         }
         &__habit-box {
-            background-color: var(--lightColor2);
             @include square(18px);
+            @include center;
+            background-color: rgba(var(--textColor1), var(--box-opacity));
             border-radius: 0px;
             position: relative;
             margin: 0px 13px 0px 1px;
             font-size: 1rem;
             transition-property: transform;
-            @include center;
             
             &:hover {
-                background-color: rgba(var(--textColor1), 0.12);
+                background-color: rgba(var(--textColor1), calc(var(--box-opacity) + 0.055));
             }
         }
         &__habit-box--checked {

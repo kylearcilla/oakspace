@@ -216,7 +216,7 @@ function addOrdinalSuffix(day: number): string {
 }
 
 /**
- * Formats date to MM/DD/YY
+ * Formats date to MMM, DD, YYYY
  * @param date
  * @returns  Formatted Time (i.e. Jan 12, 2024)
  */
@@ -241,7 +241,7 @@ export function formatDateShort(date: Date): string {
  * @param date
  * @returns Fromatted Time (i.e. 1:15 PM)
  */
-export function formatTimeToHHMM(date: Date, doUsehour12: boolean | null = null): string {
+export function formatTimeToHHMM(date: Date, doUsehour12: boolean | null = prefer12HourFormat()): string {
 	let _doUserHour12 = doUsehour12
 
 	if (_doUserHour12 === null) {
@@ -871,7 +871,7 @@ export function getTimeDistanceStr({ date, format = "default", sign = false, enf
     const dash = passed && sign ? "-" : ""
 
     if (diffInDays === 0 && !enforce) {
-        return 'today'
+        return 'Today'
     }
 
     // enforce
@@ -990,16 +990,9 @@ export function genMonthCalendar(inputDate: Date): MonthData {
 	return currMonth
 }
 
-export function getMonthWeeks(days: { date: Date; isInCurrMonth: boolean }[]) {
-	const weeks: { date: Date; isInCurrMonth: boolean }[][] = []
-
-	for (let w = 0; w < 6; w++) {
-		weeks[w] = []
-		for (let d = 0; d < 7; d++) {
-			weeks[w][d] = days[7 * w + d]
-		}
-	}
-	return weeks
+export function getMonthDays(date: Date) {
+    const days = genMonthCalendar(date).days
+	return days.filter(d => d.isInCurrMonth)
 }
 
 export function getMonthDayNumbers(date: Date) {

@@ -5,7 +5,7 @@
     import { habitTracker, themeState } from "$lib/store"
 	import { DEFAULT_SYMBOLS, EXAMPLE_HABITS } from "$lib/utils-habits-data"
     
-	import HabitsTable from "./HabitsTable.svelte"
+	import HabitsTable from "../../../components/HabitsTable.svelte"
 	import EmptyList from "$components/EmptyList.svelte"
 	import HabitViewModal from "$components/HabitViewModal.svelte"
 

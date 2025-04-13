@@ -7,12 +7,14 @@
     const LINE_WIDTH = 2
     const BOOK_END_LINE_COUNT = 12
     const LINE_SPACING = 2
+
     const SVG_ITEM_WIDTH = LINE_WIDTH + LINE_SPACING
     const BOOKEND_SVG_WIDTH = BOOK_END_LINE_COUNT * SVG_ITEM_WIDTH
+
     const NORMAL_LINE_HEIGHT = 9
     const LONG_LINE_HEIGHT = 13
+    
     const ABMIENT_ACTIVE_OPACITY = 0.6
-
     const DATA_ATTR_INACTIVE_OPACITY = "data-inactive-opacity"
     
     let progressRef: HTMLElement
@@ -141,6 +143,7 @@
 
     /* paint */
     function paintSegments() {
+        console.log(segments)
         segments.forEach((s) => paintSegment(s))
     }
 
@@ -233,8 +236,8 @@
             if (i === currLineIdx) continue
             const line = lines[i]
             const inactive  = type === "break" || type === "paused"
-            const lineEndSecs = (startIdx * secsPerLine) + secsPerLine
-            const lineStartSecs = (endIdx * secsPerLine) + 1
+            const lineStartSecs = i * secsPerLine
+            const lineEndSecs = lineStartSecs + secsPerLine
 
             // multiple inactive segments can share the same line
             const prevBreakOpacity = parseFloat(line.getAttribute(DATA_ATTR_INACTIVE_OPACITY) ?? "0")
@@ -243,7 +246,7 @@
             let totalBreak = 0, frac = 0
 
             // bookend lines for inactive states can have partial opacity
-            if (i === startIdx && i == endIdx && inactive) {
+            if (i === startIdx && i === endIdx && inactive) {
                 totalBreak = endSecs - startSecs + prevBreakSecs
                 frac       = totalBreak / secsPerLine
                 colorLine({ line, type, idx: i, activeOpacity: 1 - Math.min(frac, 1) })

@@ -209,11 +209,11 @@ export class SessionManager {
             })
         }
 
-        // break once the set next break time is reached
+        // pom: break once the set next break time is reached
         if (focus && this.elapsedSecs >= this.nextBreakSecs && !transition && isPom) {
             this.stateTransition("break")
         }
-        // focus once current progress is greater than break time
+        // pom:focus once current progress is === than break time
         else if (!focus && this.progressSecs >= breakTime && !transition && isPom) {
             this.stateTransition("focus")
         }
@@ -273,6 +273,11 @@ export class SessionManager {
         })
     }
 
+    /**
+     * Transition to a new state.
+     * 
+     * @param toState - The state to transition to ("break" or "focus").
+     */
     stateTransition(toState: "break" | "focus") {
         this.progressSecs = 0
         this.isPlaying = true
@@ -280,7 +285,6 @@ export class SessionManager {
         if (toState === "break") {
             this.state = "to-break"
             this.playBreakSound()
-            this.newBreakSegment("break")
 
             this.update({ 
                 progressSecs: this.progressSecs,
@@ -313,6 +317,9 @@ export class SessionManager {
         
         this.periods++
         this.nextBreakSecs = (this.periods * focusTime) + ((this.periods - 1) * breakTime) + ((this.periods - 1) * (2 * transSecs))
+        this.segments.push({
+            type: "break", start: firstBreakStart, end: firstBreakEnd
+        })
 
         this.update({
             periods: this.periods,
@@ -369,6 +376,14 @@ export class SessionManager {
         }
     }
 
+    /**
+     * Add a new pause / break segment to the segments array.
+     * Segments are for painting inactive periods: breaks or pauses in the progress visualizer.
+     * 
+     * For when:
+     *   - user pauses 
+     *   - user breaks manually on focus mode (break periods are entered when the next break is calculated for poms)
+     */
     newBreakSegment(type: "break" | "paused") {
         this.segments.push({
             type, start: new Date(), end: new Date()

@@ -63,6 +63,10 @@
                     icon={getSvgIcon()} 
                 />
             </div>
+        {:else if type === "txt"}
+            <span class="dmenu__option-text" style:opacity={0.5}>
+                {icon.icon}
+            </span>
         {:else if type === "hotkey"}
             <Hotkeys hotkeys={getHotkeys()} />
         {:else if type === "check"}

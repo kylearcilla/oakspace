@@ -372,7 +372,7 @@
                         top: "32px", left: "10px" 
                     },
                     styling:  { 
-                        width: "80px" 
+                        minWidth: "70px" 
                     },
                     onClickOutside: () => { 
                         breakdownOptnOpen = false
@@ -587,7 +587,8 @@
                     contextId = ""
                 },
                 styling: { 
-                    zIndex: 2001 
+                    zIndex: 2001,
+                    minWidth: "90px" 
                 },
                 position: {
                     top: routineMenuPos.top + "px",
@@ -648,7 +649,7 @@
             display: none;
         }
         &--min &__routines {
-            @include abs-top-right(8px, -25px);
+            @include abs-top-right(8px, -15px);
             width: 120px;
             margin: 0px;
             height: auto;
@@ -682,7 +683,7 @@
         &__week {
             height: calc(100% - 55px);
             width: calc(100% - 280px);
-            border-left: 1px solid rgba(var(--textColor1), 0.04);
+            border-left: var(--divider-border);
             overflow: hidden;
             position: relative;
         }

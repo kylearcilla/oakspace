@@ -3,23 +3,20 @@
     import { themeState } from "$lib/store"
     import { imageUpload } from "$lib/pop-ups"
     import { TextEditorManager } from "$lib/inputs"
-    import { clickOutside } from "$lib/utils-general"
+	import DropdownList from "$components/DropdownList.svelte"
 
-	import ToggleBtn from "$components/ToggleBtn.svelte"
-	import BounceFade from "$components/BounceFade.svelte"
-
-    export let content: Bulletin
+    export let options: BulletinOptions
     export let fullWidth: boolean
+    export let onUpdateOptions: (updated: BulletinOptions) => void
 
     $: isLight = !$themeState.isDarkTheme
 
     const MAX_NOTE_LENGTH = 300
     const INPUT_ID = "bulletin-input"
 
-    let { img, hasNotes, contentsOnHover, notes, noteIdx } = content
+    let { imgSrc, hasNotes, contentsOnHover, notes, noteIdx } = options
     let isPointerOver = false
     let hasContextMenu = false
-    let blurred = false
 
     let newNoteTxt = ""
     let contextPos = { left: -1000, top: -1000 }
@@ -35,7 +32,6 @@
             onBlurHandler: () => onEditComplete()
         }
     })
-
     function onEditComplete() {
         if (!newNoteTxt && notes.length > 0) {
             removeNote(noteIdx)
@@ -43,45 +39,46 @@
         else if (newNoteTxt != notes[noteIdx]) {
             notes[noteIdx] = newNoteTxt
         }
-        
-        blurred = true
-        notes = notes
-        content.notes = notes
+        options.notes = notes
     }
     function removeNote(idx: number) {
         notes.splice(idx, 1)
+        const length = notes.length
 
-        // undefined if removing from the end
         if (notes[idx]) {
             editor.updateText(notes[idx])
+        }
+        else if (length > 0) {
+            const newIdx = idx < length ? idx : idx - 1
+            editor.updateText(notes[newIdx])
+            noteIdx = newIdx
         }
         else {
             editor.updateText("")
             noteIdx = 0
         }
 
-        notes = notes
-        content.notes = notes
+        options.notes = notes
+        onUpdateOptions(options)
     }
     function onAddNewNote() {
-        notes.push("")
+        notes.splice(noteIdx + 1, 0, "")
         newNoteTxt = ""
         
-        noteIdx = notes.length - 1
+        noteIdx = noteIdx + 1
         hasContextMenu = false
         
         editor.updateText("")
         editor.focus()
+
+        options.notes = notes
+        onUpdateOptions(options)
     }
     function onPointerUp(e: PointerEvent) {
         const target = e.target as HTMLElement
         const width = target.clientWidth
 
-        if (e.button != 0 || target.id === INPUT_ID || !hasNotes) {
-            return
-        }
-        if (blurred) {
-            blurred = false
+        if (e.button != 0 || target.id === INPUT_ID || !hasNotes || notes.length === 0) {
             return
         }
         if (e.offsetX <= width / 2) {
@@ -91,21 +88,26 @@
             noteIdx = (noteIdx + 1) % notes.length
         }
         
-        content.noteIdx = noteIdx
+        options.noteIdx = noteIdx
         editor.updateText(notes[noteIdx])
+        onUpdateOptions(options)
     }
-    function onContextMenu(_e: Event) {
-        const e = _e as PointerEvent
-        e.preventDefault()
+    function onContextMenu(e: Event) {
+        const pe = e as PointerEvent
+        pe.preventDefault()
 
         hasContextMenu = true
-        contextPos = { left: e.offsetX, top: e.offsetY }
+        contextPos = { left: pe.offsetX, top: pe.offsetY }
     }
     function openImgPicker() {
         hasContextMenu = false
 
         imageUpload.init({
-            onSubmitImg: (imgSrc: string) => img = imgSrc && (content.img = imgSrc)
+            onSubmitImg: (img: string) => {
+                imgSrc = img
+                options.imgSrc = imgSrc
+                onUpdateOptions(options)
+            }
         })
     }
 
@@ -131,7 +133,7 @@
         on:pointerover={() => isPointerOver = true}
         on:pointerleave={() => isPointerOver = false}
     >
-        <img src={img} alt="">
+        <img src={imgSrc} alt="">
         <div class="bulletin__content" class:hidden={!hasNotes}>
             <div 
                 id={INPUT_ID}
@@ -143,83 +145,70 @@
             </div>
         </div>
     </div>
-    <BounceFade 
-        isHidden={!hasContextMenu}
-        zIndex={200}
-        position={{ 
-            top: contextPos.top + "px",
-            left: contextPos.left + "px"
+    <DropdownList 
+        id="base"
+        isHidden={!hasContextMenu} 
+        options={{
+            listItems: [
+                {
+                    name: "Change Background",
+                    divider: true
+                },
+                {
+                    sectionName: "Notes"
+                },
+                {
+                    name: "Include Notes",
+                    active: options.hasNotes,
+                    onToggle: () => {
+                        hasNotes = !hasNotes
+                        options.hasNotes = hasNotes
+                        onUpdateOptions(options)
+                    }
+                },
+                {
+                    name: "Auto Display",
+                    active: options.contentsOnHover,
+                    divider: true,
+                    onToggle: () => {
+                        contentsOnHover = !contentsOnHover
+                        options.contentsOnHover = contentsOnHover
+                        onUpdateOptions(options)
+                    }
+                },
+                {
+                    name: "Add New Note"
+                },
+                {
+                    name: "Remove Note"
+                },
+            ],
+            styling: {
+                minWidth: "160px",
+                fontSize: "1.32rem",
+                zIndex: 1000
+            },
+            position: { 
+                top: contextPos.top + "px",
+                left: contextPos.left + "px"
+            },
+            onListItemClicked: ({ name }) => {
+                if (name === "Change Background") {
+                    openImgPicker()
+                }
+                else if (name === "Add New Note") {
+                    onAddNewNote()
+                }
+                else if (name === "Remove Note") {
+                    removeNote(noteIdx)
+                    hasContextMenu = false
+                }
+            },
+            onClickOutside: () => {
+                hasContextMenu = false
+            }
         }}
-    >
-        <div 
-            data-dmenu-id="base"
-            class="base__dmenu dmenu" 
-            class:dmenu--light={isLight}
-            style:--font-size="1.32rem"
-            style:width={"180px"}
-            use:clickOutside on:outClick={() => hasContextMenu = false}
-        >
-            <li class="dmenu__option">
-                <button 
-                    class="dmenu__option-btn"
-                    on:click={() => openImgPicker()}
-                >
-                    <span class="dmenu__option-text">
-                        Change Background
-                    </span>
-                </button>
-            </li>
-            <li class="dmenu__section-divider"></li>
-            <li class="dmenu__section">
-                <div class="dmenu__section-name">
-                    Notes
-                </div>
-                <div class="dmenu__toggle-optn  dmenu__option--static">
-                    <span class="dmenu__option-heading">Include Notes</span>
-                    <ToggleBtn 
-                        active={hasNotes}
-                        onToggle={() => {
-                            hasNotes = !hasNotes
-                            content.hasNotes = hasNotes
-                        }}
-                    />
-                </div>
-                {#if hasNotes}
-                    <div class="dmenu__toggle-optn  dmenu__option--static">
-                        <span class="dmenu__option-heading">Auto Display</span>
-                        <ToggleBtn 
-                            active={contentsOnHover}
-                            onToggle={() => {
-                                contentsOnHover = !contentsOnHover
-                                content.contentsOnHover = contentsOnHover
-                            }}
-                        />
-                    </div>
-                    <li class="dmenu__section-divider"></li>
-                    <div class="dmenu__option">
-                        <button class="dmenu__option-btn" on:click={() => onAddNewNote()}>
-                            <span class="dmenu__option-text">
-                                Add New Note
-                            </span>
-                        </button>
-                    </div>
-                    <div class="dmenu__option" class:hidden={notes.length === 0}>
-                        <button 
-                            class="dmenu__option-btn" 
-                            on:click={() => {
-                                removeNote(noteIdx)
-                                hasContextMenu = false
-                            }}
-                        >
-                            <span class="dmenu__option-text">
-                                Remove Note
-                            </span>
-                        </button>
-                    </div>
-                {/if}
-            </li>
-        </div>
-    </BounceFade>
+/>
 </div>
 
 <style lang="scss">
@@ -260,7 +249,7 @@
             cursor: text;
             font-weight: 400;
             color: rgba(white, var(--text-opacity));
-            font-family: "DM Mono";
+            font-family: "Geist Mono";
             font-size: var(--font-size);
             width: 75%;
             overflow: visible;

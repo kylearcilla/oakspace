@@ -2,7 +2,7 @@ export const COLOR_SWATCHES = [
   {
     primary: "#ff8e8e",
     light1: "157, 100, 100",
-    light2: "255, 214, 214",
+    light2: "255, 224, 214",
     light3: "221, 168, 168",
     dark1: "247, 202, 202",
     dark2: "54, 34, 34",
@@ -35,7 +35,7 @@ export const COLOR_SWATCHES = [
   {
     primary: "#FCDE93",
     light1: "139, 114, 66",
-    light2: "255, 246, 200",
+    light2: "255, 241, 188",
     light3: "228, 203, 155",
     dark1: "251, 240, 214",
     dark2: "47, 41, 26",
@@ -57,7 +57,7 @@ export const COLOR_SWATCHES = [
   {
     primary: "#d7e5aa",
     light1: "72, 111, 70",
-    light2: "231, 248, 200",
+    light2: "221, 237, 192",
     light3: "160, 204, 157",
     dark1: "210, 229, 206",
     dark2: "28, 36, 25",
@@ -130,18 +130,7 @@ export const COLOR_SWATCHES = [
     dark3: "95, 72, 89",
     dark4: "43, 28, 38",
     name: "pink"
-  },
-  {
-    primary: "#FD8AB9",
-    light1: "154, 97, 124",
-    light2: "249, 218, 224",
-    light3: "220, 179, 198",
-    dark1: "255, 255, 255",
-    dark2: "31, 31, 31",
-    dark3: "72, 72, 72",
-    dark4: "31, 31, 31",
-    name: "grey"
-  },
+  }
 ]
 
 export const DARK_COLOR_PROGRESS = {
@@ -182,7 +171,6 @@ export const STATUS_COLORS = {
  * @returns  An tuple containing a color's light or dark color trio.
  */
 export function getColorTrio(color: Color, doGetLight: boolean): [string, string, string] {
-
   if (doGetLight) {
     return [color.light1, color.light2, color.light3]
   }

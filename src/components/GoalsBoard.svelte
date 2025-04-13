@@ -65,11 +65,11 @@
         {@const dtargetId = dragTarget?.type === "goal" ? getDragTargetId() : null}
 
         {#each sections as section, secIdx (secIdx)}
-            {@const sec = kebabToNormal(section)}
+            {@const sec   = kebabToNormal(section)}
             {@const goals = sortedGoals[secIdx]}
             {@const isTag    = grouping === "tag"}
-            {@const tag      = isTag ? getTagFromName(sec) : undefined}
-            {@const tagColor = isTag && tag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]}
+            {@const tag      = isTag ? getTagFromName(section) : undefined}
+            {@const tagColor = isTag && tag && tag.id !== "*" ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]}
             {@const { done, total } = manager.getSectionProgress(secIdx)}
             {@const sectionContext = manager.getSectionContext(section)}
             {@const timeFrame = manager.timeFrame}
@@ -77,10 +77,11 @@
             <div class="goals__col">
                 <div class="goals__col-header">
                     <div 
-                        class={`goals__col-name-container goals__col-name-container--${section}`}
+                        class={`goals__col-name-container ${grouping === 'status' ? `goals__col-name-container--${section}` : ''}`}
+                        class:goals__col-name-container--empty={tag?.id === "*"}
                         class:tag={isTag}
                         class:tag--light={isTag && isLight}
-                        style:--tag-color-primary={tag?.symbol.color.primary}
+                        style:--tag-color-primary={tag?.symbol?.color?.primary}
                         style:--tag-color-1={tagColor[0]}
                         style:--tag-color-2={tagColor[1]}
                         style:--tag-color-3={tagColor[2]}
@@ -182,11 +183,7 @@
         display: flex;
         overflow-x: scroll;
         padding-bottom: 100px;
-        --bg-opacity: 0.006;
 
-        &--light {
-            --bg-opacity: 0.025;
-        }
         &--light &__new-btn {
             background-color: rgba(var(--textColor1), 0.055);
             opacity: 0.6;
@@ -214,11 +211,11 @@
         }
 
         &__col {
-            min-width: 230px;
-            max-width: 230px;
+            min-width: 220px;
+            max-width: 220px;
             margin-right: 15px;
             background-color: rgba(var(--textColor1), var(--bg-opacity));
-            padding: 8px 10px 10px 9px;
+            // padding: 8px 10px 10px 9px;
             border-radius: 10px;
             height: min-content;
         }
@@ -238,7 +235,7 @@
             @include text-style(_, var(--fw-400-500), 1.3rem);
             display: flex;
             padding: 4px 13px 6px 9px !important;
-            border-radius: 4px;
+            border-radius: 5px;
             margin-right: 10px;
 
             &--not-started {
@@ -252,6 +249,11 @@
             &--accomplished {
                 color: #D4F1AD;
                 background-color: rgba(#D4F1AD, 0.05);
+            }
+            &--empty {
+                color: rgba(var(--textColor1), 0.8);
+                background-color: rgba(var(--textColor1), 0.05);
+                padding-right: 9px !important;
             }
         }
         &__col-count {
@@ -306,9 +308,6 @@
             &__title {
                 font-size: 1.25rem;
             }
-        }
-        .drop-top-border::before {
-            cursor: default !important;
         }
     }
 </style>

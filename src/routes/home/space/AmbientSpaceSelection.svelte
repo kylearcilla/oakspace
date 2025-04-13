@@ -93,6 +93,10 @@
     function onItemClicked(space: AmbientSpace) {
         clickedItem = space
     }
+    function onItemDblClicked(space: AmbientSpace) {
+        clickedItem = space
+        onItemChoose()
+    }
     async function onItemChoose() {
         const { type, sourceId } = clickedItem!
         const { space: { type: currType } } = ambience!
@@ -310,7 +314,7 @@
                         right: "0px"
                     },
                     styling: {
-                        width: "110px",
+                        minWidth: "100px",
                         zIndex: 4
                     }
                 }}
@@ -457,6 +461,7 @@
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <div 
                                     on:click={() => onItemClicked(item)}
+                                    on:dblclick={() => onItemDblClicked(item)}
                                     role='button'
                                     tabindex="0"
                                     title={`${title} - ${subtitle}`}
@@ -522,6 +527,7 @@
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                             <div 
                                 on:click={() => onItemClicked(item)}
+                                on:dblclick={() => onItemDblClicked(item)}
                                 role='button'
                                 tabindex="0"
                                 title={`${title} - ${subtitle}`}
@@ -568,6 +574,7 @@
                                     class:spaces__content-item--user-pl={chosenGroupStr === "user"}
                                     class:spaces__content-item--selected={(!clickedItem && chosenItem?.sourceId === sourceId) || clickedItem?.sourceId === sourceId}
                                     on:click={() => onItemClicked(item)}
+                                    on:dblclick={() => onItemDblClicked(item)}
                                 >
                                     <div class="spaces__content-item-img" style:border-radius="4px">
                                         <img src={thumbnail} alt="space">

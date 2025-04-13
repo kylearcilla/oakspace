@@ -4,14 +4,14 @@ import { globalContext, timer, ytPlayerStore } from "./store"
 import { ModalType } from "./enums"
 import { initEmojis } from "./emojis"
 import { themes } from "./data-themes"
-import { initHabits } from "./utils-habits-data"
+import { initGoals } from "./utils-goals"
 import { POPULAR_SPACES } from "./data-spaces"
+import { initHabits } from "./utils-habits-data"
 import { didTodoistAPIRedirect } from "./api-todoist"
 import { loadTheme, setNewTheme } from "./utils-appearance"
-import { continueFocusSession, didInitSession } from "./utils-session"
+import { continueFocusSession, didInitSession, initSessions } from "./utils-session"
 import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { initYoutubePlayer, didInitYtPlayer, handleChooseItem, initYtUserData } from "./utils-youtube"
-import { initGoals } from "./utils-goals"
 
 /* constants */
 export const SMALL_WIDTH = 740
@@ -20,13 +20,23 @@ export const X_SMALL_WIDTH = 650
 export const LEFT_BAR_MIN_WIDTH = 60
 export const LEFT_BAR_FLOAT_WIDTH = 160
 export const LEFT_BAR_FULL_WIDTH = 175
+
+const MAX_PAST_YEARS = 3
+const MAX_FUTURE_YEARS = 3
+
 const LEFT_BAR_LEFT_BOUND = 20
 const RIGHT_BAR_RIGHT_BOUND = 20
 
 const SESSION_MIN_WIDTH = 750
 const MAX_AMBIENT_OPACITY = 0.85
 
-export const SYSTEM_FONT = `system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`
+const BASE_VIEW_OPTIONS_KEY = "base-view-options"
+const BASE_LEFT_MARGIN_VIEW_KEY = "base-left-margin-view"
+
+const OVERVIEW_OPTIONS_KEY = "base-overview-options"
+const GOALS_OPTIONS_KEY = "base-goals-options"
+const HABITS_OPTIONS_KEY = "base-habits-options"
+const YR_VIEW_OPTIONS_KEY = "base-yr-view-options"
 
 export let cursorPos = {
     left: 0, top: 0
@@ -53,6 +63,7 @@ let worker: Worker | null = null
 export const initAppState = async () => {
     initEmojis()  
     initTimer()
+    initSessions()
     initHabits()
     initGoals()
     loadTheme()
@@ -478,4 +489,77 @@ export function modalSideBarOffset(pos: { left: number, top: number }) {
 
 export function setSessionLocation(location: "workspace" | "default") { 
     updateGlobalContext({ sessionLocation: location })
+}
+
+/* base view options */
+
+/**
+ * Load month view options.
+ */
+export function loadMonthView(): {
+    overview: OverviewOptions | null
+    goals: GoalsViewOptions | null
+    habits: HabitTableOptions | null
+    year: YearViewOptions | null
+} {
+    const overview = localStorage.getItem(OVERVIEW_OPTIONS_KEY)
+    const goals = localStorage.getItem(GOALS_OPTIONS_KEY)
+    const habits = localStorage.getItem(HABITS_OPTIONS_KEY)
+    const year = localStorage.getItem(YR_VIEW_OPTIONS_KEY)
+
+    return { 
+        overview: overview ? JSON.parse(overview) : null, 
+        goals: goals ? JSON.parse(goals) : null, 
+        habits: habits ? JSON.parse(habits) : null, 
+        year: year ? JSON.parse(year) : null
+    }
+}
+
+/**
+ * Save month view options.
+ */
+export function saveMonthView({ overviewView, goalsView, habitView, yearView }: { 
+    overviewView: OverviewOptions 
+    goalsView: GoalsViewOptions 
+    habitView: HabitTableOptions 
+    yearView: YearViewOptions 
+}) {
+    const o_data = JSON.stringify(overviewView)
+    const g_data = JSON.stringify(goalsView)
+    const h_data = JSON.stringify(habitView)
+    const y_data = JSON.stringify(yearView)
+
+    localStorage.setItem(OVERVIEW_OPTIONS_KEY, o_data)
+    localStorage.setItem(GOALS_OPTIONS_KEY, g_data)
+    localStorage.setItem(HABITS_OPTIONS_KEY, h_data)
+    localStorage.setItem(YR_VIEW_OPTIONS_KEY, y_data)
+}
+
+
+export function loadBaseViewOptions(): BaseViewOptions {
+    const data = localStorage.getItem(BASE_VIEW_OPTIONS_KEY)
+    return data ? JSON.parse(data) : null
+}
+
+export function saveBaseViewOptions(options: BaseViewOptions) {
+    const data = JSON.stringify(options)
+    localStorage.setItem(BASE_VIEW_OPTIONS_KEY, data)
+}
+
+export function loadBaseLeftMarginView(): BaseLeftMarginView {
+    const data = localStorage.getItem(BASE_LEFT_MARGIN_VIEW_KEY)
+    return data ? JSON.parse(data) : null
+}
+
+export function saveBaseLeftMarginView(options: BaseLeftMarginView) {
+    const data = JSON.stringify(options)
+    localStorage.setItem(BASE_LEFT_MARGIN_VIEW_KEY, data)
+}
+
+export function getYearBounds() {
+    const user = get(globalContext).user
+    const createdYear = new Date(user.createdAt).getFullYear()
+    const minDate = new Date(createdYear - MAX_PAST_YEARS, 0, 1)
+    const maxDate = new Date(createdYear + MAX_FUTURE_YEARS, 11, 31)
+    return { minDate, maxDate }
 }

@@ -2,10 +2,6 @@ import { Calendar } from "./calendar"
 import { DatePickerError } from "./enums"
 import { formatDateLong, getLastDayOfMonth, isStrMonth, isYrValid } from "./utils-date"
 
-/**
- *  Basic calendar for general use-case. 
- *  Use with the date picker.
- */
 export class DatePickerCalendar extends Calendar {
     dateType: DateType = "day"
 

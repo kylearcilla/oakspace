@@ -2,49 +2,60 @@
     import { onDestroy } from "svelte"
 	import { habitTracker, themeState, timer } from "$lib/store"
 
+    import { BULLETIN_CONTENT } from "$lib/mock-data"
     import { getQuarter, months } from "$lib/utils-date"
 	import { capitalize, clamp } from "$lib/utils-general"
-    import { BULLETIN_CONTENT } from "$lib/mock-data"
     
 	import Bulletin from "./Bulletin.svelte"
-	import { GOALS } from "$lib/mock-data-goals"
-	import DailyHabits from "./DailyHabits.svelte"
+	import DailyHabits from "$components/DailyHabits.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 	import HabitCalendar from "$components/HabitCalendar.svelte"
+	import { loadBaseLeftMarginView, saveBaseLeftMarginView } from "$lib/utils-home"
 
     export let fullWidth = false
 
+    let options: BaseLeftMarginView = {
+        habitsView: "month",
+        bulletin: BULLETIN_CONTENT
+    }
+    
     $: metrics = $habitTracker.monthMetrics
     $: activeStreak = $habitTracker.activeStreak
     $: habits = $habitTracker.habits
-
     $: isLight = !$themeState.isDarkTheme
+    $: saveBaseLeftMarginView(options)
 
-    let options = false
     let timeOptions = false
-    let marginOptn = "habits"
     let marginView = "month"
 
     let initDragY = -1
     let ogDragVal = 0
-    let bulletinHt = 380
     let now = new Date()
+
+    // initOptions()
 
     const unsubscribe = timer.subscribe(({ date }) => now = date) 
 
+    function initOptions() {
+        const data = loadBaseLeftMarginView()
+
+        if (data) {
+            options = data
+        }
+    }
     function dragDown(pe: PointerEvent) {
         if (pe.button != 0 || fullWidth) return
         const target = pe.target as HTMLElement
         initDragY = pe.clientY
 
         target.setPointerCapture(pe.pointerId)
-        ogDragVal = bulletinHt
+        ogDragVal = options.bulletin.height
     }
     function onDrag(pe: PointerEvent) {
         if (initDragY < 0) return
 
         const offset = initDragY - pe.clientY
-        bulletinHt = clamp(200, ogDragVal + -offset, 400)
+        options.bulletin.height = clamp(200, ogDragVal + -offset, 400)
     }
     function onDragEnd() {
         ogDragVal = 0
@@ -63,9 +74,16 @@
 >
     <div 
         class="margin__bulletin" 
-        style:height={`${fullWidth ? "250" : bulletinHt}px`}
+        style:height={`${fullWidth ? "250" : options.bulletin.height}px`}
     >
-        <Bulletin content={BULLETIN_CONTENT} {fullWidth}/>
+        <Bulletin 
+            {fullWidth}
+            options={options.bulletin} 
+            onUpdateOptions={(updated) => {
+                options.bulletin = updated
+                saveBaseLeftMarginView(options)
+            }}
+        />
     </div>
     <div class="margin__content">
         <div 
@@ -76,18 +94,11 @@
         >
         </div>
         <div class="margin__header">
-            <button 
-                on:click={() => options = !options}
-                class="margin__header-btn"
-                data-dmenu-id="margin-optn"
-            >
-                {capitalize(marginOptn)}
-            </button>
-            <div class="margin__header">
-                
+            <div class="margin__header-title">
+                Habits
             </div>
             <button 
-                disabled={habits.length === 0 && marginOptn === "habits"}
+                disabled={habits.length === 0}
                 class="margin__optn-btn"
                 on:click={() => timeOptions = !timeOptions}
             >
@@ -105,7 +116,7 @@
 
         {#if marginView === "today" && habits.length > 0}
             <DailyHabits />
-        {:else if (marginView === "month" || habits.length === 0) && metrics && marginOptn === "habits"}
+        {:else if (marginView === "month" || habits.length === 0) && metrics}
             {@const empty = habits.length === 0}
             {@const { habitsDone, habitsDue } = metrics}
             {@const streak = activeStreak?.count}
@@ -126,72 +137,18 @@
                 </div>
                 <HabitCalendar />
             </div>
-        {:else}
-            <div style:margin="4px 0px 0px 2px">
-                {#each GOALS as goal}
-                    {@const done = goal.status === "accomplished"}
-                    <div 
-                        class="goal-m" 
-                        class:goal-m--light={isLight}
-                        class:goal-m--full={fullWidth}
-                    >
-                        <div class="goal-m__left">
-                            {#if done}
-                                <div class="goal-m__check">
-                                    <i class="fa-solid fa-check"></i>
-                                </div>
-                            {:else}
-                                <div class="goal-m__bullet"></div>
-                            {/if}
-                        </div>
-                        <div class="goal-m__title"class:strike={done} title={goal.name}>
-                            {goal.name}
-                        </div>
-                    </div>
-                {/each}
-            </div>
         {/if}
-        <DropdownList 
-            id="margin-optn"
-            isHidden={!options} 
-            options={{
-                pickedItem: capitalize(marginOptn),
-                listItems: [
-                    { name: "Habits" }, { name: "Goals" }
-                ],
-                position: { 
-                    top: "45px", left: "-8px" 
-                },
-                styling: { 
-                    width: "100px"
-                },
-                onClickOutside: () => { 
-                    options = false 
-                },
-                onListItemClicked: ({ name }) => {
-                    const newOptn = name.toLowerCase() 
-                    if (newOptn != marginOptn) {
-                        marginOptn = newOptn
-                        marginView = newOptn === "habits" && habits.length > 0 ? "today" : "month"
-                    }
-                    options = false 
-                }
-            }}
-        />
         <DropdownList
             id="margin-view"
             isHidden={!timeOptions} 
             options={{
                 pickedItem: capitalize(marginView),
-                listItems: marginOptn === "habits" ?
-                    [{ name: "Today" }, { name: "Month" }] : 
-                    [{ name: "Month" }, { name: "Quarter" }, { name: "Year" }, ]
-                ,
+                listItems: [{ name: "Today" }, { name: "Month" }],
                 position: { 
                     top: "45px", right: "0px" 
                 },
                 styling: { 
-                    width: "100px",
+                    minWidth: "100px",
                 },
                 onClickOutside: () => { 
                     timeOptions = false 
@@ -229,15 +186,12 @@
             background-color: transparent;
             padding: 3px 0px 4px 0px;
         }
-        &__header-btn {
+        &__header-title {
             @include text-style(1, var(--fw-400-500), 1.55rem);
             padding: 5px 12px 6px 11px;
             margin-left: -13px;
             border-radius: 12px;
-        
-            &:hover {
-                opacity: 0.5;
-            }
+
         }
         &__optn-btn {
             @include text-style(1, var(--fw-400-500), 1.45em);
@@ -266,7 +220,7 @@
             margin-bottom: 8px;
         }
         span {
-            @include text-style(0.35, var(--fw-400-500), 1.4rem, "Geist Mono");
+            @include text-style(0.35, var(--fw-400-500), 1.4rem);
         }
         span:last-child {
             @include text-style(0.65);

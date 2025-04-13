@@ -7,7 +7,7 @@
 	import { emojiPicker, imageUpload } from "$lib/pop-ups"
 	import { isDowIdxRequired } from "$lib/utils-habits-data";
 	import { clamp, clickOutside, kebabToNormal, normalToKebab } from "$lib/utils-general"
-	import { getHabitStreak, onUpdateHabit, deleteHabit, addHabit, getHabiViewtData } from "$lib/utils-habits"
+	import { getHabitStreak, onUpdateHabit, deleteHabit, addHabit, getHabiViewtData, getMinYear } from "$lib/utils-habits"
 
 	import Modal from "./Modal.svelte"
 	import SvgIcon from "./SVGIcon.svelte"
@@ -58,7 +58,7 @@
     let closing = false
     let yearHeatMap: HabitHeatMapData[] | null = null
     let currYear = now.getFullYear()
-    let minYear = 2023
+    let minYear = getMinYear()
     let options = false
     let intervalStr = ""
 
@@ -452,7 +452,7 @@
                         />
                         <div use:clickOutside on:outClick={() => intervalOpen = false}>
                             <DropdownList 
-                                id={"interval-dropdown"}
+                                id="interval-dropdown"
                                 isHidden={!intervalOpen} 
                                 options={{
                                     listItems: [
@@ -461,10 +461,7 @@
                                         },
                                         {
                                             name: "Per Week",
-                                            rightIcon: { 
-                                                type: "svg",
-                                                icon: Icon.ChevronRight
-                                            },
+                                            childId: "per-week",
                                             onPointerOver: () => {
                                                 numPickerOpen = closing ? false : true
                                             },
@@ -474,10 +471,7 @@
                                         },
                                         {
                                             name: "Day of Week",
-                                            rightIcon: { 
-                                                type: "svg",
-                                                icon: Icon.ChevronRight
-                                            },
+                                            childId: "dow",
                                             onPointerOver: () => {
                                                 dowOpen = closing ? false : true
                                             },
@@ -492,9 +486,6 @@
                                     },
                                     styling: { 
                                         width: "130px"
-                                    },
-                                    parentContext: {
-                                        childId: "dow"
                                     },
                                     onListItemClicked: ({ name }) => {
                                         onIntervalChooose(name)
@@ -513,8 +504,9 @@
                                     on:pointerleave={() => numPickerOpen = false}
                                 >
                                     <div 
-                                        data-dmenu-id="dow"
-                                        class="habit__num-picker"
+                                        data-dmenu-id="interval-dropdown"
+                                        data-child-id="per-week"
+                                        class="habit__num-picker dmenu"
                                     >
                                         <button on:click={() => onPerWeekBtnClick("down")}>
                                             -
@@ -539,6 +531,8 @@
                                     on:pointerleave={() => dowOpen = false}
                                 >
                                     <div 
+                                        data-dmenu-id="interval-dropdown"
+                                        data-child-id="dow"
                                         class="habit__dow-menu dmenu"
                                         style:--font-size="1.3rem"
                                     >
@@ -740,7 +734,8 @@
     @import "../scss/stats.scss";
 
     .habit {
-        width: 560px;
+        width: 90vw;
+        max-width: 600px;
         border-radius: 13px;
         position: relative;
 
@@ -848,7 +843,7 @@
             }
         }
         &__dow-menu {
-            width: 70px;
+            min-width: 70px;
             border-radius: 8px;
             padding: 2px 2px 5px 1px;
             span {
@@ -891,10 +886,10 @@
         }
         &__num-picker {
             @include flex(center);
-            background-color: red;
             @include contrast-bg("bg-2");
             padding: 5px;
             border-radius: 7px;
+            z-index: 100;
 
             button {
                 @include square(24px, 4px);
@@ -915,7 +910,7 @@
         }
         &__description {
             @include text-style(1, var(--fw-400-500), 1.45rem);
-            min-height: 30px;
+            min-height: 60px;
             max-height: 140px;
             width: 90%;
         }
@@ -932,7 +927,7 @@
             @include circle(25px);
             
             &:disabled {
-                opacity: 0.1;
+                opacity: 0.1 !important;
             }
             &:hover {
                 opacity: 1;

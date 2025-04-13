@@ -12,7 +12,6 @@
     export let focusDate: Date | null = new Date()
     export let onDayUpdate: (date: Date) => void
 
-    let type: "default" | "side" = "default"
     let currMonth = calendar.currMonth
     let nextMoAvailable = calendar.nextMoAvailable
     let prevMoAvailable = calendar.prevMoAvailable
@@ -52,7 +51,6 @@
     }
 </script>
 
-{#if type != null}
 <div 
     class="calendar"
     class:calendar--date-picker={context === "date-picker"}
@@ -112,11 +110,7 @@
         <ul>
             {#each currMonth.days as day}
                 {@const inbounds = calendar.dateInBounds(day.date)}
-                <li 
-                    class="calendar__month-day-container"
-                    class:calendar__month-day-container--empty={!day}
-                >
-                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <li class="calendar__month-day-container">
                     <button 
                         class="calendar__month-day"
                         class:calendar__month-day--not-curr-month={!day.isInCurrMonth}
@@ -132,7 +126,6 @@
         </ul>
     </div>
 </div>
-{/if}
 
 <style lang="scss">
     .calendar {
@@ -148,10 +141,7 @@
             opacity: 0.4;
 
             &:disabled {
-                opacity: 0.16;
-            }
-            &:disabled:hover {
-                opacity: 0.16;
+                opacity: 0.16 !important;
             }
             &:hover {
                 opacity: 0.5;
@@ -223,10 +213,7 @@
             transition: 0.1s ease-in-out;
 
             &:disabled {
-                opacity: 0.05;
-            }
-            &:disabled:hover {
-                opacity: 0.05;
+                opacity: 0.05 !important;
             }
             &:hover {
                 opacity: 0.6;
@@ -262,25 +249,15 @@
             ul {
                 display: grid;
                 grid-template-columns: repeat(7, 1fr);
-                grid-gap: 0px;
-                row-gap: 0px;
-                width: 100%;
-            }
-
-            &--focus ul {
-                margin-top: 1px;
-            }
-            &--focus .calendar__month-title {
-                display: none;
             }
         }
         &__month-day {
             @include center;
             @include text-style(0.85, var(--fw-400-500), 1.19rem);
+            @include circle(25px);
             user-select: none;
             position: relative;
             opacity: 0.95;
-            @include circle(25px);
             cursor: pointer;
 
             &:hover {
@@ -296,11 +273,6 @@
             &-container {
                 @include center;
                 height: 28px;
-
-                &--empty {
-                    height: 0px;
-                    width: 0px;
-                }
             }
             &--today {
                 color: rgba(var(--textColor1), 1) !important;
@@ -320,9 +292,6 @@
             }
             &--not-curr-month:hover {
                 background-color: rgba(var(--textColor1), 0.08) !important;
-            }
-            &--disabled {
-                opacity: 0.52;
             }
         }
     }

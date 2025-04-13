@@ -1,44 +1,50 @@
 <script lang="ts">    
 	import { themeState } from "$lib/store"
+	import { iconPicker } from "$lib/pop-ups"
 	import { clamp } from "$lib/utils-general"
-	import { BASE_BANNER, BASE_HEADER } from "$lib/mock-data"
+	import { loadBaseViewOptions, saveBaseViewOptions } from "$lib/utils-home"
+	import { BASE_BANNER, BASE_HEADER, HOME_THOUGHT_ENTRY } from "$lib/mock-data"
 
 	import Header from "./Header.svelte"
 	import MonthView from "./MonthView.svelte"
 	import LeftMargin from "./LeftMargin.svelte"
 
-    const SMALLER_WIDTH = 630
     const SMALL_WIDTH = 1000
-
-    $: isLight = !$themeState.isDarkTheme
+    const BASE_HEADER_ICON_ID = "base-header--icon"
 
     let width = 0
     let leftHt = 0
     let initDragY = -1
     let ogDragVal = 0
-
-    let bannerImg: Banner = BASE_BANNER
-    let header: BaseHeader = BASE_HEADER
     
-    let options: BaseOptions = {
-        view: "month",
-        banner: true,
-        margin: true
+    let options: BaseViewOptions = {
+        banner: {
+            show: true,
+            img: BASE_BANNER
+        },
+        header: BASE_HEADER,
+        entry: HOME_THOUGHT_ENTRY,
+        leftMargin: true
     }
-    
-    /* ui */
-    function onBaseEvent(e: CustomEvent) {
-        const { context, payload } = e.detail
-        if (context === "banner") {
-            bannerImg = payload
-            bannerImg.src = payload.src
-        } 
-        else if (context === "options") {
-            options = payload
-        }
-        else if (context === "header") {
-            header = payload
-        }
+
+    $: isLight = !$themeState.isDarkTheme
+    $: showIcon = options.header.pos === "top" && options.header.icon.show
+    $: saveBaseViewOptions(options)
+
+    initViewOptions()
+
+    function initViewOptions() {
+        const data = loadBaseViewOptions()
+
+        if (data) options = data
+    }
+    function initIconPicker() {
+        iconPicker.init({
+            id: BASE_HEADER_ICON_ID,
+            onSubmitIcon: (icon) => {
+                options.header.icon = { ...options.header.icon, ...icon }
+            }
+        })
     }
 
     /* drag */
@@ -50,7 +56,7 @@
         initDragY = pe.clientY
 
         target.setPointerCapture(pe.pointerId)
-        ogDragVal = bannerImg.center
+        ogDragVal = options.banner.img.center
     }
     function onDrag(pe: PointerEvent) {
         if (initDragY < 0) {
@@ -61,8 +67,8 @@
         const naturalHeight = target.naturalHeight 
         const percOffset = ((offset / naturalHeight) * 100) * 2.5
 
-        bannerImg.center = clamp(0, ogDragVal + percOffset, 100)
-        bannerImg = bannerImg
+        options.banner.img.center = clamp(0, ogDragVal + percOffset, 100)
+        options.banner.img = options.banner.img
     }
     function onDragEnd() {
         ogDragVal = 0
@@ -72,17 +78,18 @@
 
 <div 
     bind:clientWidth={width}
-    class={`base base--${options.view}`}
-    class:base--no-margin={!options.margin}
-    class:base--no-banner={!options.banner}
+    class="base"
+    class:base--no-margin={!options.leftMargin}
+    class:base--no-banner={!options.banner.show}
+    class:base--emoji-icon={options.header.icon?.type === "emoji"}
     class:base--light={isLight}
     class:base--small={width <= SMALL_WIDTH}
-    class:base--right-bar-flex={SMALLER_WIDTH < width && width <= SMALL_WIDTH}
-    style:--month-img-ht={"261px"}
+    style:--month-img-ht="261px"
     style:--left-ht={`${leftHt}px`}
     style:cursor={initDragY >= 0 ? "ns-resize" : "default"}
 >   
-    {#if options.banner}
+    {#if options.banner.show}
+        {@const { src, center } = options.banner.img}
         <div 
             class="base__banner"
             on:pointerdown={dragDown}
@@ -90,37 +97,49 @@
             on:pointerup={onDragEnd}
         >
             <img 
-                style:object-position={`center ${bannerImg.center}%`}
-                src={bannerImg.src} 
+                style:object-position={`center ${center}%`}
+                src={src} 
                 alt="banner"
             >
         </div>
     {/if}
+    {#if showIcon}
+        {@const { type, src } = options.header.icon}
+        <button
+            id={BASE_HEADER_ICON_ID}
+            class="base__icon"
+            on:click={() => initIconPicker()}
+        >
+            {#if type === "emoji"}
+                <span>{src}</span>
+            {:else}
+                <img {src} alt="header icon">
+            {/if}
+        </button>
+    {/if}
     <div class="base__content">
-        {#if header.pos === "top"}
+        {#if options.header.pos === "top"}
             <div class="base__top-header">
                 <Header 
-                    {bannerImg} 
+                    {showIcon}
                     {options} 
-                    {header}
-                    on:base={onBaseEvent}
+                    onOptionUpdate={(updated) => options = updated}
                 />
             </div>
         {/if}
         <div class="base__content-flx">
-            {#if options.margin}
+            {#if options.leftMargin}
                 <div class="base__left" bind:clientHeight={leftHt}>
                     <LeftMargin fullWidth={width <= SMALL_WIDTH} />
                 </div>
             {/if}
             <div class="base__right">
-                {#if header.pos === "side"}
+                {#if options.header.pos === "side"}
                     <div class="base__overview-header">
                         <Header 
-                            {bannerImg} 
+                            {showIcon}
                             {options} 
-                            {header}
-                            on:base={onBaseEvent}
+                            onOptionUpdate={(updated) => options = updated}
                         />
                     </div>
                 {/if}
@@ -144,6 +163,8 @@
         overflow-x: hidden;
         overflow-y: scroll;
         height: calc(100% - 20px);
+
+        --icon-top-offset: -80px;
 
         /* light */
         &--light h1 {
@@ -176,15 +197,6 @@
         &--small &__right {
             width: 100%;
         }
-        &--right-bar-flex &__goals {
-            height: 600px;
-            padding-left: 30px;
-            width: calc(100% - 300px);
-
-            .divider {
-                display: none;
-            }
-        }
         &--smaller &__right {
             width: 100%;
         }
@@ -199,11 +211,17 @@
         &--no-margin &__right {
             width: 100%;
         }
+        &--no-banner {
+            --icon-top-offset: 5px;
+        }
         &--no-banner &__content {
             padding: 0px 30px 20px 30px;
         }
-        &--no-banner &__header{
+        &--no-banner &__header {
             margin-top: 0px;
+        }
+        &--emoji-icon &__icon {
+            margin-bottom: -10px;
         }
 
         .divider {
@@ -215,6 +233,19 @@
 
         &__top-header {
             margin: 15px 0px -10px 0px;
+        }
+        &__icon {
+            margin: var(--icon-top-offset) 0px 0px 30px;
+            font-size: 6rem;
+            height: 95px;
+            width: 95px;
+            position: relative;
+            
+            img {
+                @include square(100px);
+                border-radius: 4px;
+                object-fit: cover;
+            }
         }
         &__content {
             max-width: 1400px;
@@ -254,6 +285,7 @@
             width: 100%;
             position: relative;
             overflow: hidden;
+            z-index: 0;
             img {
                 height: 210px;
                 object-fit: cover;

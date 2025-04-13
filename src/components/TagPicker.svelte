@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Icon } from "$lib/enums"
     import { themeState } from "$lib/store"
-	import { TEST_TAGS } from "$lib/mock-data";
+	import { TEST_TAGS } from "$lib/mock-data-tags"
     import { getSwatchColors } from "$lib/utils-colors"
     
     import SvgIcon from "./SVGIcon.svelte"

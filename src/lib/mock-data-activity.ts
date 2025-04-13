@@ -171,6 +171,7 @@ export const ACTIVITY_DATA: DayEntry[] = [
           GOALS[7],
           GOALS[4],
           GOALS[2],
+          GOALS[0]
         ]
     },
     {

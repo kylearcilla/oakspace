@@ -3,16 +3,16 @@
 
 	import { themeState } from "$lib/store"
 	import { TimeInputManager } from "$lib/inputs"
+	import DropdownList from "./DropdownList.svelte"
 	import { clamp, clickOutside, getElemStyle } from "$lib/utils-general"
     import { minsFromStartToHHMM, minsFromStartFromHHMM } from "$lib/utils-date"
-    
-	import DropdownList from "./DropdownList.svelte"
     
     export let id: string | undefined = undefined
     export let options: TimePickerOptions | undefined = {}
     export let onClick: FunctionParam | undefined = undefined
     export let onSet: (time: number) => void
     export let error: Error | null = null
+
     const MINS_CHANGE = 5
     const DROPDOWN_OPTION_INTERVAL = 15
     const TIME_PICKER_ID = `${id}--time-picker-input`
@@ -125,7 +125,7 @@
     function onPickerMouseDown(e: MouseEvent) {
         const target = e.target as HTMLElement
         if (target.isContentEditable) {
-            active = true
+            toggleInput(true)
             return
         }
         
@@ -239,16 +239,18 @@
             position: { 
                 top: "32px", left: "0px" 
             },
-            scroll: { 
-                bar: true, goToIdx: closestIdxOption 
-            },
             onListItemClicked: ({ idx }) => {
                 onDropdownOptionClicked(idx)
+            },
+            scroll: {
+                bar: true,
+                goToIdx: closestIdxOption 
             },
             styling: { 
                 zIndex: 100,
                 width: "95px", 
                 height: "180px",
+                overflow: "scroll",
                 optionWidth: "55px", 
                 fontSize: "1.2rem"
             }

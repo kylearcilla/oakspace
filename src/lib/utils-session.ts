@@ -1,5 +1,54 @@
+import { minsToHHMM } from "./utils-date"
+import { TEST_SESSIONS } from "./mock-data"
 import { SessionManager } from "./session-manager"
 
+const SESSION_CACHE: Record<string, Session> = {}
+const SESSION_BY_DATE: Record<string, Session[]> = {}
+
+export function initSessions() {
+    return new Promise((res) => {
+        initSessionData()
+        res(true)
+    })
+}
+
+export function getLocalDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+export function initSessionData() {
+    for (const session of TEST_SESSIONS) {
+        SESSION_CACHE[session.id] = session
+        
+        const localDate = getLocalDateKey(session.startTime)
+        
+        if (!SESSION_BY_DATE[localDate]) {
+            SESSION_BY_DATE[localDate] = []
+        }
+        
+        SESSION_BY_DATE[localDate].push(session)
+    }
+}
+
+export function getMonthSessionData(year: number, month: number): { day: number, sessions: Session[] }[] {
+    const result: { day: number, sessions: Session[] }[] = []
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      result.push({ day, sessions: [] })
+    }
+    
+    const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`
+    
+    Object.entries(SESSION_BY_DATE).forEach(([dateStr, sessions]) => {
+      if (dateStr.startsWith(monthPrefix)) {
+        const day = parseInt(dateStr.split('-')[2])
+        result[day - 1].sessions = sessions
+      }
+    })
+    
+    return result
+}
 
 export function continueFocusSession() {
     new SessionManager()
@@ -9,9 +58,13 @@ export function didInitSession() {
     return localStorage.getItem("session") != null
 }
 
+export function getTotalFocusTimeStr(sessions: Session[]) {
+    return minsToHHMM(sessions.reduce((acc, s) => acc + s.focusTime, 0) / 60)
+}
+
 export function getFocusTime() {
     const data = localStorage.getItem("focus-time")
-    const today = new Date().toISOString().split("T")[0]
+    const today = getLocalDateKey(new Date())
     
     if (data) {
         const { elapsed, dateStr } = JSON.parse(data)
@@ -32,7 +85,7 @@ export function getFocusTime() {
 
 export function incrementFocusTime(focus: number) {
     const data = localStorage.getItem("focus-time")
-    const today = new Date().toISOString().split("T")[0]
+    const today = getLocalDateKey(new Date())
 
     if (data) {
         const { elapsed, dateStr } = JSON.parse(data)

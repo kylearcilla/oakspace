@@ -4,19 +4,21 @@
     import { Icon } from "$lib/enums"
 	import { months } from "$lib/utils-date"
     import { imageUpload } from "$lib/pop-ups"
+    import { getYearBounds } from "$lib/utils-home"
 	import { goalTracker, themeState } from "$lib/store"
     import { GoalsViewManager } from "$lib/goals-view-manager"
-	import { clamp, kebabToNormal, normalToKebab } from "$lib/utils-general"
-	import { getGoalHeatMap, getPageOptions, getYearData, MAX_YEAR, MIN_YEAR, PERIODS, saveOptions } from "$lib/utils-goals"
+	import { kebabToNormal, normalToKebab } from "$lib/utils-general"
+	import { getGoalHeatMap, getPageOptions, getYearData, PERIODS, saveOptions } from "$lib/utils-goals"
     
 	import LeftMargin from "./LeftMargin.svelte"
-	import PinnedGoals from "./PinnedGoals.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import HeatMap from "$components/HeatMap.svelte"
-	import GoalsView from "../base/GoalsView.svelte"
-	import TextEntry from "../base/TextEntry.svelte"
+	import GoalsView from "$components/GoalsView.svelte"
+	import TextEntry from "$components/TextEntry.svelte"
 	import ProgressBar from "$components/ProgressBar.svelte"
 	import SettingsBtn from "$components/SettingsBtn.svelte"
+	import PinnedGoals from "$components/PinnedGoals.svelte"
+	import BannerHeader from "$components/BannerHeader.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 	import ConfirmationModal from "$components/ConfirmationModal.svelte"
     
@@ -40,7 +42,6 @@
             showPinned: true,
             showNext: true,
             showOverdue: true,
-
             heights: {
                 pinnedHeight: 125,
                 upcomingHeight: 120,
@@ -78,7 +79,7 @@
     let monthOptions = false
     let optionsOpen = false
     let renderFlag = false
-    
+
     let now = new Date()
     let currYear = now.getFullYear()
     let periodIdx = now.getMonth()
@@ -88,6 +89,9 @@
 
     let manager: GoalsViewManager | null = null
     let rightContainerRef: HTMLElement | null = null
+    let dragTarget: GoalDragTarget | null = null
+
+    let { minDate, maxDate } = getYearBounds()
 
     let viewState: Writable<GoalsViewState>
     let viewUIState: Writable<GoalsViewUIState>
@@ -107,7 +111,6 @@
     $: deleteConfirm = $viewUIState?.deleteConfirm
 
     let initDragY = -1
-    let ogDragVal = 0
     let srcGoal: Goal | null = null
     
     function initData() {
@@ -117,6 +120,7 @@
         if (page) pageView = page
         if (view) goalsView = view
         
+        init = true
         manager = new GoalsViewManager({ 
             goals: [], 
             grouping: goalsView.list.grouping,
@@ -124,18 +128,19 @@
         })
         viewState = manager.state
         viewUIState = manager.uiState
+
         updateYear(currYear)
         setPeriodIdx(periodIdx)
-        heatMapData = getGoalHeatMap(currYear)
 
-        init = true
+        heatMapData = getGoalHeatMap(currYear)
 
         manager.state.subscribe(() => {
             heatMapData = getGoalHeatMap(currYear)
         })
         manager.uiState.subscribe((ui: GoalsViewUIState) => {
             srcGoal = manager!.dragSrc
-            if (!ui.dragTarget) {
+            dragTarget = ui.dragTarget
+            if (!dragTarget) {
                 hoverMonth = null
             }
         })
@@ -157,13 +162,14 @@
     function updateYear(year: number) {
         currYear = year
 
-        manager!.setViewPeriod({ year, period: viewPeriod })
+        const data = manager!.setViewPeriod({ year, period: viewPeriod })
         yearEntryData = getYearData({ year })
         heatMapData = getGoalHeatMap(year)
+        periodEntry = data.entry
     }
 
     /* options */
-    function onOptionClciked(name: string) {
+    function onOptionClicked(name: string) {
         if (name === "Remove Banner") {
             yearEntryData!.bannerImg = null
         }
@@ -213,33 +219,6 @@
             pageView.marginLeftView.showOverdue = !pageView.marginLeftView.showOverdue
         }
     }
-
-    /* drag */
-    function dragDown(pe: PointerEvent) {
-        if (pe.button != 0) {
-            return
-        }
-        const target = pe.target as HTMLElement
-        initDragY = pe.clientY
-
-        target.setPointerCapture(pe.pointerId)
-        ogDragVal = yearEntryData!.bannerImg!.center
-    }
-    function onDrag(pe: PointerEvent) {
-        if (initDragY < 0) {
-            return
-        }
-        const offset = initDragY - pe.clientY
-        const target = pe.target as HTMLImageElement
-        const naturalHeight = target.naturalHeight 
-        const percOffset = ((offset / naturalHeight) * 100) * 2.5
-
-        yearEntryData!.bannerImg!.center = clamp(0, ogDragVal + percOffset, 100)
-    }
-    function onDragEnd() {
-        ogDragVal = 0
-        initDragY = -1
-    }
 </script>
 
 {#if init}
@@ -253,51 +232,23 @@
         style:--side-padding={`${SIDE_PADDING}px`}
         style:--icon-offset={hasImgIcon ? (hasBannerImg ? "35px" : "120px") : "0px"}
     >
-        <div class="flx" style:height="100%">
+        <div class="flx-center" style:height="100%">
             {#if manager && pageView.leftCol}       
                 <div class="goals__left">
                     <LeftMargin {manager} options={pageView.marginLeftView} />
                 </div>
             {/if}
             <div class="goals__right">
-                {#if yearEntryData?.bannerImg}
-                    {@const { src, center } = yearEntryData.bannerImg}
-                    <div 
-                        class="goals__banner"
-                        on:pointerdown={dragDown}
-                        on:pointermove={onDrag}
-                        on:pointerup={onDragEnd}
-                    >
-                    <img 
-                        style:object-position={`center ${center}%`}
-                        src={src} 
-                        alt="goals banner"
-                        />
-                    </div>
-                {/if}
-                {#if pageView.showIcon && yearEntryData?.smallImg}
-                    {@const smallImg = yearEntryData.smallImg}
-                    <!-- svelte-ignore missing-declaration -->
-                    <button
-                        id="goals-icon"
-                        class="goals__icon"
-                        style:top={hasBannerImg ? "125px" : "0px"}
-                        on:click={() => {
-                            imageUpload.init({
-                                onSubmitImg: (src) => {
-                                    if (yearEntryData?.entry) {
-                                        yearEntryData.smallImg = src
-                                    }
-                                }
-                            })
-                        }}
-                    >
-                        <img src={smallImg} alt="goals icon">
-                    </button>
-                {/if}
+                <div style:margin-bottom="16px">
+                    <BannerHeader 
+                        year={currYear}
+                        showIcon={pageView.showIcon}
+                    />
+                </div>
                 <div>
                     <div class="goals__header" bind:this={rightContainerRef}>
-                        <h1>{currYear}</h1>
+                        <!-- <h1>{currYear}</h1> -->
+                        <h1>Goals</h1>
                         {#key yearEntryData}
                             {#if pageView.showYearEntry && yearEntryData?.entry}
                                 <div style:margin-top="-8px">
@@ -310,14 +261,17 @@
                             {/if}
                         {/key}
                         <div class="goals__header-settings">
-                            <div class="flx" style:margin="0px 0px -4px 0px">
+                            <div class="flx-center" style:margin="0px 0px -4px 0px">
                                 <div style:margin="10px 0px 10px 14px" class:hidden={!pageView.progressBars}>
                                     <ProgressBar progress={yrProgress} />
+                                </div>
+                                <div class="goals__year">
+                                    {currYear}
                                 </div>
                                 <button 
                                     on:click={() => updateYear(currYear - 1)}
                                     class="goals__arrow"
-                                    disabled={currYear === MIN_YEAR}
+                                    disabled={currYear === minDate.getFullYear()}
                                     style:margin-left="10px"
                                 >
                                     <div style:margin-left={"-2px"}>
@@ -329,8 +283,8 @@
                                 <button 
                                     on:click={() => updateYear(currYear + 1)}
                                     class="goals__arrow"
-                                    disabled={currYear === MAX_YEAR}
-                                    style:margin-left="10px"
+                                    disabled={currYear === maxDate.getFullYear()}
+                                    style:margin-left="5px"
                                 >
                                     <div style:margin-right={"-2px"}>
                                         <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
@@ -344,7 +298,6 @@
                                 />
                             </div>
                         </div>
-
                         <DropdownList 
                             id={"goals-page"}
                             isHidden={!optionsOpen}
@@ -435,7 +388,7 @@
                                     optionsOpen = false
                                 },
                                 onListItemClicked: ({ name }) => {
-                                    onOptionClciked(name)
+                                    onOptionClicked(name)
                                 },
                                 rootRef: rightContainerRef,
                                 styling: { 
@@ -490,6 +443,7 @@
                                 }
                             }}
                     />
+
                     </div>
             
                     <div class="goals__content">
@@ -504,7 +458,19 @@
 
                         {#if pageView.carousel && manager}
                             <div class="goals__pinned">
-                                <PinnedGoals {manager} goals={pinnedGoals} />
+                                <PinnedGoals 
+                                    goals={pinnedGoals} 
+                                    dragTarget={dragTarget}
+                                    onReorder={(src, target) => {
+                                        manager?.reorderPinnedGoals(src, target)
+                                    }}
+                                    onDragLeave={() => {
+                                        manager?.resetGoalsDragTarget()
+                                    }}
+                                    onDragEnter={(e, goal) => {
+                                        manager?.onDragEnter(e, goal)
+                                    }}
+                                />
                             </div>
                         {/if}
                 
@@ -540,7 +506,7 @@
                                             {month.slice(0, 3)}
                                         </button>
                                     {/each}
-                                    <div class="flx" style:opacity="0.65">
+                                    <div class="flx-center" style:opacity="0.65">
                                         <div class="goals__quarters">
                                             {#each ["Q1", "Q2", "Q3", "Q4"] as quarter, qidx}
                                                 {@const q = quarter.toLowerCase()}
@@ -565,7 +531,7 @@
                                     </div>
                                 </div>
                                 <div class="goals__month-settings">
-                                    <div class="flx" style:margin="0px 0px -4px 0px">
+                                    <div class="flx-center" style:margin="0px 0px -4px 0px">
                                         <div 
                                             style:margin="10px 0px 10px 14px" 
                                             class:hidden={!pageView.progressBars}
@@ -586,7 +552,7 @@
                                         <button 
                                             on:click={() => setPeriodIdx(periodIdx + 1)}
                                             class="goals__arrow"
-                                            style:margin-left="10px"
+                                            style:margin-left="5px"
                                         >
                                             <div style:margin-right={"-2px"}>
                                                 <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
@@ -721,14 +687,14 @@
         --min-active-opacity: 0.25;
 
         &--light {
-            --month-item-opacity: 0.15;
-            --min-active-opacity: 0.4;
+            --month-item-opacity: 0.225;
+            --min-active-opacity: 0.45;
         }
         &--icon &__header {
             margin-top: var(--icon-offset);
         }
         &--icon &__header-settings {
-            top: calc(-1 *var(--icon-offset) + 15px);
+            top: calc(-1 * var(--icon-offset) + 15px);
         }
 
         h1 {
@@ -739,7 +705,7 @@
         &__left {
             width: var(--left-col-width);
             height: calc(100vh - 50px);
-            padding: 10px 0px 0px 14px;
+            padding: 5px 0px 0px 14px;
         }
         &__right {
             width: calc(100% - var(--left-col-width));
@@ -784,14 +750,17 @@
             z-index: 1;
             
             h1 {
-                @include text-style(1, var(--fw-400-500), 2.8rem, "Geist Mono");
+                @include text-style(1, var(--fw-400-500), 2.2rem, "Geist Mono");
                 margin: 0px 0px 8px 0px;
-                order: none;
             }
         }
         &__header-settings {
             @include abs-top-right(0px, 0px);
             @include flex(center);
+        }
+        &__year {
+            @include text-style(0.35, var(--fw-400-500), 1.5rem);
+            margin-left: 14px;
         }
         &__heatmap {
             padding: 0px var(--side-padding);
@@ -890,20 +859,10 @@
             }
             &:disabled {
                 opacity: 0.1;
-                cursor: not-allowed;
             }
         }
         &__settings-btn {
             margin: 0px 0px 0px 9px;
         }
-    }
-    
-    .hidden {
-        display: none;
-    }
-    
-    .flx {
-        display: flex;
-        align-items: center;
     }
 </style>

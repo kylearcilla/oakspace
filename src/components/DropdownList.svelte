@@ -15,7 +15,6 @@
 <BounceFade 
     {isHidden} 
     {fixPos}
-    dmenuId={id}
     offsetContext={context}
     onDismount={onDismount}
     position={fixPos ? undefined : options?.position}

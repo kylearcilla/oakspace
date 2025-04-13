@@ -1,6 +1,6 @@
 import { get } from 'svelte/store'
 import { v4 as uuidv4 } from 'uuid'
-import { goalTracker } from "./store"
+import { globalContext, goalTracker } from "./store"
 
 import { formatDatetoStr, isSameDay } from "./utils-date"
 import { findTag, getTagFromId, isVoid, reorderItemArr } from "./utils-general"
@@ -13,12 +13,6 @@ type PeriodType = "year" | "quarter" | "month"
 
 export const STATUSES = ["not-started", "in-progress", "accomplished"]
 export const PERIODS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "q1", "q2", "q3", "q4", "all"]
-
-export const YEAR_CREATED = 2025
-export const MIN_YEAR = YEAR_CREATED - 5
-export const MAX_YEAR = new Date().getFullYear() + 5
-// export const MIN_YEAR = 2024
-// export const MAX_YEAR = 2025
 
 const PERIOD_TYPES: PeriodType[] = ["year", "quarter", "month"]
 const ALL_GOALS: Record<string, Goal> = {}
@@ -39,7 +33,11 @@ export async function initGoals() {
     await _initGoals()
 
     goalTracker.set({
-        init: true, goals: GOALS, viewGoal: null, view: null, ...getGoalsData()
+        init: true, 
+        goals: GOALS, 
+        viewGoal: null, 
+        view: null, 
+        ...getCurrYearTotalData()
     })
 }
 
@@ -53,12 +51,12 @@ export function handleStoreUpdate(goal: Goal) {
         viewManager.resetGoals()
     }
 
-    goalTracker.update((store) => ({ ...store, ...getGoalsData() }))
+    goalTracker.update((store) => ({ ...store, ...getCurrYearTotalData() }))
 
     GOALS_TO_UPDATE = {}
 }
 
-export function getGoalsData() {
+export function getCurrYearTotalData() {
     const now = new Date()
     const monthIdx = now.getMonth()
     const quarter = Math.ceil((monthIdx + 1) / 3)
@@ -142,14 +140,19 @@ function initData() {
         const { y, m, q } = getPeriodKeys(goal.due!)
 
         // Add to year data
+        vertifyData({ key: y, data: "year" })
         if (YEAR_DATA[y]) {
             YEAR_DATA[y].goals.push(goal)
         }
+
         // Add to month data
+        vertifyData({ key: m, data: "month" })
         if (MONTH_DATA[m]) {
             MONTH_DATA[m].goals.push(goal)
         }
+
         // Add to quarter data - all goals go here
+        vertifyData({ key: q, data: "quarter" })
         if (QUARTER_DATA[q]) {
             QUARTER_DATA[q].goals.push(goal)
         }
@@ -159,8 +162,7 @@ function initData() {
 /* data queries */
 
 export function getMonthData({ year, moIdx }: { year: number, moIdx: number }): 
-    GoalMonthData & { pinnedGoal: Goal | null } 
-{
+    GoalMonthData & { pinnedGoal: Goal | null }  {
     const key = `${year}-${moIdx + 1}`
     
     vertifyData({ key, data: "month" })
@@ -227,6 +229,19 @@ export function getGoal(id: string) {
     return ALL_GOALS[id]
 }
 
+export function getYearEntryData(year: number) {
+    const data =  getYearData({ year })
+
+    return {
+        smallImg: data.smallImg, bannerImg: data.bannerImg, entry: data.entry
+    }
+}
+
+export function getMonthEntryData(year: number, monthIdx: number) {
+    const data = getMonthData({ year, moIdx: monthIdx })
+    return data.entry
+}
+
 /* goal queries */
  
 export function getPinnedGoals() {
@@ -287,7 +302,7 @@ export function addGoal(goal: Goal) {
     })
 }
 
-export function deleteGoal(goal: Goal) {
+export async function deleteGoal(goal: Goal) {
     return new Promise((resolve) => {
         delete ALL_GOALS[goal.id]
 
@@ -359,14 +374,16 @@ export function moveGoalDate({ goal, moIdx, year, date = 1 }: {
     handleStoreUpdate(goal)
 }
 
-export function moveGoalDueDay(goal: Goal, newDueDate: Date) {
+/**
+ * Move goal's due date.
+ * If it's already completed, move the completed date.
+ * Used in the overview calendar. 
+ * 
+ * @param goal 
+ * @param newDueDate 
+ */
+export function moveGoalDueDate(goal: Goal, newDueDate: Date) {
     goal.due = newDueDate
-
-    if (goal.status === "accomplished") {
-        removeFromChecked(goal, goal.completedDate!)
-        addToChecked(goal, newDueDate)
-    }
-
     handleStoreUpdate(goal)
 }   
 
@@ -580,8 +597,6 @@ export async function updateGoal({ goal, update }: {
         resolve(goal)
     })
 }
-
-
 
 /* completion */
 
@@ -995,6 +1010,29 @@ function updateGoalStatus({ goal, status }: { goal: Goal, status: GoalStatus }) 
     goal.completedDate = toComplete ? new Date() : null
 }
 
+export function toggleGoalStatus(goal: Goal, newStatus?: "accomplished" | "in-progress" | "not-started") {
+    if (goal.status === newStatus) return
+
+    const oldStatus = goal.status
+    goal.status =  newStatus ? newStatus : goal.status === "accomplished" ? "in-progress" : "accomplished"
+
+    if (goal.status === "accomplished") {
+        goal.completedDate = new Date()
+        addToChecked(goal, new Date())
+    }
+    else {
+        goal.completedDate && removeFromChecked(goal, goal.completedDate)
+        goal.completedDate = null
+    }
+    groupSwitchUpdate({ 
+        goal, 
+        grouping: "status",
+        sSection: oldStatus, 
+        tSection: goal.status
+    })
+    handleStoreUpdate(goal)
+}
+
 /* ui utils */
 
 export function setViewGoal(goal: Goal) {
@@ -1145,6 +1183,22 @@ export function saveHeights(heights: { pinnedHeight: number, upcomingHeight: num
     page.marginLeftView.heights = heights
 
     localStorage.setItem(GOALS_PAGE_STORAGE_ID, JSON.stringify(page))
+}
+
+export function getMonthGoalsOverview({ year, moIdx }: { year: number, moIdx: number }) {
+    const month = genMonthCalendar(new Date(year, moIdx, 1))
+    const days = month.days
+    const mGoals = getMonthData({ year, moIdx }).goals
+    const data: { date: Date, goals: Goal[] }[] = []
+
+    for (let d = 0; d < days.length; d++) {
+        const { date, isInCurrMonth } = days[d]
+        if (!isInCurrMonth) continue
+
+        data.push({ date, goals: mGoals.filter(g => isSameDay(g.due, date)) })
+    }
+
+    return data
 }
 
 /* utils */

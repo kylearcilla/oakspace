@@ -5,13 +5,13 @@
 	import { themeState } from "$lib/store"
 	import { habitTracker } from "$lib/store"
 	import { kebabToNormal } from "$lib/utils-general"
+	import { isDowIdxRequired } from "$lib/utils-habits-data"
 	import { DAYS_OF_WEEK, getMonthDayNumbers, isSameMonth } from "$lib/utils-date"
-	import { getHabitTableData, toggleCompleteHabit, initData } from "$lib/utils-habits"
+	import { getHabitTableData, toggleCompleteHabit, initData, viewHabit } from "$lib/utils-habits"
 	import { getHabitStreak, reorderInTimeOfDayView, reorderInDefaultView, TIMES_OF_DAY_MAP } from "$lib/utils-habits"
 
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import ProgressRing from "$components/ProgressRing.svelte"
-	import { isDowIdxRequired } from "$lib/utils-habits-data";
 
     const MIN_SIZE = 620
     const X_MIN_SIZE = 480
@@ -242,9 +242,6 @@
         else {
             return isSameMonth(new Date(), month) && idx === new Date().getDate() - 1
         }
-    }
-    function viewHabit(habit: Habit) {
-        habitTracker.update((state) => ({ ...state, viewHabit: habit }))
     }
 
     onMount(() => requestAnimationFrame(() => getDaysElems()))
@@ -733,7 +730,7 @@
             @include flex(center, space-between);
             
             button {
-                @include text-style(1, var(--fw-400-500), 1.35rem);
+                @include text-style(1, var(--fw-400-500), 1.425rem);
 
                 &:hover {
                     text-decoration: underline;

@@ -102,6 +102,7 @@
             item.onPointerOver()
             return
         }
+        console.log(item)
         item.onPointerOver({ 
             e, 
             item, 
@@ -178,7 +179,6 @@
         data-dmenu-id={id}
         data-child-id={childId}
         class="dmenu"
-
         class:dmenu--light={!isDark}
         class:dmenu--has-scroll-bar={scroll?.bar ?? false}
         style:width={width}
@@ -233,7 +233,7 @@
                         <span class="dmenu__option-heading">
                             {item.name}
                         </span>
-                        <DropdownListMenuOptn {item}/>
+                        <DropdownListMenuOptn {item} {id}/>
                     </li>
                     {#if item.divider}
                         <li 

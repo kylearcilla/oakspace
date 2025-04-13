@@ -54,19 +54,18 @@
     }
 
     .color-picker {
-        padding: 4px 7px 6px 5px;
-        border-radius: 7px;
+        padding: 5px 7px 6px 6px;
+        border-radius: 11px;
         border: 1px solid rgba(var(--textColor1), 0.03);
-        @include contrast-bg("bg-2");
+        @include contrast-bg("bg-3");
 
-        --bg-opacity: 0.025;
+        --bg-opacity: 0.03;
         --hov-brightness: 1.15;
         
         &--light {
             --bg-opacity: 0.06;
             --hov-brightness: 1.05;
         }
-
         li {
             margin-bottom: 1px;
             border-radius: 4px;
@@ -79,7 +78,7 @@
             display: flex;
             cursor: pointer;
             padding: 6px 4px 6px 5px;
-            border-radius: 6px;
+            border-radius: 7px;
             width: calc(100% - 6px);
             transition: 0s;
 
@@ -98,8 +97,8 @@
             background-color: var(--color);
         }
         &__color-name {
-            @include text-style(1, var(--fw-400-500), 1.225rem, "Geist Mono");
-            margin: -2px 22px 0px 11px;
+            @include text-style(1, var(--fw-400-500), 1.35rem);
+            margin: -2px 12px 0px 11px;
             opacity: 0.6;
         }
     }

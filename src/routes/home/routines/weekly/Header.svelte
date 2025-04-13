@@ -2,8 +2,9 @@
 	import { themeState } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
+	import { cursorPos } from "$lib/utils-home"
 	import { minsToHHMM } from "$lib/utils-date"
-    import { capitalize, preventScroll } from "$lib/utils-general"
+    import { capitalize, initFloatElemPos, preventScroll } from "$lib/utils-general"
     import { formatCoreData, isDayRoutinedLinked } from "$lib/utils-routines"
 	import type { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
     
@@ -14,6 +15,7 @@
 	import DropdownList from "$components/DropdownList.svelte"
 	import ConfirmationModal from "$components/ConfirmationModal.svelte"
 	import { SET_DAILY_ROUTINES } from "../../../../tests/routines/routines.data"
+	import DropdownOptionIcon from "$components/DropdownOptionIcon.svelte";
     
     const DAILY_ROUTINES: DailyRoutine[] = SET_DAILY_ROUTINES
     const DAY_DROPDOWN_WIDTH = 255
@@ -30,7 +32,7 @@
     
     let viewOptionOpen = false
     let breakdownOpen = false
-    let dailyRoutinesOpen = false
+    let dailyRoutineContext: "Link" | "Replace" | null = null
 
     let breakdownColIdx = -1
     let breakdownView: "cores" | "tags" = "cores"
@@ -39,9 +41,6 @@
     
     let routinesMenuOffset = -1
     let breakdownViewMenu = false
-    let closing = false
-
-    let options: DropdownOption[] = []
     let containerRef: HTMLElement | null = null
 
     $: light = !$themeState.isDarkTheme
@@ -110,51 +109,12 @@
     }
 
     /* options */
-    function toggleBreakdownOptions(linked: boolean) {
-        const onPointerOver = (params?: { childXPos: number }) => {
-            if (params && !closing)  {
-                dailyRoutinesOpen = true
-                routinesMenuOffset = params.childXPos
-            }
-        }
-        const onPointerLeave = () => {
-            dailyRoutinesOpen = false
-        }
-        const rightIcon = {
-            type: "svg" as const,
-            icon: Icon.ChevronRight
-        }
-        const empty = dayBreakdown!.blocksLength === 0
-
-        options = linked ? [
-            {
-                name: "Replace routine",
-                rightIcon,
-                onPointerOver,
-                onPointerLeave
-            },
-            {
-                name: "Unlink routine",
-                divider: !empty
-            }
-        ] : [
-            {
-                name: "Link a routine",
-                rightIcon,
-                onPointerOver,
-                onPointerLeave,
-                divider: !empty
-            }
-        ]
-
-        breakdownSettings = !breakdownSettings
-    }
     function onNewDayRoutine(idx: number) {
         const onCancel = () => {
             breakdownSettings = false
             confirmOptions = null
             breakdownOpen = false
-            dailyRoutinesOpen = false
+            dailyRoutineContext = null
             manager.setDayBreakdown(null)
         }
         const linkRoutine = () => {
@@ -175,8 +135,6 @@
                 onOk: () => linkRoutine()
             }
         }
-
-        closing = true
     }
     function onDayRoutinesClicked(e: Event) {
         const target = e.target as HTMLElement
@@ -186,7 +144,7 @@
             breakdownSettings = false
             confirmOptions = null
             breakdownOpen = false
-            dailyRoutinesOpen = false
+            dailyRoutineContext = null
         }
 
         if (optnText === "Unlink routine") {
@@ -199,7 +157,8 @@
                 },
             }
         }
-        else if (optnText === "Link Routine" || optnText === "Replace Routine") {
+        else if (optnText === "Link a Routine" || optnText === "Replace Routine") {
+            initDailyRoutineContext(optnText)
         }
         else if (optnText === "Clear routine") {
             confirmOptions = {
@@ -213,6 +172,38 @@
         }
         else if (optnText === "Use template") {
         }
+    }
+    function initDailyRoutineContext(optnText: string) {
+        if (optnText === "Link a Routine") {
+            dailyRoutineContext = "Link"
+        }
+        else if (optnText === "Replace Routine") {
+            dailyRoutineContext = "Replace"
+        }
+        const { left, top } = cursorPos
+        const { left: c_left, top: c_top } = containerRef!.getBoundingClientRect()
+
+        const pos = initFloatElemPos({
+            dims: { 
+                height: 400,
+                width: 200
+            }, 
+            containerDims: { 
+                height: containerRef!.clientHeight, 
+                width: containerRef!.clientWidth
+            },
+            cursorPos: {
+                left: left - c_left,
+                top: top - c_top
+            }
+        })
+
+        routinesMenuOffset = pos.left
+        breakdownSettings = false
+    }
+
+    function onDailyRoutineListItemClicked(idx: number) {
+        onNewDayRoutine(idx)
     }
 </script>
 
@@ -341,10 +332,8 @@
 
                 <div class="routine__settings-btn">
                     <SettingsBtn 
-                        id={"day-breakdown"}
-                        onClick={() => {
-                            toggleBreakdownOptions(linked)
-                        }}
+                        id="day-breakdown-optns"
+                        onClick={() => breakdownSettings = !breakdownSettings}
                     />
                 </div>
     
@@ -465,18 +454,38 @@
                 />
     
                 <DropdownList 
-                    id={"day-breakdown"}
+                    id="day-breakdown-optns"
                     isHidden={!breakdownSettings} 
                     options={{
                         listItems: [
-                            ...options,
-                            ...(dayBreakdown.blocksLength > 0 ? [{ name: "Clear routine" }] : []),
+                            { 
+                                name: linked ? "Replace Routine" : "",
+                                rightIcon: {
+                                    type: "svg",
+                                    icon: Icon.ChevronRight
+                                }
+                            },
+                            { 
+                                name: linked ? "Unlink Routine" : "",
+                                divider: dayBreakdown.blocksLength > 0
+                            },
+                            {
+                                name: !linked ? "Link a Routine" : "",
+                                divider: dayBreakdown.blocksLength > 0,
+                                rightIcon: {
+                                    type: "svg",
+                                    icon: Icon.ChevronRight
+                                }
+                            },
+                            {
+                                name: dayBreakdown.blocksLength > 0 ? "Clear routine" : ""
+                            }
                         ],
                         position: { 
                             top: "30px", right: "10px"
                         },
                         styling:  { 
-                            width: "140px" 
+                            minWidth: "140px" 
                         },
                         onListItemClicked: ({ event }) => {
                             onDayRoutinesClicked(event)
@@ -484,10 +493,7 @@
                         onClickOutside: () => {
                             breakdownSettings = false
                         },
-                        parentContext: {
-                            container: containerRef,
-                            childId: "daily-routines"
-                        },
+                        rootRef: containerRef
                     }}
                 />
     
@@ -496,55 +502,61 @@
     {/if}
 </div>
 
+<BounceFade
+    isHidden={!dailyRoutineContext}
+    zIndex={500}
+    onClickOutside={() => {
+        dailyRoutineContext = null
+    }}
+    position={{ 
+        top: "45px", left: `${routinesMenuOffset}px` 
+    }}
+>
+    <ul 
+        data-dmenu-id="day-routines"
+        class="dmenu"
+        class:dmenu--light={light}
+        style:min-width={"100px"}
+        style:--font-size="1.3rem"
+    >
+        <li class="dmenu__section-name">
+            {dailyRoutineContext === "Link" ? "Link a Routine" : "Replace Routine"}
+        </li>
 
-{#if dayBreakdown}
-    {@const { linkedRoutine } = dayBreakdown}
-    {@const linked = !!linkedRoutine}
-    <DropdownList 
-        id={"daily-routines"}
-        isHidden={!dailyRoutinesOpen || !breakdownSettings}
-        options={{
-            pickedItem: linkedRoutine?.name,
-            listItems: [
-                ...DAILY_ROUTINES.map((dr) => ({ name: dr.name })),
-            ],
-            styling:  { 
-                width: "125px",
-                zIndex: 500,
-                maxHeight: "300px" 
-            },
-            scroll: { 
-                bar: true 
-            },
-            position: { 
-                top: "35px", 
-                left: `${routinesMenuOffset}px` 
-            },
-            parent: {
-                id: "day-breakdown",
-                optnIdx: 0,
-                optnName: linked ? "Replace Routine" : "Link a Routine"
-            },
-            onDismount: () => {
-                closing = false
-            },
-            onListItemClicked: ({ idx}) => {
-                onNewDayRoutine(idx)
-            },
-            onPointerLeave: () => {
-                dailyRoutinesOpen = false
-            }
-        }}
-    />
-{/if}
+        <div
+            style:max-height="300px"
+            style:overflow="scroll"
+        >
+            {#each DAILY_ROUTINES as routine, idx}
+                {@const selected = dayBreakdown?.linkedRoutine?.name === routine.name}
+                <li 
+                    class="dmenu__option"
+                    class:dmenu__option--selected={selected}
+                >
+                    <button 
+                        class="dmenu__option-btn" 
+                        on:click={() => onDailyRoutineListItemClicked(idx)}
+                    >
+                        <span class="dmenu__option-text">
+                            {routine.name}
+                        </span>
+                        {#if selected}
+                            <DropdownOptionIcon dir="r" icon={{ type: "check" }}/>
+                        {/if}
+                    </button>
+                </li>
+            {/each}
+        </div>
+    </ul>
+</BounceFade>
 
 {#if confirmOptions} 
     <ConfirmationModal {...confirmOptions} />
 {/if}
 
-
 <style lang="scss">
     @import "../../../../scss/components/routines.scss";
+    @import "../../../../scss/dropdown.scss";
 
     .routine {
         width: 100%;
@@ -566,6 +578,7 @@
         }
         &--isMin {
             padding: 0px;
+            border-top: var(--divider-border);
         }
         &--isMin &__days-container {
             width: 100%;
@@ -650,7 +663,7 @@
             }
         }
         &__name {
-            @include text-style(0.6, var(--fw-400-500), 1.2rem);
+            @include text-style(0.6, var(--fw-400-500), 1.35rem);
             @include elipses-overflow;
             max-width: calc(100% - 30px);
         }
@@ -658,7 +671,7 @@
             opacity: 0.75;
         }
         &__settings-btn {
-            transform: scale(0.85);
+            transform: scale(1);
             @include abs-top-right(4px, 12px);
         }
         &__stat-breakdown {
@@ -666,15 +679,24 @@
             padding-top: 5px;
         }
         &__day-breakdown {
-            width: 220px !important;
-            padding: 5px 16px 15px 14px;
+            min-width: 210px;
+            width: auto !important;
             overflow: visible;
-            border: 1.5px dashed rgba(var(--textColor1), var(--breakdown-border-opacity)) !important;
+            padding: 5px 16px 15px 14px;
+            border: none !important;
         }
         &__day-breakdown-header {
             @include flex(center, space-between);
             position: relative;
             width: calc(100% + 2px);
+            margin: 2px 0px 4px 0px;
         }
+    }
+    .dmenu__option-btn {
+        max-width: 240px;
+    }
+    .dmenu__option--selected .dmenu__option-text {
+        max-width: calc(100% - 30px);
+        @include elipses-overflow;
     }
 </style>

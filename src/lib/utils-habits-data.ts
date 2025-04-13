@@ -28,8 +28,6 @@ export function initHabitData() {
     TEST_HABITS.forEach((habit) => {
         const yearData = YEAR_HABITS_DATA.find((_habit) => _habit.name === habit.name)!
         const { start, end } = getWeekBounds()
-
-        habit.data = getHabitBitsSlice(yearData.data, start, end)
     })
 
     habitTracker.set({ 
@@ -138,9 +136,10 @@ export function toggleHabitYearBit({ habit, date }: { habit: Habit, date: Date }
  * @param endDate    - The end date (1-based)
  * @returns A bigint representing the extracted bits
  */
-export function getHabitBitsSlice(yearHabits: Record<string, number>, startDate: Date, endDate: Date) {
+export function getHabitBitsSlice(habit: Habit, startDate: Date, endDate: Date) {
     let bitsStr = ''
     const currentDate = new Date(endDate)
+    const yearHabits = YEAR_HABITS_DATA.find(({ name }) => name === habit.name)!.data
 
     while (currentDate.getTime() >= startDate.getTime()) {
         const bit = getBitFromDate(yearHabits, currentDate)
@@ -187,8 +186,7 @@ export function getHabitData({ habit, firstDate, endDate, length, data }: {
     endDate: Date
     length: number
 }) {
-    const yearData = YEAR_HABITS_DATA.find(h => h.name === habit.name)!.data
-    const bits = getHabitBitsSlice(yearData, firstDate, endDate)
+    const bits = getHabitBitsSlice(habit, firstDate, endDate)
 
     let wkIdx = 0
 
@@ -244,26 +242,14 @@ export function getHabitData({ habit, firstDate, endDate, length, data }: {
 /* week utils */
 
 /**
- * Given a habit and week ago idx, return the given week bits
+ * Get the start and end of a week period where habits can be toggled from now.
  * 
- * @param habit   - The habit 
- * @param weekId  - Number of weeks ago (0 = current week, 1 = last week, etc.)
- * @returns       - The week bits from the habit's data property
+ * @param weeksAgo - The number of weeks ago to get the bounds for (default: MAX_WEEKS_BACK_IDX)
+ * @returns The start and end of the week bounds
  */
-export function getHabitWeekBits(habit: Habit, weeksAgoIdx: number): string {
-    const data = habit.data
-    const startIdx = (MAX_WEEKS_BACK_IDX - weeksAgoIdx) * 7
-    
-    return data.slice(startIdx, startIdx + 7)
-}
-
-/**
- * Get the start and end of 6 week period where habits can be toggled from now.
- */
-export function getWeekBounds() {
+export function getWeekBounds(weeksAgo = MAX_WEEKS_BACK_IDX) {
     const date = new Date() 
-    const { start } = getWeekPeriod(date, MAX_WEEKS_BACK_IDX)
-    const { end } = getWeekPeriod(date, 0)
+    const { start, end } = getWeekPeriod(date, weeksAgo)
 
     start.setHours(0, 0, 0, 0)
     end.setHours(0, 0, 0, 0)

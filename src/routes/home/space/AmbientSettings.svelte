@@ -64,7 +64,7 @@
             <div class="ambient__setting-name">
                 Element Styling
             </div>
-            <div class="ambient__setting-right">
+            <div>
                 <DropdownBtn 
                     id={"ambient"}
                     isActive={stylingOpen}
@@ -73,7 +73,6 @@
                         noBg: false,
                         styles: { 
                             backgroundColor: "rgba(255, 255, 255, 0.025)",
-                            margin: "0px 0px 0px -5px",
                             width: "64px",
                             borderRadius: "10px"
                         },
@@ -132,18 +131,17 @@
             <div class="ambient__setting-name">
                 Clock Style
             </div>
-            <div class="ambient__setting-right">
+            <div>
                 <!-- svelte-ignore missing-declaration -->
                 <DropdownBtn 
-                    id={"ambient-clock-style"}
+                    id="clock-style"
                     isActive={timeStyleOpen}
                     options={{
                         title: capitalize(fontStyle),
                         noBg: false,
                         styles: { 
                             backgroundColor: "rgba(255, 255, 255, 0.025)",
-                            margin: "0px 0px 0px -5px",
-                            width: "64px",
+                            minWidth: "64px",
                             borderRadius: "10px",
                         },
                         onClick: () => {
@@ -153,7 +151,7 @@
                 />
 
                 <DropdownList 
-                    id={"ambient-clock-style"}
+                    id="clock-style"
                     isHidden={!timeStyleOpen} 
                     options={{
                         listItems: [
@@ -166,7 +164,7 @@
                             top: "105px", right: "10px"
                         },
                         styling:  {
-                            width: "90px",
+                            minWidth: "90px",
                             zIndex: 500
                         },
                         pickedItem: capitalize(fontStyle),
@@ -264,8 +262,8 @@
     .ambient {
         background: var(--bg-2);
         padding: 10px 14px 6px 14px;
-        border-radius: 15px;
-        width: 220px;
+        border-radius: 9px;
+        min-width: 220px;
         position: relative;
 
         &__divider {
@@ -275,6 +273,7 @@
         &__setting {
             @include flex(center);
             margin-bottom: 9px;
+            gap: 22px;
         }
         &__seeting-open-space-btn {
             @include center;

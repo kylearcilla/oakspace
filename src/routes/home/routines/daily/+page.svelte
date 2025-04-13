@@ -449,7 +449,7 @@
             options={{
                 listItems: EDIT_BLOCK_OPTIONS,
                 styling: { 
-                    width: "140px",
+                    minWidth: "130px",
                     zIndex: 100
                 },
                 onListItemClicked: ({ name }) => {

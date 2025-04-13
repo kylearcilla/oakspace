@@ -87,6 +87,7 @@
             {@const sectionName = kebabToNormal(section)}
             {@const tagSectionEmpty = grouping === "tag" && goals.length === 0}
             {@const sectionContext = manager.getSectionContext(section)}
+            
             {#if !tagSectionEmpty}
                 <div 
                     class="goals__section"
@@ -102,10 +103,12 @@
                         data-type="section"
                         data-idx={secIdx}
                     >
-                        <div class="goals__section-header-inner">
+                        <div 
+                            class="goals__section-header-inner"
+                            class:goals__section-header-inner--empty={sectionName === "Empty"}
+                        >
                             <div 
                                 class="goals__section-name" 
-                                class:goals__section-name--empty={sectionName === "Empty"}
                                 title={sectionName}
                             >
                                 {sectionName}
@@ -228,6 +231,7 @@
                                                 <div class="goals__goal-tag">
                                                     <div 
                                                         class="tag"
+                                                        class:tag--empty={sectionName === "Empty"}
                                                         class:tag--light={isLight}
                                                         style:--tag-color-primary={tag.symbol.color.primary}
                                                         style:--tag-color-1={tagColor[0]}
@@ -295,7 +299,6 @@
                                 </div>
                             </button>
                         {/if}
-
                     {/if}
                 </div>
             {/if}
@@ -366,6 +369,12 @@
                 opacity: 0.2;
             }
         }
+        &__section-header-inner--empty &__section-name {
+            opacity: 0.5;
+        }
+        &__section-header-inner--empty &__section-count {
+            opacity: 0.5;
+        }
         &__section-header {
             @include flex(center, space-between);
             box-shadow: none !important;
@@ -384,10 +393,6 @@
             @include text-style(0.5, var(--fw-400-500), 1.3rem);
             @include elipses-overflow;
             max-width: 300px;
-
-            &--empty {
-                opacity: 0.3;
-            }
         }
         &__section-count {
             @include text-style(0.15, var(--fw-400-500), _);

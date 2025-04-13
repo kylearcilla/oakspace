@@ -15,6 +15,7 @@
     let habits: Habit[] = []
     let sortedHabits: Habit[][] = []
     let showHabitsLeft = true
+    let bannerLinked = false
     
     let srcId: string = ""
     let targetId: string = ""
@@ -25,7 +26,7 @@
     $: groupByTimeOfDay(habits)
 
     function groupByTimeOfDay(habits: Habit[]) {
-        sortedHabits = [[], [], [], []];
+        sortedHabits = [[], [], [], []]
 
         habits.forEach(habit => {
             const timeOfDayIndex = TIMES_OF_DAY_MAP[habit.timeOfDay]
@@ -83,9 +84,9 @@
 <div 
     class="habits" 
     class:habits--light={light}
-    style:--left-width={showHabitsLeft ? "150px" : "0px"}
+    class:habits--banner-linked={bannerLinked}
+    style:--left-width={showHabitsLeft ? "135px" : "0px"}
 >
-    <h1>Habits</h1>
     <div class="habits__content">
         {#if showHabitsLeft}
             <div class="habits__left">
@@ -140,7 +141,8 @@
         <div class="habits__right">
             <Details 
                 {showHabitsLeft}
-                setLeftWidth={() => showHabitsLeft = !showHabitsLeft} 
+                setLeftWidth={(flag) => showHabitsLeft = flag} 
+                setBannerLinked={(flag) => bannerLinked = flag}
             />
         </div>
     </div>
@@ -150,7 +152,7 @@
     .habits {
         height: 100%;
         width: 100%;
-        padding: 18px 0px 0px 25px;
+        padding: 5px 0px 0px 20px;
         color: rgba(var(--textColor1), 0.9);
         @include text-style(1, var(--fw-400-500), 1.3rem);
 
@@ -166,16 +168,17 @@
         &--light &__list-group-title {
             @include text-style(0.3);
         }
-        h1 {
-            margin: 0px 20px 0px 0px;
-            padding-bottom: 10px;
-            border-bottom: var(--divider-border);
-            @include text-style(1, var(--fw-400-500), 1.8rem);
+        &--banner-linked {
+            padding-top: 0px;
         }
-        
+        &--banner-linked &__left {
+            border-right: none;
+        }
+        &--banner-linked h1 {
+            display: none;
+        }        
         &__left {
             width: var(--left-width);
-            border-right: var(--divider-border);
             height: 100%;
         }
         &__right {
@@ -191,7 +194,7 @@
             @include text-style(0.24, _, 1.4rem);
 
             &:first-child {
-                padding-top: 10px;
+                padding-top: 4px;
             }
         }
         &__list-item {

@@ -1,7 +1,10 @@
-import { GOALS } from "./mock-data-goals"
+
 import { COLOR_SWATCHES } from "./utils-colors"
 import { generateHabitData } from "./utils-habits-data"
-import { v4 as uuidv4 } from 'uuid'
+
+const now = new Date()
+const nowMonth = now.getMonth()
+const nowYear = now.getFullYear()
 
 /* aesthetics */
 export const IMG_COLLECTIONS: any = {
@@ -13,7 +16,7 @@ export const IMG_COLLECTIONS: any = {
       headerIcon: "https://i.pinimg.com/originals/09/09/53/09095303ec25e04693b00f0f9d21b962.gif",
       headerTextBlockImg: {
         type: "img",
-        src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
+        src: "https://i.pinimg.com/736x/45/92/3a/45923a8ee7be5de5ef57e5108d6a3c12.jpg",
         size: "small"
       },
       bulletinImg: "https://i.pinimg.com/564x/81/2d/7b/812d7be9f97ac8a753e6a73997c71fea.jpg",
@@ -260,26 +263,152 @@ export const EMPTY_TAG = TEST_TAGS[13]
 /* sessions */
 export const TEST_SESSIONS: Session[] = [
   {
-      id: "session-001",
-      name: "Morning Study Session",
-      mode: "pom",
-      focusTime: 1500, // 25 minutes
-      breakTime: 300,  // 5 minutes
-      startTime: new Date(2025, 8, 5, 9, 0), // September 5, 2024, 9:00 AM
-      todos: [],
-      allowChime: true,
-      allowSfx: true,
-      result: {
-          endTime: new Date(2024, 8, 5, 10, 30), // September 5, 2024, 10:30 AM
-          focusCount: 3,
-          breakCount: 2,
-          pauseCount: 1,
-          elapsedSecs: 5400,    // 1.5h in seconds
-          totalFocusTime: 4500, // 1.25h in seconds
-          totalBreakTime: 900,  // 15 minutes in seconds
-          periods: 3
-      }
-  }
+    id: "1",
+    name: "Morning Study Session",
+    mode: "pom",
+    focusTime: 1500,
+    breakTime: 300,
+    startTime: new Date(nowYear, nowMonth, 5, 9, 0),
+    todos: [],
+    allowChime: true,
+    allowSfx: true,
+    result: {
+      endTime: new Date(nowYear, nowMonth, 5, 10, 30),
+      focusCount: 3,
+      breakCount: 2,
+      pauseCount: 1,
+      elapsedSecs: 5400,
+      totalFocusTime: 4500,
+      totalBreakTime: 900,
+      periods: 3,
+    },
+  },
+  {
+    id: "2",
+    name: "Deep Work Block",
+    mode: "flow",
+    focusTime: 3600,
+    breakTime: 0,
+    startTime: new Date(nowYear, nowMonth, 5, 13, 0),
+    todos: [],
+    allowChime: false,
+    allowSfx: false,
+    result: {
+      endTime: new Date(nowYear, nowMonth, 5, 14, 0),
+      focusCount: 1,
+      breakCount: 0,
+      pauseCount: 0,
+      elapsedSecs: 3600,
+      totalFocusTime: 3600,
+      totalBreakTime: 0,
+      periods: 1,
+    },
+  },
+  {
+    id: "3",
+    name: "Evening Review",
+    mode: "pom",
+    focusTime: 1200,
+    breakTime: 300,
+    startTime: new Date(nowYear, nowMonth, 5, 19, 0),
+    todos: [],
+    allowChime: true,
+    allowSfx: true,
+    result: {
+      endTime: new Date(nowYear, nowMonth, 5, 19, 45),
+      focusCount: 2,
+      breakCount: 1,
+      pauseCount: 0,
+      elapsedSecs: 2700,
+      totalFocusTime: 2400,
+      totalBreakTime: 300,
+      periods: 2,
+    },
+  },
+  {
+    id: "4",
+    name: "Weekend Planning",
+    mode: "flow",
+    focusTime: 1800,
+    breakTime: 0,
+    startTime: new Date(nowYear, nowMonth, 6, 10, 0),
+    todos: [],
+    allowChime: false,
+    allowSfx: true,
+    result: {
+      endTime: new Date(nowYear, nowMonth, 6, 10, 30),
+      focusCount: 1,
+      breakCount: 0,
+      pauseCount: 0,
+      elapsedSecs: 1800,
+      totalFocusTime: 1800,
+      totalBreakTime: 0,
+      periods: 1,
+    },
+  },
+  {
+    id: "5",
+    name: "App Design",
+    mode: "pom",
+    focusTime: 900,
+    breakTime: 120,
+    startTime: new Date(nowYear, nowMonth, 6, 15, 0),
+    todos: [],
+    allowChime: true,
+    allowSfx: false,
+    result: {
+      endTime: new Date(nowYear, nowMonth, 6, 15, 30),
+      focusCount: 2,
+      breakCount: 2,
+      pauseCount: 0,
+      elapsedSecs: 1800,
+      totalFocusTime: 1500,
+      totalBreakTime: 300,
+      periods: 2,
+    },
+  },
+  {
+    id: "6",
+    name: "Late Night Writing",
+    mode: "flow",
+    focusTime: 2700,
+    breakTime: 0,
+    startTime: new Date(nowYear, nowMonth, 6, 22, 0),
+    todos: [],
+    allowChime: false,
+    allowSfx: true,
+    result: {
+      endTime: new Date(nowYear, nowMonth, 6, 22, 50),
+      focusCount: 1,
+      breakCount: 0,
+      pauseCount: 1,
+      elapsedSecs: 3000,
+      totalFocusTime: 2700,
+      totalBreakTime: 0,
+      periods: 1,
+    },
+  },
+  {
+    id: "7",
+    name: "Workout",
+    mode: "pom",
+    focusTime: 600,
+    breakTime: 120,
+    startTime: new Date(nowYear, nowMonth, 7, 7, 0),
+    todos: [],
+    allowChime: true,
+    allowSfx: true,
+    result: {
+      endTime: new Date(nowYear, nowMonth, 7, 7, 40),
+      focusCount: 4,
+      breakCount: 3,
+      pauseCount: 0,
+      elapsedSecs: 2400,
+      totalFocusTime: 2400,
+      totalBreakTime: 360,
+      periods: 4,
+    },
+  },
 ]
 
 export const TEST_TASKS: Task[] = [
@@ -439,7 +568,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 0,
     freqType: "daily",
     frequency: 1,
-    data: "", 
     timeOfDay: "all-day",
     order: {
       default: 0,
@@ -460,7 +588,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 2,
     freqType: "daily",
     frequency: 1,
-    data: "", 
     timeOfDay: "morning",
     order: {
       default: 1,
@@ -481,7 +608,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 0,
     freqType: "day-of-week",
     frequency: 0b001111,
-    data: "", 
     timeOfDay: "afternoon",
     order: {
       default: 2,
@@ -502,7 +628,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 0,
     freqType: "day-of-week",
     frequency: 0b0000001,
-    data: "", 
     timeOfDay: "evening",
     order: {
       default: 3,
@@ -523,7 +648,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 0,
     freqType: "daily",
     frequency: 1,
-    data: "", 
     timeOfDay: "morning",
     order: {
       default: 4,
@@ -544,7 +668,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 0,
     freqType: "day-of-week",
     frequency: 0b0010100,
-    data: "", 
     timeOfDay: "evening",
     order: {
       default: 5,
@@ -565,7 +688,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 0,
     freqType: "day-of-week",
     frequency: 0b0101010,
-    data: "", 
     timeOfDay: "morning",
     order: {
       default: 6,
@@ -586,7 +708,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 0,
     freqType: "day-of-week",
     frequency: 0b1111000,
-    data: "",
     timeOfDay: "afternoon",
     order: {
       default: 7,
@@ -604,7 +725,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 0,
     freqType: "daily",
     frequency: 1,
-    data: "", 
     timeOfDay: "all-day",
     order: {
       default: 8,
@@ -620,7 +740,6 @@ export const TEST_HABITS: Habit[] = [
     streak: 0,
     freqType: "per-week",
     frequency: 5,
-    data: "", 
     caption: "",
     description: "",
     timeOfDay: "afternoon",
@@ -677,14 +796,14 @@ export const YEAR_HABITS_DATA: HabitYearData[] = [
 /* home base */
 export const BASE_BANNER = IMG_COLLECTIONS[IMG_COLLECTION_IDX].banner
 
-export const BASE_HEADER = {
+export const BASE_HEADER: BaseHeaderViewOptions = {
+  showEntry: true,
+  pos: "top",
   icon: {
     src: IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerIcon,
     type: "img",
     show: true
   },
-  showText: true,
-  pos: "top"
 }
 
 export const YEAR_THOUGHT_ENTRY: TextEntryOptions = {
@@ -731,7 +850,8 @@ It's the art of <i>letting go</i>, embracing tranquility, and finding clarity in
 }
 
 export const BULLETIN_CONTENT = {
-  img: IMG_COLLECTIONS[IMG_COLLECTION_IDX].bulletinImg,
+  height: 380,
+  imgSrc: IMG_COLLECTIONS[IMG_COLLECTION_IDX].bulletinImg,
   hasNotes: true,
   contentsOnHover: false,
   notes: [

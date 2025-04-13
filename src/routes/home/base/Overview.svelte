@@ -1,97 +1,130 @@
 <script lang="ts">
-    import { themeState } from "$lib/store"
+    import { goalTracker, habitTracker, themeState } from "$lib/store"
 
-	import { minsToHHMM } from "$lib/utils-date"
+	import { Icon } from "$lib/enums"
     import { getSwatchColors } from "$lib/utils-colors"
-	import { MONTH_THOUGHT_ENTRY } from "$lib/mock-data"
-	import { randomArrayElem } from "$lib/utils-general"
-	import { ACTIVITY_DATA } from "$lib/mock-data-activity"
-	import type { GoalsViewManager } from "$lib/goals-view-manager"
-    import { genMonthCalendar, getMonthWeeks, isSameDay } from "$lib/utils-date"
-    
-	import TextEntry from "./TextEntry.svelte"
-	import type { Unsubscriber } from "svelte/store"
+	import { getMonthHabitsHeatMap } from "$lib/utils-habits";
+	import { formatDateLong, uptoToday } from "$lib/utils-date"
+    import { genMonthCalendar, isSameDay } from "$lib/utils-date"
+	import { initFloatElemPos, randomArrayElem } from "$lib/utils-general"
+	import { getMonthSessionData, getTotalFocusTimeStr } from "$lib/utils-session"
+	import { getIdxFromMo, getMonthGoalsOverview, getPeriodData, moveGoalDueDate, setViewGoal, setViewGoalNew, toggleGoalStatus } from "$lib/utils-goals"
+
+	import SvgIcon from "$components/SVGIcon.svelte"
+	import ImgModal from "$components/ImgModal.svelte"
+	import TextEntry from "$components/TextEntry.svelte"
+	import DailyGoals from "$components/DailyGoals.svelte"
+	import BounceFade from "$components/BounceFade.svelte"
+	import DailyHabits from "$components/DailyHabits.svelte"
+	import DropdownList from "$components/DropdownList.svelte"
+	import DailySessions from "$components/DailySessions.svelte"
 	import AccomplishedIcon from "$components/AccomplishedIcon.svelte"
-	import { setViewGoal, setViewGoalNew } from "$lib/utils-goals";
-	import ImgModal from "./ImgModal.svelte";
-	import SvgIcon from "$components/SVGIcon.svelte";
-	import { Icon } from "$lib/enums";
 
     export let timeFrame: GoalViewTimeFrame
-    export let goalsManager: GoalsViewManager
-    export let onDayClicked: (dayIdx: number) => void
-    export let options
+    export let options: OverviewOptions
 
-    $: goalsState = goalsManager.state
     $: isLight = !$themeState.isDarkTheme
 
-    type CalendarDay = {
-        date: Date
-        isInCurrMonth: boolean
-    }
-
-    const entries = ACTIVITY_DATA
     const GOALS_LIST_MAX = 3
     const PHOTO_OFFSETS = [
-        { x: -8, y: 0, tilt: 4  },
-        { x: -5, y: -14, tilt: 4  },
-        { x: -10, y: -9, tilt: -5  },
-        { x: -6, y: -12, tilt: 3  },
-        { x: -7, y: -7, tilt: -2  },
-        { x: -9, y: -11, tilt: 5  },
-        { x: -5, y: -9, tilt: -3  },
-        { x: -12, y: -6, tilt: -6  }
+        { x: -8, y: -2, tilt: 4  },
+        { x: -5, y: -15, tilt: 4  },
+        { x: -10, y: -12, tilt: -5  },
+        { x: -6, y: -14, tilt: 3  },
+        { x: -7, y: -9, tilt: -2  },
+        { x: -9, y: -13, tilt: 5  },
+        { x: -5, y: -12, tilt: -3  },
+        { x: -12, y: -8, tilt: -6  }
     ]
-
-    let gridWidth = 0
-    let gridHeight = 0
-    let weeks: CalendarDay[][] = []
-    let contextMenu = false
-    let editDay: DayEntry | null = null
-    let imgOpenSrc: string | null = null
+ 
+    let imgOpen: string | null = null
+    let monthEntry: TextEntryOptions | null = null
     
     let goalClicked: Goal | null = null
-    let goalsSub: Unsubscriber | null = null
+    let editEntry: EditEntry | null = null
+    let contextMenu = false
+    let dayView: "habits" | "goals" | "sessions" | null = null
     
+    let contextMenuPos = { left: 0, top: 0 }
+    let dayViewPos = { left: 0, top: 0 }
+    let clientPos = { left: 0, top: 0 }
+    
+    let dragGoal: Goal | null = null
     let dragOverDate: Date | null = null
-
+    
+    let weeks: DayEntry[][] = []
+    let gridWidth = 0
+    let acalRef: HTMLElement | null = null
+    
     $: animPhotos = options?.animPhotos ?? true
-
-    $: if (goalsState && !goalsSub) {
-        goalsSub = goalsState.subscribe((data: GoalsViewState) => {
-
-        })
+    $: if (timeFrame) {
+        initData()
     }
 
-    function initData() {
-        const month = genMonthCalendar(new Date())
-        weeks = getMonthWeeks(month.days)
-    }
-    function findDayEntry(day: Date) {
-        const idx = entries.findIndex((d) => isSameDay(d.date, day))
-        const entry = idx >= 0 ? entries[idx] : undefined
+    goalTracker.subscribe(() => initData())
+    habitTracker.subscribe(() => initData())
 
-        return { entry, idx }
-    }
+    async function initData() {
+        const { period, year } = timeFrame
+        const moIdx = getIdxFromMo(period)
+        const month = genMonthCalendar(new Date(year, moIdx, 1))
+        const days = month.days
+        const periodData = getPeriodData(timeFrame)
+        monthEntry = periodData.entry
 
-    /* goals */
-    function getGoalsDisplayData({ day, entry }: { day: CalendarDay, entry: DayEntry | undefined }) {
-        if (!entry || !entry.goals || !day.isInCurrMonth) return {
-            goals: [],
-            count: 0
+        const goals = getMonthGoalsOverview({ year, moIdx })
+        const habits = await getMonthHabitsHeatMap(year, moIdx)
+        const sessions = getMonthSessionData(year, moIdx)
+
+        const data: DayEntry[] = []
+        let dayIdx = 0
+
+        for (let d = 0; d < days.length; d++) {
+            const { isInCurrMonth, date } = days[d]
+            const habitData = habits ? habits[dayIdx] : null
+            const goalsData = goals[dayIdx]?.goals ?? []
+            const sessionData = sessions[dayIdx]!
+
+            const goalsWithImages = goalsData.filter(g => g.img?.src)
+            const sortedGoals = goalsWithImages.sort((a, b) => a.name.localeCompare(b.name))
+            const img = sortedGoals[0]?.img?.src
+
+            const showHabit = habitData && !habitData.noData && uptoToday(habitData.date)
+
+            if (isInCurrMonth) {
+                data.push({
+                    date,
+                    currMonth: true,
+                    img: img ?? null,
+                    focusMins: 0,
+                    habits: showHabit ? { 
+                        checked: habitData.trueDone ?? 0,  
+                        total: habitData.due ?? 0, 
+                        trueChecked: habitData.trueDone ?? 0
+                    } : null,
+                    goals: goalsData,
+                    sessions: sessionData.sessions
+                })
+                dayIdx++
+            }
+            else {
+                data.push({
+                    currMonth: false,
+                    date: days[d].date,
+                    img: null,
+                    focusMins: null,
+                    habits: null,
+                    goals: null,
+                    sessions: null
+                })
+            }
         }
-
-        const goals = entry.goals.sort((a, b) => a.name.localeCompare(b.name))
-        const goalsWithImages = goals.filter(g => g.img?.src)
-        const sortedGoals = goalsWithImages.sort((a, b) => a.name.localeCompare(b.name))
-        const imgSrc = sortedGoals[0]?.img?.src
-
-        return {
-            goals, imgSrc, count: entry.goals.length
-        }
-    }
-    function toggleGoalComplete(goal: Goal) {
-        goalsManager.toggleGoalStatus(goal)
+        for (let w = 0; w < 6; w++) {
+            weeks[w] = []
+            for (let d = 0; d < 7; d++) {
+                weeks[w][d] = data[7 * w + d]!
+            }
+	    }
     }
     function addGoal(date: Date) {
         setViewGoalNew({ timeFrame, day: date })
@@ -114,6 +147,115 @@
         }
     }
 
+    /* options */
+    function initEditEntry(entry: DayEntry) {
+        const goals = entry.goals ?? []
+        const sessions = entry.sessions ?? []
+        const habits = entry.habits ?? { checked: 0, total: 0 }
+
+        const upToToday = uptoToday(entry.date)
+        const completedGoals = goals.filter(g => g.status === 'accomplished')
+        const fractionStr = (num: number, denom: number) => denom ? `${num} / ${denom}` : "0"
+
+        editEntry = {
+            ...entry,
+            h_context: upToToday ? {
+                str: fractionStr(habits.checked, habits.total),
+                checked: habits.checked,
+                total: habits.total
+            } : null,
+            g_context: {
+                str: fractionStr(completedGoals.length, goals.length),
+                checked: completedGoals.length,
+                total: goals.length,
+                items: goals
+            },
+            s_context: upToToday && sessions.length > 0 ? {
+                str: getTotalFocusTimeStr(sessions),
+                focusMins: sessions.reduce((acc, s) => acc + s.focusTime, 0),
+                items: sessions
+            } : null
+        }
+    }
+    function onContextMenu({ e, entry }: { e: Event, entry: DayEntry }) {
+        const pe = e as PointerEvent
+        pe.preventDefault()
+        initEditEntry(entry)!
+
+        const { left, top } = acalRef!.getBoundingClientRect()
+        clientPos = { left: pe.clientX, top: pe.clientY }
+
+        contextMenuPos = initFloatElemPos({
+            dims: { 
+                height: 130,
+                width: 140
+            }, 
+            containerDims: { 
+                height: acalRef!.clientHeight, 
+                width: acalRef!.clientWidth
+            },
+            cursorPos: {
+                left: clientPos.left - left,
+                top: clientPos.top - top
+            }
+        })
+        contextMenu = true
+    }
+
+    function getOptnHeight(optn: string, count: number) {
+        if (optn === "habits") {
+            return count * 40 + 100
+        }
+        else if (optn === "goals") {
+            return count * 30 + 100
+        }
+        else {
+            return count * 50 + 150
+        }
+    }
+    function onViewOption(optn: string) {
+        const { habits, goals, sessions } = editEntry!
+        let dims = { height: 0, width: 0 }
+
+        if (optn === "Daily Habits") {
+            dayView = "habits"
+            dims = { 
+                height: getOptnHeight("habits", habits!.total), 
+                width: 200 
+            }
+        }
+        else if (optn === "Your Goals") {
+            dayView = "goals"
+            dims = { 
+                height: getOptnHeight("goals", goals!.length), 
+                width: 200 
+            }
+        }
+        else if (optn === "Focus Time") {
+            dayView = "sessions"
+            dims = { 
+                height: getOptnHeight("sessions", sessions!.length), 
+                width: 200 
+            }
+        }
+
+        const { left, top } = acalRef!.getBoundingClientRect()
+        dims.height = Math.min(dims.height, 400)
+
+        dayViewPos = initFloatElemPos({
+            dims, 
+            containerDims: { 
+                height: acalRef!.clientHeight, 
+                width: acalRef!.clientWidth
+            },
+            cursorPos: {
+                left: clientPos.left - left,
+                top: clientPos.top - top + 20
+            }
+        })
+        contextMenu = false
+    }
+
     /* drag and drop */
     function onDragStart({ e, goal, date }: { e: DragEvent, goal: Goal, date: Date }) {
         const target = e.target as HTMLElement
@@ -121,56 +263,44 @@
         e.dataTransfer?.setData("text", "")
         e.dataTransfer!.effectAllowed = "move"
 
+        dragGoal = goal
+
         dragOverDate = date
         target.addEventListener("dragend", () => onDragEnd(e))
     }
     function onDragEnd(e: DragEvent) {
         const target = e.target as HTMLElement
 
+        if (dragGoal && dragOverDate) {
+            moveGoalDueDate(dragGoal, dragOverDate)
+        }
+
         dragOverDate = null
         goalClicked = null
+        dragGoal = null
 
         target.removeEventListener("dragend", onDragEnd)
     }
-    function onCellDragOver(e: DragEvent, date: Date) {
-        dragOverDate = date
-    }
-
-    /* utils */
-
-    function onContextMenu(e: Event, date: Date) {
-
-    }
-    function closeContextMenu() {
-
-    }
-    function onPhotoClicked(date: Date) {
-
-    }
-    function onSettingsOptnClicked(name: string) {
-
-
-    }
     initData()
-
 </script>
 
-
-{#if options.textBlock}
-    <div style:margin="-5px 0px 10px 0px">
-        <TextEntry 
-            id="month"
-            zIndex={50}
-            entry={MONTH_THOUGHT_ENTRY}
-        />
-    </div>
+{#if options.textBlock && monthEntry}
+    {#key monthEntry}
+        <div style:margin="-2px 0px 0px 0px">
+            <TextEntry 
+                id="month"
+                zIndex={50}
+                entry={monthEntry}
+            />
+        </div>
+    {/key}
 {/if}
 
 <div 
     class="acal"
+    bind:this={acalRef}
     class:acal--light={isLight}
     style:--GRID_WIDTH={`${gridWidth}px`}
-    style:--GRID_HEIGHT={`${gridHeight}px`}
 >
     {#if weeks}
         <div class="acal__days">
@@ -185,53 +315,50 @@
         <div 
             class="acal__month"
             bind:clientWidth={gridWidth}
-            bind:clientHeight={gridHeight}
         >
             {#each weeks as week, weekIdx}
                 <div class="acal__week">
-                    {#each week as day}
-                        {@const d   = day.date.getDate()}
-                        {@const dow = day.date.getDay()}
-                        {@const sameMonth = day.isInCurrMonth}
-                        {@const { entry }  = findDayEntry(day.date)}
-                        {@const { goals, imgSrc, count } = getGoalsDisplayData({ day, entry })}
-                        {@const showHabits = options.habitsMark && sameMonth}
-                        {@const showFocus = options.focusTime && Math.random() > 0.7 && sameMonth}
+                    {#each week as entry}
+                        {@const { date, img, habits, goals, sessions, currMonth } = entry}
+                        {@const day = date.getDate()}
+                        {@const dow = date.getDay()}
+                        {@const showHabits = options.habitsMark && currMonth && uptoToday(date)}
+                        {@const showFocus = options.focusTime && currMonth}
             
                         <!-- svelte-ignore a11y-no-static-element-interactions -->
                         <div 
+                            data-habit={habits?.trueChecked}
                             class="acal__day"
-                            class:acal__day--drag-over={dragOverDate && isSameDay(day.date, dragOverDate)}
+                            class:acal__day--drag-over={dragOverDate && isSameDay(date, dragOverDate)}
+                            class:acal__day--edit={editEntry?.date && isSameDay(date, editEntry.date)}
                             class:acal__day--first-col={dow === 0}
                             class:acal__day--last-col={dow === 6}
                             class:acal__day--bottom-row={weekIdx === 5}
-                            class:acal__day--not-curr-month={!sameMonth}
+                            class:acal__day--not-curr-month={!currMonth}
                             class:acal__day--anim-photos={animPhotos}
-                            class:acal__day--today={isSameDay(day.date, new Date())}
-                            on:contextmenu|preventDefault={(e) => onContextMenu(e, day.date)}
+                            class:acal__day--today={isSameDay(date, new Date())}
+                            on:contextmenu={(e) => {
+                                dayView = null
+                                if (currMonth) {
+                                    onContextMenu({ e, entry })
+                                }
+                            }}
                             on:dragover={(e) => {
-                                if (sameMonth) {
-                                    onCellDragOver(e, day.date)
-                                }
-                                else {
-                                    dragOverDate = null
-                                }
+                                e.preventDefault()
+                                dragOverDate = currMonth ? date : null
                             }}
                         >
                             <div>
                                 <div class="acal__day-header">
                                     <div class="flx-center">
-                                        <span class="acal__day-num">{d}</span>
-                                        {#if showHabits && Math.random() > 0.7}
-                                            <span 
-                                                class="acal__star" 
-                                                title="missed some habits"
-                                            >
+                                        <span class="acal__day-num">{day}</span>
+                                        {#if showHabits && habits && habits.trueChecked >= habits.total}
+                                            <span class="acal__star" title="All habits compelte.">
                                                 *
                                             </span>
                                         {/if}
-                                        {#if sameMonth}
-                                            <button class="acal__day-add-btn" on:click={() => addGoal(day.date)}>
+                                        {#if currMonth}
+                                            <button class="acal__day-add-btn" on:click={() => addGoal(date)}>
                                                 <SvgIcon 
                                                     icon={Icon.Add} 
                                                     options={{ scale: 1.05, strokeWidth: 1.45, opacity: 0.8 }}
@@ -239,10 +366,10 @@
                                             </button>
                                         {/if}
                                     </div>
-                                    {#if showFocus}
-                                        {@const str = minsToHHMM(Math.random() * 400)}
+                                    {#if showFocus && sessions && sessions.length > 0}
+                                        {@const focusTimeStr = getTotalFocusTimeStr(sessions)}
                                         <div class="acal__focus" title="Focus Time">
-                                            {str}
+                                            {focusTimeStr}
                                         </div>
                                     {/if}
                                 </div>
@@ -253,12 +380,12 @@
                                     {@const cutoff = goals.length - showAmount}
                                     
                                     <div>
-                                        {#each goals.slice(0, showAmount) as goal}
+                                        {#each goals.slice(0, showAmount) as goal, _ (goal.id)}
                                             {@const tag = goal.tag}
-                                            {@const symbol = tag.symbol}
-                                            {@const color = symbol.color}
-                                            {@const colors = getSwatchColors({ color, light: isLight, contrast: false})}
-                                            {@const completed = Math.random() > 0.5}
+                                            {@const symbol = tag?.symbol ?? null}
+                                            {@const color = symbol?.color ?? null}
+                                            {@const colors = color ? getSwatchColors({ color, light: isLight, contrast: false}) : []}
+                                            {@const completed = goal.status === "accomplished"}
                                             <!-- svelte-ignore a11y-interactive-supports-focus -->
                                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                                             <div 
@@ -267,39 +394,48 @@
                                                 role="button"
                                                 draggable={true}
                                                 class="acal__goal"
+                                                class:acal__goal--empty={!symbol}
                                                 class:acal__goal--completed={completed}
                                                 class:acal__goal--active={goalClicked === goal}
-                                                style:--tag-color-primary={symbol.color.primary}
+                                                style:--tag-color-primary={symbol?.color.primary}
                                                 style:--tag-color-1={colors[0]}
                                                 style:--tag-color-2={colors[1]}
                                                 style:--tag-color-3={colors[2]}
                                                 on:pointerdown={(e) => pointerDown(e, goal)}
                                                 on:pointerup={() => pointerUp()}
                                                 on:drag={(e) => e.preventDefault()}
+                                                on:dragover={(e) => {
+                                                    e.preventDefault()
+                                                }}
                                                 on:dragstart={(e) => {
-                                                    onDragStart({ e, goal, date: day.date })
+                                                    onDragStart({ e, goal, date })
                                                 }}
                                             >
                                                 <div class="flx-sb">
                                                     {#if completed}
                                                         <button 
                                                             class="acal__goal-done-icon"
-                                                            on:click={() => toggleGoalComplete(goal)}
+                                                            on:click={() => toggleGoalStatus(goal)}
                                                         >
-                                                            <AccomplishedIcon {tag} scale={0.65}/>
+                                                            <AccomplishedIcon 
+                                                                tag={tag ?? undefined}
+                                                                scale={0.65}
+                                                            />
                                                         </button>
                                                     {:else}
                                                         <button 
                                                             class="acal__goal-checkbox" 
-                                                            on:click={() => toggleGoalComplete(goal)}
+                                                            on:click={() => toggleGoalStatus(goal)}
                                                         >    
                                                         </button>
                                                     {/if}
 
-                                                    <div class="flx-center">
-                                                        <i>{symbol.emoji}</i>
-                                                        <span>{goal.name}</span>
-                                                    </div>
+                                                    {#if symbol}
+                                                        <div class="flx-center">
+                                                            <i>{symbol.emoji}</i>
+                                                            <span>{goal.name}</span>
+                                                        </div>
+                                                    {/if}
                                                 </div>
                                             </div>
                                         {/each}
@@ -313,7 +449,7 @@
                             </div>
             
                             <!-- icon -->
-                            {#if imgSrc && entry && count > 0}
+                            {#if img && entry && goals && goals.length > 0 && options.showImgs}
                                 {@const offset = randomArrayElem(PHOTO_OFFSETS)}
 
                                 <div class="acal__img-container">
@@ -323,9 +459,9 @@
                                         style:--photo-x={`${offset.x}px`}
                                         style:--photo-y={`${offset.y}px`}
                                         style:--photo-tilt={`${offset.tilt}deg`}
-                                        on:click={() => imgOpenSrc = imgSrc}
+                                        on:click={() => imgOpen = img}
                                     >
-                                        <img src={imgSrc} alt="Day Icon">
+                                        <img src={img} alt="Day Icon">
                                     </button>
                                 </div>
                             {/if}
@@ -335,19 +471,91 @@
             {/each}
         </div>
     {/if}
+
+    <DropdownList 
+        id={"overview"}
+        isHidden={!contextMenu}
+        options={{
+            listItems: [
+                {
+                    sectionName: editEntry ? formatDateLong(editEntry.date) : "",
+                },
+                {  
+                    name: editEntry?.h_context ? "Daily Habits" : "",
+                    rightIcon: { type: "txt", icon: editEntry?.h_context?.str },
+                },
+                {  
+                    name: "Your Goals",
+                    rightIcon: { type: "txt", icon: editEntry?.g_context?.str },
+                    divider: !!editEntry?.s_context
+                },
+                {  
+                    name: editEntry?.s_context ? "Focus Time" : "",
+                    rightIcon: { type: "txt", icon: editEntry?.s_context?.str ?? "" }
+                }
+            ],
+            onListItemClicked: ({ name }) => {
+                onViewOption(name)
+            },
+            onClickOutside: () => {
+                contextMenu = false
+                editEntry = null
+            },
+            styling: { 
+                zIndex: 100,
+                minWidth: "150px",
+            },
+            position: { 
+                top: `${contextMenuPos.top}px`,
+                left: `${contextMenuPos.left}px`,
+            }
+        }}
+    />
+
+    <BounceFade 
+        isHidden={dayView === null}
+        onClickOutside={() => {
+            dayView = null
+            editEntry = null
+        }}
+        position={{
+            top: `${dayViewPos.top}px`,
+            left: `${dayViewPos.left}px`,
+        }}
+    >
+        {#if editEntry}
+            {@const date = editEntry?.date ?? new Date()}
+            {@const { habits, goals, sessions } = editEntry}
+
+            <div class="acal__day-view">
+                <div class="acal__day-view-header">
+                    <span>{formatDateLong(date)}</span>
+                </div>
+                <div class="acal__day-view-content">
+                    {#if dayView === "habits"}
+                        <DailyHabits {date} context="overview" />
+                    {:else if dayView === "goals" && goals}
+                        <DailyGoals {goals} {date} />
+                    {:else if dayView === "sessions" && sessions}
+                        <DailySessions {date} {sessions}/>
+                    {/if}
+                </div>
+            </div>
+        {/if}
+    </BounceFade>
 </div>
 
-{#if imgOpenSrc}
+{#if imgOpen}
     <ImgModal 
-        img={{ src: imgOpenSrc }} 
-        onClickOutside={() => imgOpenSrc = null}
+        img={{ src: imgOpen }} 
+        onClickOutside={() => imgOpen = null}
     />
 {/if}
 
 
 <style lang="scss">
     .acal {
-        margin-top: 0px;
+        margin-top: 15px;
         width: 100%;
         max-width: 1200px;
         position: relative;
@@ -400,16 +608,15 @@
             border-top: var(--divider-border);
             border-left: var(--divider-border);
             width: calc(var(--GRID_WIDTH) / 7);
-            height: auto;
-            min-height: 100px;
             @include flex-col;
             position: relative;
+            height: auto;
+            min-height: 100px;
             cursor: pointer;
 
             &:hover &-add-btn {
                 opacity: 0.2;
             }
-
             &--first-col {
                 background-color: rgba(var(--textColor1), var(--dark-cell-opac));
 
@@ -440,12 +647,12 @@
                 background-color: rgba(var(--textColor1), 0.035);
                 @include border-focus;
             }
+            &--edit {
+                background-color: rgba(var(--textColor1), 0.02);
+            }
         }
         &__day--edit {
             background: rgba(var(--textColor1), 0.035) !important;
-        }
-        &__day:hover {
-            background-color: rgba(var(--textColor1), var(--dark-cell-opac));
         }
         &__day-add-btn {
             opacity: 0;
@@ -496,6 +703,10 @@
             &--active {
                 transform: scale(0.95);
             }
+            &--completed span {
+                text-decoration: line-through;
+                opacity: 0.55;
+            }
             i {
                 font-style: normal;
                 font-size: 0.85rem;
@@ -520,7 +731,7 @@
             }
         }
         &__goal-cutoff {
-            @include text-style(0.225, 400, 1.15rem, "Geist Mono");
+            @include text-style(0.225, var(--fw-400-500), 1.15rem);
             margin: 1px 3px 0px 4px;
             float: right;
         }
@@ -542,6 +753,13 @@
                 object-fit: cover
             }
         }
+        &__img-icon:hover {
+            transform: rotate(calc(-1 * var(--photo-tilt)));
+            transform: scale(2);
+        }
+        &__img-icon:hover img {
+            border: white 2px solid;
+        }
         &__img-icon--photo-anim:hover {
             transform: rotate(calc(-1 * var(--photo-tilt)));
             transform: scale(1.5);
@@ -552,20 +770,34 @@
         &__img-icon--photo-anim {
             @include abs-bottom-left(var(--photo-y), var(--photo-x));
             transform: rotate(var(--photo-tilt));
-            @include square(55px, 6px);
         }
         &__img-icon--photo-anim img {
-            @include square(55px, 6px);
-            border: white 3px solid;
+            @include square(60px, 6px);
+            border: white 3.5px solid;
         }
         &__day-activity {
             margin-top: 7px;
         }
-    }
+        &__day-view {
+            @include contrast-bg("bg-3");
+            padding: 0px 0px 6px 0px;
+            border-radius: 7px;
+            min-width: 165px;
 
-    h1 {
-        // @include text-style(1.25, 400, 2.25rem, "Geist Mono");
-        @include text-style(1, 400, 4rem, "Gambarino Regular");
-        margin: 0px 0px 10px 0px;
+            span {
+                @include text-style(0.9, var(--fw-400-500), 1.25rem);
+                margin-bottom: 7px;
+                display: block;
+            }
+        }
+        &__day-view-header {
+            @include flex(center, space-between);
+            padding: 10px 0px 0px 12px;
+        }
+        &__day-view-content {
+            overflow: scroll;
+            max-height: 400px;
+            padding: 0px 12px 0px 12px;
+        }
     }
 </style>

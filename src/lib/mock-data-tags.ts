@@ -115,7 +115,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 12,
       name: "wefowe;ofiwje F;OIwefjw;eoFIJWef;owieFJWE;O FIJWe;o i",
       symbol: {
-        color: COLOR_SWATCHES[5],
+        color: COLOR_SWATCHES[4],
         emoji: "💵"
       }
     },
@@ -124,7 +124,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 0,
       name: "Empty",
       symbol: {
-        color: COLOR_SWATCHES[12],
+        color: COLOR_SWATCHES[0],
         emoji: ""
       }
     }

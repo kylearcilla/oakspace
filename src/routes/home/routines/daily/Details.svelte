@@ -463,7 +463,8 @@
                         contextIdx = -1
                     },
                     styling: { 
-                        zIndex: 2001 
+                        zIndex: 2001,
+                        minWidth: "90px" 
                     },
                     position: {
                         top: settingsPos.top + "px",

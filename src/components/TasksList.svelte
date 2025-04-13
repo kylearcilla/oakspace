@@ -197,11 +197,11 @@
             <div style:margin="0px 8px 0px 0px">
                 <SvgIcon 
                     icon={Icon.Add} 
-                    options={{ scale: 1.09, strokeWidth: 1.8, opacity: 0.7 }}
+                    options={{ scale: 1.15, strokeWidth: 1.2, opacity: 0.8 }}
                 />
             </div>
             <span>
-                {text ?? "Add an Item"}
+                {text ?? "New Task"}
             </span>
         </button>
     {/if}

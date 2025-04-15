@@ -6,7 +6,7 @@
 
 	import { updateRoute } from "$lib/utils-home"
 	import { secsToHhMmSs } from "$lib/utils-date"
-	import { TextEditorManager } from "$lib/inputs"
+	import { TextEditorManager } from "$lib/text-editor"
 	import { SessionManager } from "$lib/session-manager"
 
     const TITLE_ID = "session-title"

@@ -4,7 +4,7 @@
 	import { themeState } from "$lib/store"
 	import { Icon, ModalType } from "$lib/enums"
 	import { closeModal } from "$lib/utils-home"
-	import { TextEditorManager } from "$lib/inputs"
+	import { TextEditorManager } from "$lib/text-editor"
 	import { SessionManager } from "$lib/session-manager"
     
 	import Modal from "$components/Modal.svelte"

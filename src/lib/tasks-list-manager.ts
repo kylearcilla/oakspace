@@ -5,7 +5,7 @@ import { get, writable, type Writable } from "svelte/store"
 import { Tasks } from "./Tasks"
 import { toast } from "./utils-toast"
 import { absoluteElem } from './pop-ups'
-import { TextEditorManager } from "./inputs"
+import { TextEditorManager } from "./text-editor"
 import DropdownContent from "../components/DropdownContent.svelte"
 import { ambienceSideBarOffset, modalSideBarOffset } from './utils-home'
 import { findAncestor, getElemById, isEditTextElem, shouldScroll } from "./utils-general"

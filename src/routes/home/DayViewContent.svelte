@@ -7,7 +7,7 @@
 	import { themeState, weekRoutine, timer } from "$lib/store"
     
     import { RoutinesManager } from "$lib/routines-manager"
-    import { getMaskedGradientStyle, initFloatElemPos } from "$lib/utils-general"
+    import { getMaskedGradientStyle } from "$lib/utils-general"
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
 	import { getDayIdxMinutes, getTimeFromIdx, isSameDay, minsFromStartToHHMM } from "$lib/utils-date"
 	import { getDayRoutineFromWeek, resetDayRoutine, toggleRoutineBlockComplete } from "$lib/utils-routines"

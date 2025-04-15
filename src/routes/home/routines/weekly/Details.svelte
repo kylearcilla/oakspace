@@ -5,7 +5,7 @@
 	import { Icon } from "$lib/enums"
 	import { toast } from "$lib/utils-toast"
 	import { minsToHHMM } from "$lib/utils-date"
-	import { TextEditorManager } from "$lib/inputs"
+	import { TextEditorManager } from "$lib/text-editor"
 	import { formatCoreData } from "$lib/utils-routines"
 	import { WeeklyRoutinesManager } from "$lib/routines-weekly-manager"
 	import { capitalize, decrementIdx, insertItemArr, randomArrayElem, removeItemArr, reorderItemArr } from "$lib/utils-general"

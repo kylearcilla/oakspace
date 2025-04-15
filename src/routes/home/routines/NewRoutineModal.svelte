@@ -3,7 +3,7 @@
     import { v4 as uuidv4 } from 'uuid'
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
-	import { TextEditorManager } from "$lib/inputs"
+	import { TextEditorManager } from "$lib/text-editor"
     
 	import Modal from "$components/Modal.svelte"
 	import ConfirmBtns from "$components/ConfirmBtns.svelte"

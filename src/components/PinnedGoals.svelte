@@ -123,7 +123,7 @@
 <style lang="scss">
     .pinned {
         display: flex;
-        padding-bottom: 4px;
+        padding-bottom: 6px;
         overflow-x: auto;
         width: 100%;
     }

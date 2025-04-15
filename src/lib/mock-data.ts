@@ -29,16 +29,16 @@ export const IMG_COLLECTIONS: any = {
   },
   "light": {
     banner: {
-      src: "https://pbs.twimg.com/media/EjAg4_zU8AMUZHJ?format=jpg&name=large",
-      center: 67.5588
+      src: "https://images.unsplash.com/photo-1503917988258-f87a78e3c995?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      center: 40
     },
-    headerIcon: "https://i.pinimg.com/736x/e2/8c/8d/e28c8d7ec915504ba5f098aa80901972.jpg",
+    headerIcon: "https://i.pinimg.com/originals/46/87/9f/46879f3a8e0c6694217df27a58401a69.gif",
     headerTextBlockImg: {
       type: "img",
       src: "https://i.pinimg.com/originals/74/9b/95/749b9521a2d28907f7b0fc79598cc420.gif",
       size: "small"
     },
-    bulletinImg: "https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/287d3559037917.5a130f45904d5.gif",
+    bulletinImg: "https://i.pinimg.com/736x/d3/c6/4f/d3c64fd149b331d8e4c7d6e82b7bd173.jpg",
     overviewTextBlockImg: {
       src: "https://i.pinimg.com/736x/d1/a6/55/d1a655f28705a9257c58e97b30211ea2.jpg",
       type: "img",
@@ -76,7 +76,7 @@ export const IMG_COLLECTIONS: any = {
         src: "🌉",
         size: "small"
       },
-      bulletinImg: "https://i.pinimg.com/originals/b9/3c/aa/b93caa57b98ed62c10eaab665d3f41b9.gif",
+      bulletinImg: "https://i.pinimg.com/originals/43/64/d9/4364d9a73d7d2a62b79b5dc401638b03.gif",
       overviewTextBlockImg: {
         src: "https://i.pinimg.com/736x/ae/28/ba/ae28ba3c8dcca80bd2b8b5a632ffa9b6.jpg",
         type: "img",
@@ -798,7 +798,7 @@ export const BASE_BANNER = IMG_COLLECTIONS[IMG_COLLECTION_IDX].banner
 
 export const BASE_HEADER: BaseHeaderViewOptions = {
   showEntry: true,
-  pos: "top",
+  pos: "side",
   icon: {
     src: IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerIcon,
     type: "img",
@@ -812,10 +812,9 @@ export const YEAR_THOUGHT_ENTRY: TextEntryOptions = {
       src: "https://i.pinimg.com/736x/c0/e3/4d/c0e34d53f0d0c134ebbdc7dbca8d2a43.jpg",
       size: "small"
   },
-  date: new Date(2025, 1),
   truncate: true,
   styling: "has-marker",
-  entry: `<strong>Chill</strong>  <code>noun</code>
+  entry: `<strong>Chill</strong>  noun
 Chill is the <u>calm in a storm</u> 🌊, the pause that lets us <i>breathe deeply</i>. 
 It's the <u>crisp air</u> of a morning walk, the <i>stillness of twilight</i> settling over the world 🌌. 
 To chill is to <u>embrace the quiet moments</u>, to let the rush fall away, and to find yourself in <i>peace</i> 🕊️.
@@ -825,10 +824,9 @@ It's finding comfort in solitude, turning down the noise, and letting your mind 
 
 export const HOME_THOUGHT_ENTRY: TextEntryOptions = {
   icon: IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerTextBlockImg,
-  date: new Date(2025, 5),
   truncate: true,
   styling: "has-marker",
-  entry: `<strong>Wonder</strong>  <code>noun</code>
+  entry: `<strong>Wonder</strong>  noun
 Wonder is the spark of curiosity ✨, the moment that makes us <i>pause in awe</i>. 
 It's the glow of <i>starlight</i> in a vast night sky, the <u>whisper of possibility</u> in the unknown 🌌. 
 To wonder is to embrace the questions, to see magic in the mundane, and to feel alive in discovery, 🌟.
@@ -838,10 +836,9 @@ It's the art of <i>dreaming boldly</i>, seeking the extraordinary, and finding b
 
 export const MONTH_THOUGHT_ENTRY: TextEntryOptions = {
   icon: IMG_COLLECTIONS[IMG_COLLECTION_IDX].overviewTextBlockImg,
-  date: new Date(2025, 6),
   truncate: true,
   styling: "has-marker",
-  entry: `<strong>Serenity</strong>  <code>noun</code>
+  entry: `<strong>Serenity</strong>  noun
 Serenity is the gentle stillness 🌊, the calm that <i>flows within</i>.
 It's the soft glow of <i>dawn</i> breaking over quiet waters, the <u>peace that settles</u> in solitude 🌅.
 To be serene is to find balance in chaos, to breathe deeply, and to rest in the present, 🍃.

@@ -28,10 +28,10 @@
     }
 
     $: isLight = !$themeState.isDarkTheme
-    $: showIcon = options.header.pos === "top" && options.header.icon.show
+    $: showIcon = options.header.icon.show
     $: saveBaseViewOptions(options)
 
-    initViewOptions()
+    // initViewOptions()
 
     function initViewOptions() {
         const data = loadBaseViewOptions()
@@ -103,21 +103,21 @@
             >
         </div>
     {/if}
-    {#if showIcon}
-        {@const { type, src } = options.header.icon}
-        <button
-            id={BASE_HEADER_ICON_ID}
-            class="base__icon"
-            on:click={() => initIconPicker()}
-        >
-            {#if type === "emoji"}
-                <span>{src}</span>
-            {:else}
-                <img {src} alt="header icon">
-            {/if}
-        </button>
-    {/if}
     <div class="base__content">
+        {#if showIcon}
+            {@const { type, src } = options.header.icon}
+            <button
+                id={BASE_HEADER_ICON_ID}
+                class="base__icon"
+                on:click={() => initIconPicker()}
+            >
+                {#if type === "emoji"}
+                    <span>{src}</span>
+                {:else}
+                    <img {src} alt="header icon">
+                {/if}
+            </button>
+        {/if}
         {#if options.header.pos === "top"}
             <div class="base__top-header">
                 <Header 
@@ -235,7 +235,7 @@
             margin: 15px 0px -10px 0px;
         }
         &__icon {
-            margin: var(--icon-top-offset) 0px 0px 30px;
+            margin: var(--icon-top-offset) 0px 0px 0px;
             font-size: 6rem;
             height: 95px;
             width: 95px;
@@ -255,7 +255,7 @@
         }
         &__content-flx {
             display: flex;
-            margin-top: 20px;
+            margin-top: 16px;
         }
         &__left {
             width: 260px;
@@ -279,23 +279,20 @@
             @include text-style(0.45, 400, 1.475rem);
         }
 
-        /* header */
         &__banner {
-            height: 210px;
+            height: 260px;
             width: 100%;
             position: relative;
             overflow: hidden;
             z-index: 0;
             img {
-                height: 210px;
+                height: 100%;
                 object-fit: cover;
                 width: 100%;
             }
         }
-        /* month header */
         &__overview-header {
             @include flex(flex-start, space-between);
-            position: relative;
             position: relative;
             margin-bottom: 4px;
         }

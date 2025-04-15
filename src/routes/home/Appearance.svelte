@@ -1,18 +1,19 @@
 <script lang="ts">
 	import { ModalType } from "$lib/enums"
-	import { Icon } from "../../lib/enums"
+	import { Icon } from "$lib/enums"
 	import { closeModal } from "$lib/utils-home"
-	import { themePreviews } from "../../lib/data-themes"
-	import { kebabToNormal } from "../../lib/utils-general"
+	import { themePreviews } from "$lib/data-themes"
+	import { kebabToNormal } from "$lib/utils-general"
 	import { globalContext, themeState } from "$lib/store"
-	import { findThemeFromName, setNewTheme } from "../../lib/utils-appearance"
+	import { findThemeFromName, setNewTheme } from "$lib/utils-appearance"
 
 	import ThemeItem from "./ThemeItem.svelte"
-	import Modal from "../../components/Modal.svelte"
-	import SvgIcon from "../../components/SVGIcon.svelte"
-	import DropdownList from "../../components/DropdownList.svelte"
+	import Modal from "$components/Modal.svelte"
+	import SvgIcon from "$components/SVGIcon.svelte"
+	import DropdownList from "$components/DropdownList.svelte"
+	import ConfirmBtns from "$components/ConfirmBtns.svelte";
 
-    $: hasAmbience = $globalContext.ambience.active
+    $: hasAmbience = $globalContext.ambience?.active ?? false
     $: isDark = $themeState.isDarkTheme
     $: state = $themeState
 
@@ -30,10 +31,12 @@
     })
     let flavorOptionsOpen = false
 
-    function onSubmit() {
+    async function onSubmit() {
         if (hasAmbience) return
 
         const theme = findThemeFromName(clickedFlavor)
+        if (!theme) return
+
         setNewTheme(theme)
 
         localStorage.setItem("theme-name", theme.name)
@@ -76,7 +79,7 @@
         <div class="themes__flavor">
             <div>
                 <h2>Flavor</h2>
-                <p style:margin-top="4px">
+                <p style:margin-top="7px">
                     {`Choose a ${isDark ? "dark" : "light"} theme color palette.`}
                 </p>
             </div>
@@ -88,7 +91,7 @@
             >
                 {#if clickedFlavor}
                     {@const flavor = flavorOptions.find(flavor => flavor.name === clickedFlavor)}
-                    {@const name = flavor.name}
+                    {@const name = flavor?.name ?? ""}
                     {@const title = (name === "dark" || name === "light") ? "Basic" : kebabToNormal(name, true)}
                     <span>{title}</span>
                     <div class="themes__arrow smooth-bounce">
@@ -102,7 +105,7 @@
                 {/if}
             </button>
             <DropdownList 
-                id="flavors--dmenu"
+                id="flavors"
                 isHidden={!flavorOptionsOpen}
                 options={{
                     pickedItem: kebabToNormal(selectedItem, true),
@@ -118,28 +121,24 @@
                         flavorOptionsOpen = false
                     },
                     styling: {
-                        width: "150px",
-                        zIndex: 2,
-                        fontFamily: "Geist Mono"
+                        minWidth: "80px",
+                        zIndex: 2
                     },
                     position: {
-                        top: "54px",
+                        top: "52px",
                         right: "0px"
                     }
                 }}
             />
         </div>
-        <div class="themes__btns">
-            <button on:click={() => closeModal(ModalType.Themes)}>
-                Close
-            </button>
-            <button 
-                title={hasAmbience ? "Cannot change while inside workspace." : ""}
+        <div style:padding="29px 0px 0px 0px">
+            <ConfirmBtns 
                 disabled={hasAmbience}
-                on:click={onSubmit}
-            >
-                Done
-            </button>
+                isLoading={false}
+                onCancel={() => closeModal(ModalType.Themes)}
+                weakDisable={hasAmbience}
+                onOk={() => onSubmit()}
+             />
         </div>
     </div>
 </Modal>
@@ -163,14 +162,14 @@
             color: rgba(var(--textColor1), 0.55) !important;
         }
         h1 {
-            @include text-style(1, var(--fw-400-500), 1.8rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.6rem);
         }
         h2 {
-            @include text-style(1, var(--fw-400-500), 1.55rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.5rem);
         }
         p {
-            margin: 4px 0px 0px 0px;
-            @include text-style(0.4, 400, 1.5rem);
+            margin: 7px 0px 0px 0px;
+            @include text-style(0.4, var(--fw-400-500), 1.45rem);
         }
         &__flavor {
             border-top: var(--divider-border);
@@ -196,7 +195,7 @@
                 @include visible(0.4);
             }
             span {
-                @include text-style(1, var(--fw-400-500), 1.35rem, "Geist Mono");
+                @include text-style(1, var(--fw-400-500), 1.35rem);
             }
         }
         &__flavor-options {
@@ -206,40 +205,13 @@
             opacity: 0.4;
             margin-left: 10px;
             transform: rotate(0deg);
-            // @include not-visible;
         }
         &__color-circle {
             @include circle(14px);
             margin-right: 8px
         }
-        &__btns {
-            @include flex(center, space-between);
-            margin-top: 45px;
-
-            button {
-                @include text-style(1, var(--fw-400-500), 1.5rem);
-                background-color: rgba(var(--textColor1), var(--button-bg-opacity));
-                padding: 11px 12px 13px 15px;
-                border-radius: 8px;
-                width: calc(100% - 150px);
-                text-align: center;
-            }
-            button:hover {
-                background-color: rgba(var(--textColor1), calc(var(--button-bg-opacity) + 0.035));
-            }
-            button:first-child {
-                margin-right: 10px;
-                width: 140px;
-            }
-        }
     }
     .dmenu {
         border-radius: 13px;
-        span {
-            @include text-style(1, 400, 1.4rem, "Geist Mono");
-        }
-        &__option-btn {
-            @include flex(center, space-between);
-        }
     }
 </style>

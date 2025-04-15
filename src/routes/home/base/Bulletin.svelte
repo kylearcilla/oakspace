@@ -2,21 +2,23 @@
 	import { onMount } from "svelte"
     import { themeState } from "$lib/store"
     import { imageUpload } from "$lib/pop-ups"
-    import { TextEditorManager } from "$lib/inputs"
+    import { TextEditorManager } from "$lib/text-editor"
 	import DropdownList from "$components/DropdownList.svelte"
 
     export let options: BulletinOptions
     export let fullWidth: boolean
     export let onUpdateOptions: (updated: BulletinOptions) => void
 
-    $: isLight = !$themeState.isDarkTheme
-
+    
     const MAX_NOTE_LENGTH = 300
     const INPUT_ID = "bulletin-input"
-
+    
     let { imgSrc, hasNotes, contentsOnHover, notes, noteIdx } = options
     let isPointerOver = false
     let hasContextMenu = false
+    
+    $: isLight = !$themeState.isDarkTheme
+    $: contentsOnHover = isLight ? true : contentsOnHover
 
     let newNoteTxt = ""
     let contextPos = { left: -1000, top: -1000 }
@@ -167,7 +169,7 @@
                     }
                 },
                 {
-                    name: "Auto Display",
+                    name: options.hasNotes ? "Auto Display" : "",
                     active: options.contentsOnHover,
                     divider: true,
                     onToggle: () => {
@@ -177,10 +179,10 @@
                     }
                 },
                 {
-                    name: "Add New Note"
+                    name: options.hasNotes ? "Add New Note" : "",
                 },
                 {
-                    name: "Remove Note"
+                    name: options.hasNotes ? "Remove Note" : ""
                 },
             ],
             styling: {

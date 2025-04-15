@@ -38,6 +38,8 @@ const GOALS_OPTIONS_KEY = "base-goals-options"
 const HABITS_OPTIONS_KEY = "base-habits-options"
 const YR_VIEW_OPTIONS_KEY = "base-yr-view-options"
 
+const DAY_VIEW_OPTIONS_KEY = "day-view-options"
+
 export let cursorPos = {
     left: 0, top: 0
 }
@@ -418,26 +420,6 @@ export function getHomeUrlPath(path = window.location.pathname) {
     return name === "base" ? "home" : name
 }
 
-export function loadSideBarView(): SideBarViews {
-    const data = localStorage.getItem("side-bar")
-    const redirect = didTodoistAPIRedirect() 
-
-    if (!data) {
-        return {
-            view: redirect ? "tasks" : "cal", calView: "routine"
-        }
-    }
-
-    const options = JSON.parse(data)
-    redirect && (options.view = "tasks")
-
-    return options
-}
-export function saveSideBarView(options: SideBarViews) {
-    const data = JSON.stringify(options)
-    localStorage.setItem("side-bar", data)
-}
-
 export function setOatuhRedirectContext(api: "gcal" | "tapi" | "yt") {
     localStorage.setItem("oauth-redirect-context", JSON.stringify({ 
         redirectBackUrl: window.location.pathname, api
@@ -491,7 +473,7 @@ export function setSessionLocation(location: "workspace" | "default") {
     updateGlobalContext({ sessionLocation: location })
 }
 
-/* base view options */
+/* view options */
 
 /**
  * Load month view options.
@@ -554,6 +536,16 @@ export function loadBaseLeftMarginView(): BaseLeftMarginView {
 export function saveBaseLeftMarginView(options: BaseLeftMarginView) {
     const data = JSON.stringify(options)
     localStorage.setItem(BASE_LEFT_MARGIN_VIEW_KEY, data)
+}
+
+export function loadDayViewOptions(): DayViewOptions {
+    const data = localStorage.getItem(DAY_VIEW_OPTIONS_KEY)
+    return data ? JSON.parse(data) : null
+}
+
+export function saveDayViewOptions(options: DayViewOptions) {
+    const data = JSON.stringify(options)
+    localStorage.setItem(DAY_VIEW_OPTIONS_KEY, data)
 }
 
 export function getYearBounds() {

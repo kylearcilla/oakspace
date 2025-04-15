@@ -2,10 +2,11 @@
 	import { onMount } from "svelte"
 
 	import { themeState } from "$lib/store"
-	import { TimeInputManager } from "$lib/inputs"
-	import DropdownList from "./DropdownList.svelte"
+	import { TimeInputManager } from "$lib/time-input-manager"
 	import { clamp, clickOutside, getElemStyle } from "$lib/utils-general"
     import { minsFromStartToHHMM, minsFromStartFromHHMM } from "$lib/utils-date"
+    
+	import DropdownList from "./DropdownList.svelte"
     
     export let id: string | undefined = undefined
     export let options: TimePickerOptions | undefined = {}

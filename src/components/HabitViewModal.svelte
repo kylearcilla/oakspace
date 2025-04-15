@@ -3,7 +3,7 @@
 	import { Icon } from "$lib/enums"
     import { habitTracker, themeState } from "$lib/store"
 
-	import { TextEditorManager } from "$lib/inputs"
+	import { TextEditorManager } from "$lib/text-editor"
 	import { emojiPicker, imageUpload } from "$lib/pop-ups"
 	import { isDowIdxRequired } from "$lib/utils-habits-data";
 	import { clamp, clickOutside, kebabToNormal, normalToKebab } from "$lib/utils-general"

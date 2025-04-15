@@ -27,7 +27,7 @@
 
     const GOALS_LIST_MAX = 3
     const PHOTO_OFFSETS = [
-        { x: -8, y: -2, tilt: 4  },
+        { x: -8, y: -4, tilt: 4  },
         { x: -5, y: -15, tilt: 4  },
         { x: -10, y: -12, tilt: -5  },
         { x: -6, y: -14, tilt: 3  },

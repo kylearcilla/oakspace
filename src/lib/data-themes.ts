@@ -32,6 +32,7 @@ export const themes: Theme[] = [
             ringColor: "196, 234, 47",
             cardBgColor: "#191919",
             cardHovColor: "#1e1d1e"
+
         }
     },
     {
@@ -59,7 +60,7 @@ export const themes: Theme[] = [
             navBtnBgColor: "#f0efe9",
             navBtnColor: "#3B3B3B",
             rightBarBgColor: "#faf9f2",
-            elemColor1: "#98c1e8",
+            elemColor1: "#98c7f3",
             elemColor2: "#53B2E8",
             elemTextColor: "#FFFFFF",
             starColor: "#93927e",
@@ -164,7 +165,7 @@ export const themes: Theme[] = [
             navBtnColor: "#d3b094",
             navBtnBgColor: "#26231f",
             rightBarBgColor: "#1d1b18",
-            elemColor1: "#715f51",
+            elemColor1: "#6c5e55",
             elemColor2: "#6b5c51",
             elemTextColor: "#FFFFFF",
             starColor: "",
@@ -211,7 +212,7 @@ export const themes: Theme[] = [
     }
 ]
 
-export const themePreviews = [
+export const themePreviews: ThemePreview[] = [
     {
         name: "dark",
         isDark: true,
@@ -266,7 +267,7 @@ export const themePreviews = [
     },
     {
         name: "sand",
-        iisDark: false,
+        isDark: false,
         borderColor: "#9C9995",
         signaturecolor: "#fff0d4",
         bg1: "#D5CDBF",
@@ -279,7 +280,7 @@ export const themePreviews = [
     },
     {
         name: "terracotta",
-        iisDark: false,
+        isDark: false,
         borderColor: "#7B7874",
         signaturecolor: "#63605b",
         bg1: "#9F978C",

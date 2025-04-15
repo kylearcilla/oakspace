@@ -4,15 +4,16 @@
 	import { Icon } from "$lib/enums"
     import { imageUpload } from "$lib/pop-ups"
 	import { HEADER_IMG } from "$lib/mock-data"
-    import { setHotkeyFocus } from "$lib/utils-home"
     import { clamp, clickOutside } from "$lib/utils-general"
     import { globalContext, themeState, timer } from "$lib/store"    
+    import { loadDayViewOptions, saveDayViewOptions, setHotkeyFocus } from "$lib/utils-home"
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
     
 	import DayView from "./DayView.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
 
     const MAX_DIST_BOTTOM_IMG_CONTAINER = 70
+    const DRAG_OFFSET_THRESHOLD = 5
 
     export let onHeaderImageChange: (img: string) => void
     export let fixed: boolean
@@ -20,6 +21,25 @@
     $: isLight = !$themeState.isDarkTheme
     $: ambience = $globalContext.ambience
     $: hasAmbience = ambience?.active ?? false
+
+    let options: DayViewOptions = {
+        view: "cal",
+        calView: "routines",
+        googleCal: {
+            colors: true
+        },
+        routines: {
+            checkbox: false,
+            colors: true
+        },
+        header: {
+            img: {
+                src: HEADER_IMG,
+                top: 0
+            },
+            show: true
+        }
+    }
 
     /* time */
     let now = new Date()
@@ -29,24 +49,38 @@
     
     /* header image */
     let opacity = 0
-    let bgImgSrc = HEADER_IMG
-    let showHeaderImg = true
-
-    let topOffset = 0
     let ogTopOffset = 0
     let initDragY = 0
     let isDragging = false
-    let bgImgRef: HTMLImageElement
-    let DRAG_OFFSET_THRESHOLD = 5
 
-    $: onHeaderImageChange(showHeaderImg && bgImgSrc)
+    let bgImgRef: HTMLImageElement
+
+    $: headerImg = options.header?.img
+    $: showHeaderImg = options.header.show
+
     $: transparent = hasAmbience && ambience?.styling != "solid"
-    $: empty = transparent || !bgImgSrc || !showHeaderImg || isLight
+    $: empty = transparent || !headerImg || !showHeaderImg || isLight
+
+    $: onHeaderImageChange(headerImg?.src ?? "")
+
+    // initOptions()
 
     const unsubscribe = timer.subscribe(({ date }) => updateTimeStr(date))
 
+    function initOptions() {
+        const data = loadDayViewOptions()
+        
+        if (data) options = data
+    }
+    function onImgUpload(src: string) {
+        options.header.img = {
+            src,
+            top: 0
+        }
+        saveDayViewOptions(options)
+    }
     function onPointerDown(pe: PointerEvent) {
-        if (!bgImgSrc) return
+        if (!headerImg) return
 
         const target = pe.target as HTMLElement
         const { clientY } = pe
@@ -63,15 +97,20 @@
 
         if (Math.abs(offset) >= DRAG_OFFSET_THRESHOLD && !isDragging) {
             target.setPointerCapture(pe.pointerId)
-            ogTopOffset = topOffset
+
+            ogTopOffset = headerImg!.top ?? 0
             isDragging = true
         }
         if (isDragging) {
-            topOffset = clamp(-(MAX), (ogTopOffset + -offset), 0)
+            headerImg!.top = clamp(-(MAX), (ogTopOffset + -offset), 0)
         }
     }
     function onPointerUp(pe: PointerEvent) {
         const target = pe.target as HTMLElement
+
+        if (isDragging) {
+            saveDayViewOptions(options)
+        }
 
         ogTopOffset = 0
         initDragY = -1
@@ -80,6 +119,7 @@
         target.removeEventListener("pointermove", onDrag)
         target.removeEventListener("pointerup", onPointerUp)
     }
+    
     /* time */
     function updateTimeStr(date: Date) {
         currentTimeStr = formatTimeToHHMM(date, doUse12HourFormat)
@@ -100,7 +140,7 @@
     class:bar--dark-theme={!isLight}
     class:bar--empty={empty}
     class:bar--transparent={transparent}
-    style:--margin-top={isLight ? "12px" : showHeaderImg && bgImgSrc && !transparent ? "55px" : "15px"}
+    style:--margin-top={isLight ? "12px" : showHeaderImg && headerImg && !transparent ? "55px" : "15px"}
     style:--main-top-offset={ambience?.active ? "2px" : "-20px"}
     style:--fixed-offset={fixed ? "42px" : "0px"}
     on:mousedown={() => {
@@ -110,7 +150,7 @@
         setHotkeyFocus("default")
     }}
 >
-    {#if !empty}
+    {#if !empty && headerImg}
         <div 
             class="bar__header"
             style:cursor={isDragging ? "ns-resize" : "default"}
@@ -121,9 +161,9 @@
                     <img
                         bind:this={bgImgRef}
                         class="bar__header-img"
-                        style:top={`${topOffset}px`}
-                        style:left={`${0}px`}
-                        src={bgImgSrc} 
+                        style:top={`${headerImg.top}px`}
+                        style:left="0px"
+                        src={headerImg.src ?? ""} 
                         alt=""
                     >
                 </div>
@@ -133,7 +173,7 @@
             <div class="bar__header-time-date">
                 <div class="bar__header-date">
                     {`${formatDatetoStr(now, { weekday: "short", day: "numeric", month: "short" })}`}
-                    {#if !bgImgSrc}
+                    {#if !headerImg}
                         <div class="bar__header-day-icon bar__header-day-icon--top">
                             {#if isDayTime}
                                 <SvgIcon icon={Icon.ColorSun} options={{ scale: 0.65 }} />
@@ -173,21 +213,17 @@
 
     <div class="bar__overview">
         <DayView 
+            {options}
             onHeaderOptions={optn => {
                 if (optn == "show") {
-                    showHeaderImg = !showHeaderImg
+                    options.header.show = !options.header.show
+                    saveDayViewOptions(options)
                 }
                 else {
                     imageUpload.init({
-                        onSubmitImg: (src) => {
-                            bgImgSrc != src && (bgImgSrc = src)
-                        }
+                        onSubmitImg: (src) => onImgUpload(src)
                     })
                 }
-            }}
-            headerOptions={{
-                img: bgImgSrc,
-                show: showHeaderImg
             }}
         />
     </div>

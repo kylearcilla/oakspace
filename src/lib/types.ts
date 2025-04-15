@@ -79,7 +79,6 @@ type TextEntryIcon = {
 type TextEntryOptions = {
     entry: string
     styling: "background" | "has-marker" | "default"
-    date: Date
     truncate: boolean
     icon: TextEntryIcon | null
 }
@@ -188,6 +187,27 @@ type BulletinOptions = {
     notes: string[]
     height: number
     noteIdx: number
+}
+
+/* Sidebars */
+
+type DayViewOptions = {
+    view: "cal" | "tasks"
+    calView: "g-cal" | "routines"
+    googleCal: {
+        colors: boolean
+    }
+    routines: {
+        checkbox: boolean
+        colors: boolean
+    }
+    header: {
+        img: {
+            src: string
+            top: number
+        } | null
+        show: boolean
+    }
 }
 
 /* icon picker */
@@ -1528,6 +1548,20 @@ type ThemeState = {
     lightTheme: string
     darkTheme: string
     current: Theme
+}
+
+type ThemePreview = {
+    name: string
+    isDark: boolean
+    borderColor: string
+    signaturecolor: string
+    bg1: string
+    bg2: string
+    bg3: string
+    fg1: string
+    fg2: string
+    fg3: string
+    fg4: string
 }
 
 type Theme = {

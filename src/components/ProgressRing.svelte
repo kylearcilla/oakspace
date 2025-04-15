@@ -32,7 +32,7 @@
         }
         else {
             const bgOpacity = isLight ? 0.1 : 0.045
-            const usefgColor = isLight && lightTheme != "light"
+            const usefgColor = isLight
             const opacity = isLight ? 0.45 : 0.35
 
             fgColor = usefgColor ? "var(--elemColor1)" : `rgba(var(--textColor1), ${opacity})`

@@ -88,7 +88,7 @@ export const TEST_TAGS: Tag[] = [
       orderIdx: 9,
       name: "Travel",
       symbol: {
-        color: COLOR_SWATCHES[3],
+        color: COLOR_SWATCHES[1],
         emoji: "🏔️"
       }
     },

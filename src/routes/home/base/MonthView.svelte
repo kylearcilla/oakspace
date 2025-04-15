@@ -294,8 +294,7 @@
                 end: "20px"
             },
             tail: {
-                start: "20%",
-                end: "100%"
+                start: "20%", end: "100%"
             }
         })
         gradient = styling
@@ -359,7 +358,7 @@
                 >
                 </div>
             </div>
-            <div class="month-view__details-header-right">
+            <div>
                 <div class="month-view__settings">
                     <div class="month-view__period">
                         {#if currView === "overview"}
@@ -772,9 +771,6 @@
             position: relative;
             margin-bottom: 2px;
             @include flex(center, space-between);
-        }
-        &__details-header-right {
-            flex: 1;
         }
         &__header-btns {
             margin: 0px 10px -7px -3px;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { themeState } from "../../lib/store";
+	import { themeState } from "$lib/store";
 	import { themePreviews } from "$lib/data-themes";
 
     export let type: "dark" | "light"
@@ -12,7 +12,7 @@
     $: darkTheme = state.darkTheme
 
     $: updatePreview(lightTheme, darkTheme)
-    let preview
+    let preview: ThemePreview | null = null
 
     function updatePreview(lightTheme: string, darkTheme: string) {
         preview = themePreviews.find(preview => {
@@ -22,7 +22,7 @@
             else {
                 return preview.name === lightTheme
             }
-        })
+        })!
     }
 </script>
 

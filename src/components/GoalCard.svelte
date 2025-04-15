@@ -142,7 +142,7 @@
         cursor: pointer;
         border-radius: 10px;
         margin: 0px 8px 4px 0px;
-        background-color: var(--cardBgColor);
+        background-color: var(--cardBgColor) !important;
         border: 1px solid rgba(var(--textColor1), 0.015);
         overflow: hidden;
         position: relative;
@@ -191,14 +191,10 @@
             @include text-style(0.2);
         }
         &--light &__description {     
-            @include text-style(0.55);
+            @include text-style(0.65);
         }
         &--light &__due {
             @include text-style(0.5);
-        }
-        &--light#{&}--hoz {
-            background: rgba(var(--textColor1), 0.04);
-            box-shadow: none;
         }
         &--completed {
             opacity: 0.65;

@@ -8,8 +8,8 @@
 	import { getElapsedTime } from "$lib/utils-date"
 	import { globalContext, timer } from "$lib/store"
 	import { formatDatetoStr } from "$lib/utils-date"
+	import { saveDayViewOptions } from "$lib/utils-home"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
-	import { loadSideBarView, saveSideBarView } from "$lib/utils-home"
     
     import { TodosManager } from "$lib/todos-manager"
 	import { SideCalendar } from "$lib/side-calendar"
@@ -19,26 +19,23 @@
 	import { GoogleCalendarManager } from "$lib/google-calendar-manager"
     
 	import Todos from "./Todos.svelte";
-	import DayView from "./DayViewContent.svelte"
 	import Logo from "$components/Logo.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import Calendar from "$components/Calendar.svelte"
 	import ToggleBtn from "$components/ToggleBtn.svelte"
+	import DayViewContent from "./DayViewContent.svelte"
 	import BounceFade from "$components/BounceFade.svelte"
-	import SettingsBtn from "$components/SettingsBtn.svelte";
+	import SettingsBtn from "$components/SettingsBtn.svelte"
 
     const OVERVIEW_SIDE_MARGINS = 4
     const DAY_VIEW_SIDE_MARGINS = 14
     const NOW_TIME_THRESHOLD_SECS = 5
 
-    export let headerOptions: {
-        img: string
-        show: boolean
-    }
+    export let options: DayViewOptions
     export let onHeaderOptions: (optn: string) => void
 
     let calendar = new SideCalendar()
-    let { view, calView } = loadSideBarView()
+    
     let focusDate  = new Date()
     let now = new Date()
     let calendarHt = 0
@@ -56,12 +53,11 @@
     $: todoistLinked = $tm.todoistLinked
 
     /* routines */
-    let checkbox = false
-    let richColors = false
 
     $: routine = $weekRoutine
     $: isLight = !$themeState.isDarkTheme
     $: ambience = $globalContext.ambience
+    $: saveDayViewOptions(options)
     
     /* google calendar */
     let googleCal: GoogleCalendarManager | null = initGoogleCal()
@@ -83,8 +79,7 @@
     $: g_tokenExpired = $gCalState?.tokenExpired
     $: gCalSignedIn = $gCalState?.signedIn
 
-    $: onAPI = (view === "tasks" && onTodoist) || (view === "cal" && calView === "g-cal" && gCalSignedIn)
-    $: saveSideBarView({ view, calView })
+    $: onAPI = (options.view === "tasks" && onTodoist) || (options.view === "cal" && options.calView === "g-cal" && gCalSignedIn)
     
     $: if (googleCal) {
         googleCal.state.subscribe((state) => onGoogleCalUpdate(state))
@@ -95,14 +90,6 @@
 
     const unsubscribe = timer.subscribe(({ date }) => {
         now = date
-        // if ($tm?.onTodoist) {
-        //     todosManager.autoRefreshHandler(date)
-        // }
-        // if (gCalSignedIn) {
-        //     googleCal!.watchUpcomingEvents()
-        //     calView === "g-cal" && googleCal!.autoRefreshHandler(focusDate)
-        // }
-
         if ($tm?.todoistLinked) {
             todosManager.autoRefreshHandler(date)
         }
@@ -112,15 +99,29 @@
         }
     })
 
+    function updateOptions(partial: Partial<DayViewOptions>) {
+        options = { ...options, ...partial }
+        saveDayViewOptions(options)
+    }
+    function onToggleOption(optn: string) {
+        if (optn === "checkbox") {
+            options.routines.checkbox = !options.routines.checkbox
+            updateOptions({ routines: options.routines })
+        }
+        else if (optn === "colors") {
+            options.routines.colors = !options.routines.colors
+            updateOptions({ routines: options.routines })
+        }
+    }
     function onDayUpdate(date: Date) {
         const tokenExpired = g_tokenExpired
         if (!gCalSignedIn || !tokenExpired) {
             focusDate = date
         }
-        if (view === "tasks") {
-            view = "cal"
+        if (options.view === "tasks") {
+            updateOptions({ view: "cal" })
         }
-        if (calView === "g-cal") {
+        if (options.calView === "g-cal") {
             getCalEvents(date)
         }
     }
@@ -143,7 +144,7 @@
         g_lastSyncTime = googleCal!.lastSyncTimeStamp
 
         if (signedIn && getOAuthRedirectData("gcal")) {
-            calView = "g-cal"
+            updateOptions({ calView: "g-cal" })
         }
         if (g_tokenExpired && !tokenExpired && signedIn && !g_loading) {
             focusDate = new Date()
@@ -186,7 +187,7 @@
             googleCal = null
             googleCalendars = []
             googleEvents = []
-            calView = "routine"
+            updateOptions({ calView: "routines" })
         }
         else if (optnText === "my calendars" && $gCalState) {
             calsMenu = true
@@ -234,14 +235,14 @@
     <div class="flx-sb" style:padding="0px 12px 5px 0px">
         <div class="flx-center">
             <div class="day-view__day-header">
-                {#if view === "cal"}
+                {#if options.view === "cal"}
                     {formatDatetoStr(focusDate, { month: "long", day: "numeric" })}
                 {:else}
                     Tasks
                 {/if}
             </div>
             <button 
-                class:hidden={view === "cal"}
+                class:hidden={options.view === "cal"}
                 class="day-view__add-btn"
                 on:click={() => addBtnFlag = !addBtnFlag}
             >
@@ -254,10 +255,11 @@
         <SettingsBtn id="day-view" onClick={() => settings = !settings} />
     </div>
     <div class="day-view__main-content">
-        {#if view === "cal"}
-            <DayView
-                {richColors}
-                {checkbox}
+        {#if options.view === "cal"}
+            {@const { checkbox, colors, calView } = options.routines}
+            <DayViewContent
+                richColors={colors}
+                checkbox={checkbox}
                 view={calView}
                 day={focusDate}
                 googleCals={googleCalendars}
@@ -274,7 +276,7 @@
     </div>
 
     {#if onAPI}
-        {@const api = view === "cal" ? "google-cal" : "todoist"}
+        {@const api = options.view === "cal" ? "google-cal" : "todoist"}
         {@const logo = api === "google-cal" ? LogoIcon.GoogleCal : LogoIcon.Todoist}
         {@const scale = api === "google-cal" ? 0.785 : 1.065}
         {@const title = api === "google-cal" ? "Calendar" : "Inbox"}
@@ -369,6 +371,7 @@
         position={{ top: "20px", right: "12px" }}
         onClickOutside={() => settings = false}
     >
+        {@const { view, calView } = options}
         <div 
             class="dmenu"
             class:dmenu--light={isLight}
@@ -383,7 +386,7 @@
                         class="dmenu__box" 
                         class:dmenu__box--selected={view === "cal"}
                         on:click={() => {
-                            view = "cal"
+                            updateOptions({ view: "cal" })
                             settings = false
                         }}
                     >
@@ -396,7 +399,7 @@
                         class="dmenu__box" 
                         class:dmenu__box--selected={view === "tasks"}
                         on:click={() => {
-                            view = "tasks"
+                            updateOptions({ view: "tasks" })
                             settings = false
                         }}
                     >
@@ -512,7 +515,7 @@
                             <button 
                                 class="dmenu__option-btn"
                                 on:click={() => {
-                                    calView = "routine"
+                                    updateOptions({ calView: "routines" })
                                     settings = false
                                     g_Day = focusDate
                                 }}
@@ -526,15 +529,15 @@
                         <div class="dmenu__toggle-optn">
                             <span class="dmenu__option-heading">Checkbox</span>
                             <ToggleBtn 
-                                active={checkbox}
-                                onToggle={() => checkbox = !checkbox}
+                                active={options.routines.checkbox}
+                                onToggle={() => onToggleOption("checkbox")}
                             />
                         </div>
                         <div class="dmenu__toggle-optn" class:hidden={calView === "g-cal"}>
                             <span class="dmenu__option-heading">Colors</span>
                             <ToggleBtn 
-                                active={richColors}
-                                onToggle={() => richColors = !richColors}
+                                active={options.routines.colors}
+                                onToggle={() => onToggleOption("colors")}
                             />
                         </div>
                     {:else}
@@ -552,12 +555,12 @@
                     <div class="dmenu__section-name">
                         Google Calendar
                     </div>
-                    {#if calView === "routine" && gCalSignedIn}
+                    {#if calView === "routines" && gCalSignedIn}
                         <div class="dmenu__option">
                             <button 
                                 class="dmenu__option-btn"
                                 on:click={() => {
-                                    calView = "g-cal"
+                                    updateOptions({ calView: "g-cal" })
                                     settings = false
 
                                     if (!isSameDay(focusDate, g_Day)) {
@@ -584,11 +587,14 @@
                                 </button>
                             </div>
                         {/if}
-                        <div class="dmenu__toggle-optn" class:hidden={calView === "routine"}>
+                        <div 
+                            class="dmenu__toggle-optn" 
+                            class:hidden={options.calView === "routines"}
+                        >
                             <span class="dmenu__option-heading">Colors</span>
                             <ToggleBtn 
-                                active={richColors}
-                                onToggle={() => richColors = !richColors}
+                                active={options.routines.colors}
+                                onToggle={() => options.routines.colors = !options.routines.colors}
                             />
                         </div>
                         <div class="dmenu__option">
@@ -630,7 +636,7 @@
             {/if}
 
             {#if !isLight && !ambience?.active}
-                {@const { img, show } = headerOptions}
+                {@const { img, show } = options.header}
                 {@const optnText = img ? "Replace" : "Add"}
             
                 <!-- header image -->
@@ -677,7 +683,7 @@
         height: 100%;
         overflow: hidden;
 
-        &--light &__day-header span {
+        &--light &__day-header  {
             @include text-style(0.85);
         }
         &__calendar-container {
@@ -700,7 +706,7 @@
             @include center;
             @include square(22px, 7px);
             opacity: 0.25;
-            margin: -2px 0px 0px 5px;
+            margin: 0px 0px 0px 5px;
 
             &:hover {
                 opacity: 0.7;

@@ -5,7 +5,7 @@
 	import { Icon } from "$lib/enums"
 	import { toast } from "$lib/utils-toast"
 	import { getYearBounds } from "$lib/utils-home"
-	import { TextEditorManager } from "$lib/inputs"
+	import { TextEditorManager } from "$lib/text-editor"
 	import { datePicker, imageUpload } from "$lib/pop-ups"
 	import { formatDateLong, isSameDay } from "$lib/utils-date"
 	import { clamp, isVoid, kebabToNormal, normalToKebab, randomArrayElem } from "$lib/utils-general"

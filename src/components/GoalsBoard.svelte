@@ -182,7 +182,7 @@
     .goals {
         display: flex;
         overflow-x: scroll;
-        padding-bottom: 100px;
+        padding: 0px 0px 100px 0px;
 
         &--light &__new-btn {
             background-color: rgba(var(--textColor1), 0.055);

@@ -5,7 +5,7 @@
 	import { themeState } from '$lib/store'
 	import { toast } from '$lib/utils-toast'
 	import { minsToHHMM } from '$lib/utils-date'
-	import { TextEditorManager } from '$lib/inputs'
+	import { TextEditorManager } from '$lib/text-editor'
 	import { formatCoreData } from '$lib/utils-routines'
 	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
 	import { capitalize, decrementIdx, insertItemArr, randomArrayElem, removeItemArr, reorderItemArr } from '$lib/utils-general'

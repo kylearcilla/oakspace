@@ -3,7 +3,7 @@
 
 	import { themeState } from "$lib/store"
 	import { iconPicker } from "$lib/pop-ups"
-	import { TextEditorManager } from "$lib/inputs"
+	import { TextEditorManager } from "$lib/text-editor"
 	import { formatPlural, capitalize, getElemPadding } from "$lib/utils-general"
 	import { clickOutside, findElemVertSpace, getMaskedGradientStyle } from "$lib/utils-general"
     
@@ -98,6 +98,44 @@
     }
 
     /* ui */
+    function handleEditorStyle(elem: HTMLElement) {
+        if (focused || !elem) return
+
+        const { styling } = getMaskedGradientStyle(elem, {
+            head: {
+                start: "15px",
+                end: "15px"
+            },
+            tail: {
+                start: isLight ? "25%" : "10%",
+                end: isLight ? "100%" : "92%"
+            }
+        })
+
+        textGradient = styling
+        setMarkerHeight()
+    }
+    /* layout */
+    function getMinHeight(focused: boolean) {
+        if (focused) {
+            return icon?.size === "big" ? 125 : 70
+        }
+        else {
+            return icon?.size === "big" ? 100 : 35
+        }
+    }
+    function setMarkerHeight() {
+        const { top, bottom } = getElemPadding(textEditorElem)
+        const padding = top + bottom
+        markerHeight = 10 + textEditorElem.clientHeight
+
+        if (icon && icon.type === "img") {
+            markerHeight = Math.max(minHeight, markerHeight - 25)
+        }
+        else {
+            markerHeight = textEditorElem.clientHeight - padding + 1
+        }
+    }
     function updateStyling(styling: string, icon: any) {
         const { size, type } = icon || {}
 
@@ -161,47 +199,11 @@
             padding = "4px 14px 0px 13px"
         }
     }
-    function getMinHeight(focused: boolean) {
-        if (focused) {
-            return icon?.size === "big" ? 125 : 70
-        }
-        else {
-            return icon?.size === "big" ? 100 : 35
-        }
-    }
-    function handleEditorStyle(elem: HTMLElement) {
-        if (focused || !elem) return
-
-        const { styling } = getMaskedGradientStyle(elem, {
-            head: {
-                start: "15px",
-                end: "15px"
-            },
-            tail: {
-                start: isLight ? "25%" : "10%",
-                end: isLight ? "100%" : "92%"
-            }
-        })
-
-        textGradient = styling
-        setMarkerHeight()
-    }
-    function setMarkerHeight() {
-        const { top, bottom } = getElemPadding(textEditorElem)
-        const padding = top + bottom
-        markerHeight = 10 + textEditorElem.clientHeight
-
-        if (icon && icon.type === "img") {
-            markerHeight = Math.max(minHeight, markerHeight - 25)
-        }
-        else {
-            markerHeight = textEditorElem.clientHeight - padding + 1
-        }
-
-    }
     function getTextEditorHeight() {
         return findElemVertSpace(textEntryElem) - 15
     }
+
+    /* styling*/
     function onStylingChange(optn: "background" | "has-marker") {
         if (optn === "background") {
             toStyle = toStyle === "background" ? "default" : "background"
@@ -226,6 +228,7 @@
         imgSizeOpen = false
         imgOpen = false
     }
+    
 
     onMount(() => {
         handleEditorStyle(textEditorElem)
@@ -286,9 +289,11 @@
                 class="text-editor"
                 contenteditable
                 spellcheck="false"
-                style={`${textGradient}; max-height: ${icon?.size === "big" ? "120px" : "90px"}`}
+                style={`${textGradient}; max-height: ${icon?.size === "big" ? "120px" : "90px"}; overflow: ${focused ? "auto" : "hidden"}`}
                 bind:this={textEditorElem}
-                on:scroll={() => handleEditorStyle(textEditorElem)}
+                on:scroll={(e) => {
+                    handleEditorStyle(textEditorElem)
+                }}
             >
             </div>
         </div>
@@ -559,7 +564,7 @@
         }
     }
     .thought-entry .text-editor {
-        cursor: text;
+        cursor: text !important;
         @include text-style(var(--txt-opacity), var(--fw-300-400), 1.5rem);
         line-height: 1.185;
         max-height: var(--max-height);

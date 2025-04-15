@@ -126,7 +126,7 @@
             --tag-hov-brightness: 1.015;
         }
         &__dbtn {
-            padding: 5.5px 10px 7.5px 10px;
+            padding: 6.5px 10px 7.5px 10px;
             height: 15px;
             border-radius: 7px !important;
             @include flex(center, space-between);

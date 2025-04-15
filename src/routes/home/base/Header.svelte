@@ -80,20 +80,20 @@
                             sectionName: "Header",
                         },
                         {
-                            name: "On Top",
+                            name: "Top",
                             active: options.header.pos === "top",
                             onToggle: () => onViewOptions("header")
                         },
                         {
-                            name: "Text Block",
-                            active: options.header.showEntry,
-                            onToggle: () => onViewOptions("entry")
-                        },
-                        {
                             name: "Icon",
                             active: options.header.icon.show,
-                            divider: true,
                             onToggle: () => onViewOptions("icon"),
+                        },
+                        {
+                            name: "Text Block",
+                            divider: true,
+                            active: options.header.showEntry,
+                            onToggle: () => onViewOptions("entry")
                         },
                         {
                             sectionName: "Side Margin",
@@ -106,7 +106,7 @@
                         }
                     ],
                     styling: {
-                        minWidth: "140px",
+                        minWidth: "155px",
                         fontSize: "1.32rem",
                         zIndex: 1000
                     },

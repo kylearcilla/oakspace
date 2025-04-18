@@ -25,8 +25,8 @@ label {
     display: inline-block;
 }
 body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    //   font-family: "Geist Mono";
+    //   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: "Geist Mono";
 }
 img {
     -webkit-user-drag: none;
@@ -57,18 +57,6 @@ div[contenteditable] {
     src: url("/src/fonts/Gordita\ Medium.woff2") format('woff2');
 }
 
-// TODO: might not need this
-@mixin dark-divider($opacity: 0.06, $height: 0.5px, $width: 100%) {
-    width: $width;
-    height: $height;
-    background-color: rgba(black, $opacity);
-}
-
-@mixin l-div {
-    background-color: rgba(var(--textColor1), 0.055) !important;
-    height: 1px !important;
-}
-
 @mixin divider($opacity: 0.06, $height: 0.5px, $width: 100%) {
     width: $width;
     height: $height;
@@ -90,7 +78,6 @@ div[contenteditable] {
     }
 }
 
- /* Global Mixins */
 @mixin flex($vert-spacing, $hoz-spacing: _) {
     display: flex;
 
@@ -100,9 +87,8 @@ div[contenteditable] {
     @if $hoz-spacing != _ {
         justify-content: $hoz-spacing;
     }
- }
+}
 
-/* Reusable Stylings */
 @mixin center {
     @include flex(center, center);
 }
@@ -202,14 +188,6 @@ div[contenteditable] {
     @include elipses-overflow;
 }
 
-.show-block {
-    display: block !important;
-}
-
-.show-flex {
-    display: flex !important;
-}
-
 .hide {
     display: none !important;
 }
@@ -262,26 +240,6 @@ div[contenteditable] {
     justify-content: space-between;
 }
 
-.vert-scroll {
-    overflow-y: scroll;
-}
-.hoz-scroll {
-    display: flex;
-    overflow-x: scroll;
-}
-
-.hoz-scroll, .vert-scroll {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.vert-scroll::-webkit-scrollbar {
-    display: none;
-}
-.hoz-scroll::-webkit-scrollbar {
-    display: none;
-}
-
 .no-scroll-bar::-webkit-scrollbar {
     display: none;
 }
@@ -325,10 +283,6 @@ div[contenteditable] {
     border-radius: $b-radius;
 }
 
-@mixin shadow-border($color, $width: 1.5px) {
-    box-shadow: inset $color 0px 0px 0px $width;
-}
-
 [role="button"]:focus-visible {
     @include border-focus;
 }
@@ -340,10 +294,8 @@ a:focus-visible {
 button, input {
 	all: unset;
 }
-input {
-    &::placeholder {
-        opacity: 0.3;
-    }
+input::placeholder {
+    opacity: 0.3;
 }
 button {
     font-weight: 600;
@@ -397,13 +349,6 @@ button.tab-btn {
 .white {
     color: white !important;
 }
-
- @mixin tool-tip-shown($bg-color) { // styling for the tool tip parent container and the tool tip bg
-     opacity: 100;
-     visibility: visible;
-     background: $bg-color;
-     color: white;
- }
 
 /* Custom Input Range */
 .input-range {
@@ -474,26 +419,7 @@ button.tab-btn {
             @include circle(9px);
         }
     }
-  }
-
-/* Icons */
- .text-icon-1 {
-    @include center;
-    width: 100%;
-    border-radius: 8px;
-    box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.07);
-    background: #1E1E22; 
-    padding: 10px 0px;
-    font-weight: 700;
-    transition: ease-in-out 0.1s;
-    margin-bottom: 20px 0px 10px 0px;
-    &:hover {
-        background: #272427;
-    }
-    &:active {
-        background: rgb(51, 48, 48); 
-    }
- }
+}
 
 .abs-center {
     @include abs-center();
@@ -537,15 +463,6 @@ $bento-box-padding: 8px;
         color: rgb(var(--textColor1), 0.6);
     }
 }
-
-@mixin blurred-bg-subtitle-text($opacity) {
-    color: rgb(var(--textColor2));
-    opacity: $opacity;
-}
-
-
-/* Modal */
-$settings-modal-padding: 20px 25px 25px 25px;
 
 .modal {
     position: relative;
@@ -756,13 +673,6 @@ $loading-dots-width: 4px;
     transition: 0.18s cubic-bezier(.4, 0, .2, 1);
 }
 
-@mixin bg-img($src: "hello", $opacity: 0.5) {
-    background-image: linear-gradient(rgba(0, 0, 0, $opacity), rgba(0, 0, 0, $opacity)), url($src);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
 .ambient-blur {
     background: var(--ambient-bg-color) !important;
     border: var(--ambient-border) !important;
@@ -827,9 +737,9 @@ $loading-dots-width: 4px;
     }
     &::before { 
         height: 2.5px !important;
-        width: calc(100% - 20px);
+        width: calc(100%);
         @include drop-border;
-        @include abs-top-left(0px, 10px);
+        @include abs-top-left(0px, 0px);
     }
 }
 
@@ -947,4 +857,11 @@ $loading-dots-width: 4px;
 
 .hov-underline:hover {
     text-decoration: underline;
+}
+
+.border-top {
+    border-top: var(--divider-border);
+}
+.border-bottom {
+    border-bottom: var(--divider-border);
 }

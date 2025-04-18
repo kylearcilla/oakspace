@@ -377,7 +377,6 @@
             );
         }
         &__overview {
-            transition: 0.2s cubic-bezier(.4, 0, .2, 1);
             margin-top: var(--margin-top);
             margin-left: 2px;
             overflow: hidden;

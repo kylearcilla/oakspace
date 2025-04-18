@@ -1,18 +1,22 @@
+
 import { get } from 'svelte/store'
 import { v4 as uuidv4 } from 'uuid'
 import { globalContext, goalTracker } from "./store"
 
 import { formatDatetoStr, isSameDay } from "./utils-date"
-import { findTag, getTagFromId, isVoid, reorderItemArr } from "./utils-general"
+import { capitalize, findTag, getTagFromId, isVoid, reorderItemArr } from "./utils-general"
 import { GOALS, YEARS, MONTH_ENTIRES, QUARTER_ENTRIES } from "./mock-data-goals"
 import { genMonthCalendar, getTimeDistanceStr, months, uptoToday } from "./utils-date"
 
 export let initPromise: Promise<void>
 
 type PeriodType = "year" | "quarter" | "month"
+const MONTH_PERIODS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+const QUARTER_PERIODS = ["q1", "q2", "q3", "q4"]
 
 export const STATUSES = ["not-started", "in-progress", "accomplished"]
-export const PERIODS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec", "q1", "q2", "q3", "q4", "all"]
+export const PERIODS = [...MONTH_PERIODS, ...QUARTER_PERIODS, "all"]
+
 
 const PERIOD_TYPES: PeriodType[] = ["year", "quarter", "month"]
 const ALL_GOALS: Record<string, Goal> = {}
@@ -162,7 +166,8 @@ function initData() {
 /* data queries */
 
 export function getMonthData({ year, moIdx }: { year: number, moIdx: number }): 
-    GoalMonthData & { pinnedGoal: Goal | null }  {
+    GoalMonthData & { pinnedGoal: Goal | null }  
+{
     const key = `${year}-${moIdx + 1}`
     
     vertifyData({ key, data: "month" })
@@ -753,7 +758,7 @@ function addGoalPeriodCaches({ goal, time, idxContext }: {
         idx: number
     }
 }) {
-    const { m, y, q } = getPeriodKeys(goal.due!)
+    const { m, y, q } = getPeriodKeys(goal.due)
 
     const addIdx = {
         default: -1, status: -1, tag: -1,
@@ -1197,7 +1202,6 @@ export function getMonthGoalsOverview({ year, moIdx }: { year: number, moIdx: nu
 
         data.push({ date, goals: mGoals.filter(g => isSameDay(g.due, date)) })
     }
-
     return data
 }
 
@@ -1331,7 +1335,6 @@ function getEmptyEntry(): TextEntryOptions {
     return {
         entry: "",
         styling: "has-marker",
-        date: new Date(),
         truncate: false,
         icon: null
     }
@@ -1354,16 +1357,6 @@ function getDataKey(date: Date, time: "quarter" | "year" | "month" | "day") {
         return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
     }
     return ""
-}
-
-export function getPeriodType(period: string) {
-    if (period.startsWith("q")) {
-        return "quarter"
-    }
-    else if (period === "all") {
-        return "year"
-    }
-    return "month"
 }
 
 /**
@@ -1403,6 +1396,18 @@ function getGroupVal(goal: Goal, grouping: GoalViewSection) {
     else {
         return "*"
     }
+}
+
+/* time frame */
+
+export function getPeriodType(period: string) {
+    if (period.startsWith("q")) {
+        return "quarter"
+    }
+    else if (period === "all") {
+        return "year"
+    }
+    return "month"
 }
 
 export function getMoFromIdx(idx: number) {
@@ -1461,5 +1466,80 @@ export function getDateFromTimeFrame({ period, year }: { period: string, year: n
     }
     else {
         return new Date(year, getIdxFromMo(period) + 1, 0)
+    }
+}
+
+/**
+ * Switch between month and quarter periods.
+ * @param timeFrame 
+ * @returns Updated period
+ */
+export function switchMoQuPeriod(timeFrame: GoalViewTimeFrame) {
+    const { year, period } = timeFrame
+    const type = getPeriodType(period)
+
+    if (type === "month") {
+        const moIdx = getIdxFromMo(period)
+        const quarterIdx = Math.floor(moIdx / 3)
+
+        return { period: `q${quarterIdx + 1}`, year }
+    }
+    else {
+        const quarter = +period.split("")[1]
+        const firstMoIdx = (quarter - 1) * 3
+
+        return { period: getMoFromIdx(firstMoIdx), year }
+    }
+}
+
+export function getCurrentPeriod(type: "month" | "quarter") {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth()
+    const quarter = Math.floor(month / 3) + 1
+
+    return { period: type === "month" ? getMoFromIdx(month) : `q${quarter}`, year }
+}
+
+export function getPeriodDate(timeFrame: { year: number, period: string }) {
+    const type = getPeriodType(timeFrame.period)
+
+    if (type === "month") {
+        const month = getIdxFromMo(timeFrame.period)
+        return new Date(timeFrame.year, month + 1, 0)
+    }
+    else {
+        const quarter = +timeFrame.period.split("")[1]
+        const firstMoIdx = (quarter - 1) * 3
+        return new Date(timeFrame.year, firstMoIdx + 1, 0)
+    }
+}
+
+export function getPeriodStr(timeFrame: { year: number, period: string }) {
+    const type = getPeriodType(timeFrame.period)
+
+    if (type === "month") {
+        return months[getIdxFromMo(timeFrame.period)]
+    }
+    else if (type === "quarter") {
+        return capitalize(timeFrame.period)
+    } 
+    else {
+        return timeFrame.year.toString()
+    }
+}
+
+export function getPeriodIdx(timeFrame: { year: number, period: string }) {
+    const type = getPeriodType(timeFrame.period)
+
+    if (type === "month") {
+        return getIdxFromMo(timeFrame.period)
+    }
+    else if (type === "quarter") {
+        const quarter = +timeFrame.period.split("")[1]
+        return quarter - 1
+    }
+    else {
+        return timeFrame.year
     }
 }

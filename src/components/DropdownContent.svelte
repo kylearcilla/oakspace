@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
 	import { themeState } from "$lib/store"
     
-	import { clickOutside } from "$lib/utils-general"
+	import { clickOutside, normalToKebab } from "$lib/utils-general"
 	import { getHozSpace } from "../lib/utils-general"
 
 	import ToggleBtn from "./ToggleBtn.svelte"
@@ -233,7 +233,7 @@
                         <span class="dmenu__option-heading">
                             {item.name}
                         </span>
-                        <DropdownListMenuOptn {item} {id}/>
+                        <DropdownListMenuOptn {item} id={normalToKebab(item.name)} />
                     </li>
                     {#if item.divider}
                         <li 

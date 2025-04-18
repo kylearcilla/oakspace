@@ -1,11 +1,10 @@
-
 <script lang="ts">
     import { onMount } from "svelte"
 
     import { Icon } from "$lib/enums"
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
-    import { colorPicker } from "$lib/pop-ups"
+    import { colorPicker, tagPicker } from "$lib/pop-ups"
     import { getColorTrio } from "$lib/utils-colors"
     import { TextEditorManager } from "$lib/text-editor"
 	import { minsFromStartToHHMM } from "$lib/utils-date"
@@ -38,7 +37,7 @@
     let settingsOpen = false, coresOpen = false
     
     let { 
-        id, startTime, endTime, title, 
+        id, startTime, endTime, title, color,
         description, tasks, order, activity, tag,
         allowDescription = true, allowTasks = true
     } = block
@@ -48,6 +47,7 @@
     let newTaskFlag = false
     let pickedCoreItemIdx = getCoreActivityIdx(activity)
     let timeError: Error | null = null
+    let tagsOpen = false
     
     let saving = false
     let editHasBeenMade = false
@@ -58,7 +58,7 @@
 
     $: isDarkTheme = $themeState.isDarkTheme
     $: blocks = $_blocks
-    $: colors = getColorTrio(block.color, true)
+    $: colors = getColorTrio(color, true)
     $: validateTime(startTime, endTime)
 
     new TextEditorManager({ 
@@ -108,28 +108,41 @@
         }
         settingsOpen = false
     }
-    function onTagChange(tag: Tag | null) {
-        block = { ...block, tag }
-        toggleEditMade()
+    function toggleTagPicker() {
+        tagsOpen = !tagsOpen
+        tagsOpen ? initTagPicker() : tagPicker.close()
+    }
+    function initTagPicker() {
+        tagsOpen = true
+        tagPicker.init({
+            tag: tag ?? null,
+            onClose: () => {
+                tagsOpen = false
+            },
+            onSubmitTag: (_tag) => {
+                tag = _tag
+                tagsOpen = false
+                if (tag?.id != block.tag?.id) {
+                    toggleEditMade()
+                }
+            }
+        })
     }
     function onCoreOptnClicked(idx: number) {
         coresOpen = false
         pickedCoreItemIdx = idx
-        block = { ...block, activity: CORE_OPTIONS[pickedCoreItemIdx][0] }
-
+        activity = CORE_OPTIONS[pickedCoreItemIdx][0]
         activity !== block.activity && toggleEditMade()
     }
     function onRemoveCore() {
-        block = { ...block, activity: null }
+        activity = null
         pickedCoreItemIdx = -1
-
         activity !== block.activity && toggleEditMade()
     }
-    function onChooseColor(color: Color | null) {
-        if (!color) return
-
-        block = { ...block, color }
-        color !== block.color && toggleEditMade()
+    function onChooseColor(_color: Color) {
+        color = _color
+        color.name !== block.color.name && toggleEditMade()
+        colorPicker.close()
     }
     function validateTime(startTime: number, endTime: number) {
         if (!blocks) return
@@ -179,21 +192,27 @@
             saving = true
             await new Promise((res) => setTimeout(() => res(null), 200))
             
-            concludeEdit({
-                ...block, 
-                title, 
+            const update = {
+                title,
                 description,
-                startTime, 
+                startTime,
                 allowDescription,
                 allowTasks,
                 endTime,
-                tasks, 
-                order
-            })
-            toast("default", { message: `"${title}" saved!` })
+                tasks,
+                order,
+                activity,
+                tag,
+                color
+            }
+            concludeEdit({ ...block, ...update })
         }
         catch(e: any) {
-            toast("error", { message: "Error saving your changes." })
+            toast("error", { 
+                contextId: "edit-block-modal", 
+                groupExclusive: true,
+                message: "Error saving your changes."
+            })
         }
         finally {
             saving = false
@@ -236,7 +255,7 @@
 
         if (colorsOpen) {
             colorPicker.init({
-                picked: block.color,
+                picked: color,
                 onSubmitColor: (color) => onChooseColor(color),
                 onClose: () => colorsOpen = false
             })
@@ -260,7 +279,12 @@
         overflowX: "visible", 
         scaleUp: true 
     }}
-    onClickOutSide={onAttemptClose}
+    onClickOutSide={() => {
+        if (tagsOpen) {
+            tagPicker.close()
+        }
+        onAttemptClose()
+    }}
 >
     <div 
         class="edit-routine"
@@ -368,9 +392,7 @@
                 <div class="edit-routine__info-val">
                     <TagPickerBtn 
                         {tag}
-                        onChoose={(tag) => { 
-                            onTagChange(tag)
-                        }}
+                        onClick={() => toggleTagPicker()}
                         styling={{ 
                             borderRadius: "12px" 
                         }}
@@ -427,7 +449,7 @@
                             options={{
                                 allowEmpty: true,
                                 noBg: false,
-                                title: getCoreStr(block.activity),
+                                title: getCoreStr(activity),
                                 onClick: () => {
                                     coresOpen = !coresOpen
                                 },
@@ -679,7 +701,7 @@
         }
         &__description {
             min-height: 60px;
-            max-height: 100px;
+            max-height: 140px;
             margin-bottom: 10px;
             font-size: 1.35rem;
         }

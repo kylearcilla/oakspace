@@ -232,6 +232,7 @@
             editId = nextRoutine?.id || ""
             manager.setViewRoutine(nextRoutine)
         }
+        toast("info", { message: `"${routine.name}" routine deleted.` })
     }
     
     function onRoutineClicked(routineId: string) {
@@ -550,7 +551,11 @@
                         </button>
                         <div class="routine-item__settings-btn">
                             <SettingsBtn 
-                                id={"routines"}
+                                id="routines"
+                                options={{
+                                    bg: false,
+                                    opacity: { fg: 0.155, bg: 0 }
+                                }}
                                 onClick={(e) => openContextMenu(e, routine.id)}
                             />
                         </div>
@@ -588,7 +593,7 @@
                 },
                 styling: { 
                     zIndex: 2001,
-                    minWidth: "90px" 
+                    minWidth: "120px" 
                 },
                 position: {
                     top: routineMenuPos.top + "px",

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { v4 as uuidv4 } from 'uuid'
+
 	import { themeState } from "$lib/store"
 	import { toast } from "$lib/utils-toast"
 	import { TextEditorManager } from "$lib/text-editor"
@@ -23,7 +24,7 @@
     let descrLength = 0
     let descrFocus = false
     let titleFocus = false
-
+    let editHasBeenMade = false
     $: light      = !$themeState.isDarkTheme
 
     const newWkRoutine: WeeklyRoutine = {
@@ -64,6 +65,9 @@
     })
 
     /* conclude */
+    function toggleEditMade() {
+        editHasBeenMade = true
+    }
     function asyncCall() {
         return new Promise((resolve) => setTimeout(() => resolve("xxx"), 1400))
     }
@@ -92,11 +96,11 @@
         if (isSaving) {
             return
         }
-        else if (isEmpty(true)) {
-            close()
+        else if (editHasBeenMade) {
+            confirmModalOpen = true
         }
         else {
-            confirmModalOpen = true
+            close()
         }
     }
     function close() {
@@ -147,11 +151,12 @@
                 class="new-routine__title text-editor"
                 aria-label="Title"
                 spellcheck="false"
-                placeholder="new block title..."
+                placeholder="new routine title..."
                 maxLength={MAX_TITLE_LENGTH}
                 style:margin-top="1px"
                 on:focus={() => titleFocus = true}
                 on:blur={() => titleFocus = false}
+                on:change={() => toggleEditMade()}
                 bind:value={newRoutine.name}
             />
         </div>
@@ -166,6 +171,7 @@
                 aria-label="Description"
                 contenteditable
                 spellcheck="false"
+                style:overflow-y="hidden"
             />
             <div 
                 class="input-box__count"
@@ -201,7 +207,7 @@
 
     .new-routine {
         width: 420px;
-        padding: 17px 20px 18px 20px;
+        padding: 20px 20px 18px 20px;
 
         --cancel-btn-opacity: 0.025;
         
@@ -237,8 +243,7 @@
             }
         }
         .input-box__count {
-            margin-right: 5px;
-            @include abs-bottom-right(12px, 8px);
+            @include abs-bottom-right(12px, 12px);
         }
     }
 </style>

@@ -91,7 +91,7 @@
 
     .confirm { 
         width: 350px;
-        padding: 12px 20px 21px 20px;
+        padding: 14px 20px 20px 20px;
 
         --brightness-hover: 1.1;
         --default-base-opacity: 0.02;
@@ -120,15 +120,15 @@
             color: rgba(var(--textColor1), 0.8) !important;
         }
         &__text {
-            @include text-style(1, var(--fw-400-500), 1.38rem, "Geist Mono");
-            margin: 14px 7px 30px 7px;
+            @include text-style(1, var(--fw-400-500), 1.3rem, "Geist Mono");
+            margin: 7px 7px 22px 7px;
             text-align: center;
         }
         button {
             padding: 12px 25px;
             border-radius: 9px;
             @include center;
-            @include text-style(1, var(--fw-400-500), 1.3rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.25rem, "Geist Mono");
 
             &:active {
                 transform: scale(0.99);
@@ -164,7 +164,7 @@
                 z-index: 0;
             }
             span {
-                @include text-style(1, _, 1.3rem);
+                @include text-style(1, _, 1.25rem, "Geist Mono");
                 color: var(--confirm-color-2);
                 z-index: 10;
             }

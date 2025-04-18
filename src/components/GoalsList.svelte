@@ -329,7 +329,7 @@
             @include text-style(1);
         }
         &--light &__goal-description {
-            @include text-style(0.45);
+            @include text-style(0.7);
         }
         &--light &__goal-due {
             @include text-style(0.55);

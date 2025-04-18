@@ -67,7 +67,7 @@
 
     .routines-page {
         height: 100%;
-        padding: 10px 0px 0px 25px;
+        padding: 5px 0px 0px 25px;
 
         &--light &__title {
             @include text-style(1);

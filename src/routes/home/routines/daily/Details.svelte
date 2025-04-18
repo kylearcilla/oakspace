@@ -153,6 +153,7 @@
             manager.initEditRoutine(routines[editIdx])
         }
         contextIdx = -1
+        toast("info", { message: `"${routine.name}" routine deleted.` })
     }
 
     /* options */
@@ -427,7 +428,11 @@
                             </button>
                             <div class="routine-item__settings-btn">
                                 <SettingsBtn 
-                                    id={"routines"}
+                                    id="routines"
+                                    options={{
+                                        bg: false,
+                                        opacity: { fg: 0.155, bg: 0 }
+                                    }}
                                     onClick={(e) => openContextMenu(e, routineIdx)}
                                 />
                             </div>

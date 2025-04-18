@@ -3,16 +3,16 @@ import { COLOR_SWATCHES } from "./utils-colors";
 export const TEST_TAGS: Tag[] = [
     {
       id: "0",
-      orderIdx: 13,
+      idx: 0,
       name: "Body",
       symbol: {
-        color: COLOR_SWATCHES[0],
+        color: COLOR_SWATCHES[3],
         emoji: "💪"
       }
     },
     {
       id: "1",
-      orderIdx: 1,
+      idx: 1,
       name: "SWE",
       symbol: {
 
@@ -22,7 +22,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "2",
-      orderIdx: 2,
+      idx: 2,
       name: "French",
       symbol: {
         color: COLOR_SWATCHES[7],
@@ -31,7 +31,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "3",
-      orderIdx: 3,
+      idx: 3,
       name: "Cooking",
       symbol: {
         color: COLOR_SWATCHES[1],
@@ -40,7 +40,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "4",
-      orderIdx: 4,
+      idx: 4,
       name: "English",
       symbol: {
         color: COLOR_SWATCHES[8],
@@ -49,7 +49,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "5",
-      orderIdx: 5,
+      idx: 5,
       name: "BBall",
       symbol: {
         color: COLOR_SWATCHES[2],
@@ -58,7 +58,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "6",
-      orderIdx: 6,
+      idx: 6,
       name: "Running",
       symbol: {
         color: COLOR_SWATCHES[2],
@@ -67,7 +67,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "7",
-      orderIdx: 7,
+      idx: 7,
       name: "Meditation",
       symbol: {
         color: COLOR_SWATCHES[5],
@@ -76,7 +76,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "8",
-      orderIdx: 8,
+      idx: 8,
       name: "Art",
       symbol: {
         color: COLOR_SWATCHES[1],
@@ -85,7 +85,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "9",
-      orderIdx: 9,
+      idx: 9,
       name: "Travel",
       symbol: {
         color: COLOR_SWATCHES[1],
@@ -94,7 +94,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "10",
-      orderIdx: 10,
+      idx: 10,
       name: "Reading",
       symbol: {
         color: COLOR_SWATCHES[7],
@@ -103,7 +103,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "11",
-      orderIdx: 11,
+      idx: 11,
       name: "Finance",
       symbol: {
         color: COLOR_SWATCHES[5],
@@ -112,7 +112,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "12",
-      orderIdx: 12,
+      idx: 12,
       name: "wefowe;ofiwje F;OIwefjw;eoFIJWef;owieFJWE;O FIJWe;o i",
       symbol: {
         color: COLOR_SWATCHES[4],
@@ -121,7 +121,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "*",
-      orderIdx: 0,
+      idx: 0,
       name: "Empty",
       symbol: {
         color: COLOR_SWATCHES[0],

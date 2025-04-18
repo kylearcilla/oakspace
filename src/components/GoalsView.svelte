@@ -179,11 +179,11 @@
                         {
                             name: "Change Status",
                             childId: "statuses",
-                            onPointerOver: ({ childXPos }) => {
+                            onPointerOver: (data) => {
                                 if (!closing) {
                                     statusOpen = true
                                 }
-                                statusMenuPos.left = childXPos
+                                statusMenuPos.left = data?.childXPos ?? 0
                             },
                             onPointerLeave: () => {
                                 statusOpen = false

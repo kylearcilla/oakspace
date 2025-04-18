@@ -129,7 +129,6 @@
                 const dayRoutine = weekRoutine.blocks[dayKey]
 
                 if ("id" in dayRoutine && dayRoutine.id === id) {
-                    console.log(weekRoutine.name)
                     weekRoutine.blocks[dayKey] = dayRoutine.blocks
                 }
             })

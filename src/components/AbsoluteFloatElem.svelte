@@ -7,8 +7,8 @@
 
 {#each $state as floatElem (floatElem.id)}
     <BounceFade 
-        dmenuId={floatElem.id}
-        zIndex={10000}
+        dmenuId={floatElem.dmenuId}
+        zIndex={20000}
         isHidden={floatElem.isHidden}
         onClickOutside={() => {
             close(floatElem.id)

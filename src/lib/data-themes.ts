@@ -42,7 +42,7 @@ export const themes: Theme[] = [
             bg1: "#FFFDF6",
             bg2: "#fffefd",
             bg3: "#fffefd",
-            fgColor1: "147, 146, 126",
+            fgColor1: "148, 201, 241",
             fgColor2: "83, 178, 232",
             textColor1: "23, 20, 18",
             textColor2: "255, 255, 255",

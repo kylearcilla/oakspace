@@ -40,7 +40,7 @@ div[contenteditable]:focus {
     @include flex(center, space-between);
     border: none;
     border-radius: 9px;
-    padding: 10px 10px 5px 14px;
+    padding: 10px 10px 30px 14px;
     position: relative;
     transition: box-shadow 0.2s ease-in-out,
                 background-color 0.1s ease-in-out;
@@ -72,8 +72,9 @@ div[contenteditable]:focus {
     }
 
     div[contenteditable] {
-        padding: 0px 0px 35px 0px;
-        @include text-style(0.7, var(--fw-400-500), 1.45rem);
+        max-height: 200px;
+        overflow-y: auto;
+        @include text-style(0.7, var(--fw-400-500), 1.55rem);
         flex: 1;
 
         &:empty:before {
@@ -81,7 +82,7 @@ div[contenteditable]:focus {
         }
     }
     input {
-        @include text-style(0.7, var(--fw-400-500), 1.45rem);
+        @include text-style(0.7, var(--fw-400-500), 1.55rem);
 
         &::placeholder {
             opacity: calc(var(--empty-before-opacity) + 0.08);
@@ -96,7 +97,7 @@ div[contenteditable]:focus {
         color: #CB7272;
     }
     &__count {
-        @include text-style(0.2, var(--fw-400-500), 1.4rem, "Geist Mono");
+        @include text-style(0.2, var(--fw-400-500), 1.4rem);
         float: right;
 
         &--over {

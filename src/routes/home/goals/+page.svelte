@@ -206,7 +206,7 @@
         else if (optn === "Due Distance") {
             goalsView[type].dueType = goalsView[type].dueType === "distance" ? "date" : "distance"
         }
-        else if (optn === "Show Image") {
+        else if (optn === "Show Images") {
             goalsView.board.imgs = !goalsView.board.imgs
         }
         else if (optn === "Pinned") {
@@ -600,10 +600,10 @@
                                                         onToggle: () => viewOption("Month Entry")
                                                     },
                                                     { 
-                                                        name: goalsView.view === "board" ? "Show Image" : "",
+                                                        name: goalsView.view === "board" ? "Show Images" : "",
                                                         active: goalsView.board.imgs,
                                                         divider: true,
-                                                        onToggle: () => viewOption("Show Image")
+                                                        onToggle: () => viewOption("Show Images")
                                                     },
                                                     {
                                                         sectionName: "Details",

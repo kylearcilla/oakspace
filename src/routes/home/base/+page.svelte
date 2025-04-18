@@ -173,9 +173,6 @@
         &--light &__context-header {
             @include text-style(0.95, 600);
         }
-        &--light .divider {
-            @include l-div
-        }
 
         /* small */
         &--small &__content-flx {
@@ -280,7 +277,7 @@
         }
 
         &__banner {
-            height: 260px;
+            height: 220px;
             width: 100%;
             position: relative;
             overflow: hidden;

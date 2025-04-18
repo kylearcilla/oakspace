@@ -84,7 +84,9 @@
     /* data */
     function toggleComplete({ habit, date }: { habit: Habit, date: Date }) {
         resetCounters()
-        toggleCompleteHabit({ habit, date, currMonth })  
+        toggleCompleteHabit({ habit, date, currMonth })
+
+        requestAnimationFrame(() => scrollLeftCols())
     }
     function getHabitData(habit: Habit): HabitDayData[] {
         const data = getHabitTableData({ 
@@ -134,11 +136,11 @@
             return DAYS_OF_WEEK.map(day => day.substring(0, 1))
         }
         else {
-            const length = getMonthDayNumbers(new Date())
+            const length = getMonthDayNumbers(currMonth)
             return Array.from({ length }, (_, i) => `${i + 1}`)
         }
     }
-    function groupByTimeOfDay(habits: any[]) {
+    function groupByTimeOfDay(habits: Habit[]) {
         sortedHabits = [[], [], [], []]
 
         habits.forEach(habit => {
@@ -149,7 +151,7 @@
         })
 
         sortedHabits.forEach(habitGroup => {
-            habitGroup.sort((a: any, b: any) => a.order.tod - b.order.tod)
+            habitGroup.sort((a, b) => a.order.tod - b.order.tod)
         })
     }
     function groupByDefault() {
@@ -159,7 +161,7 @@
             sortedHabits[0].push(habit)
         })
 
-        sortedHabits[0].sort((a: any, b: any) => a.order.default - b.order.default)
+        sortedHabits[0].sort((a, b) => a.order.default - b.order.default)
     }
     function setLastHabitItem() {
         const lastGroup = sortedHabits.findLast(sec => sec.length > 0)
@@ -167,15 +169,11 @@
     }
     function resetUI(_?: HabitTableOptions) {
         resetCounters()
-        requestAnimationFrame(() => {
-            getDaysElems()
-
-            dayElems.forEach(elem => elem.scrollLeft = scrollLeft)
-        })
+        requestAnimationFrame(() => scrollLeftCols())
     }
 
     /* drag */
-    function onHabitDrag(e: DragEvent, habit: any) {
+    function onHabitDrag(e: DragEvent, habit: Habit) {
         e.dataTransfer!.effectAllowed = "move"
 
         if (!isDragging) {
@@ -185,13 +183,13 @@
 
         dragHabitSrc = habit
     }
-    function onHabitDragOver(e: DragEvent, target: any) {
+    function onHabitDragOver(e: DragEvent, target: Habit | string) {
         e.preventDefault()
 
         if (typeof target == "string") {
             dragHabitTarget = target
         }
-        if (target?.name != dragHabitSrc.name) {
+        else if (target?.name != dragHabitSrc.name) {
             dragHabitTarget = target
         }
     }
@@ -229,6 +227,9 @@
         const target = event.target as HTMLElement
         scrollLeft = target.scrollLeft
 
+        scrollLeftCols()
+    }
+    function scrollLeftCols() {
         dayElems.forEach(elem => elem.scrollLeft = scrollLeft)
     }
     function getDaysElems() {
@@ -243,9 +244,7 @@
             return isSameMonth(new Date(), month) && idx === new Date().getDate() - 1
         }
     }
-
     onMount(() => requestAnimationFrame(() => getDaysElems()))
-
 </script>
 
 <div 

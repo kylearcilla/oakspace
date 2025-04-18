@@ -44,6 +44,7 @@
     class="base-header"
     class:base-header--no-banner={!options.banner.show}
     class:base-header--has-icon={showIcon}
+    class:base-header--pos-side={options.header.pos === "side"}
 >
     <div style:width="100%">
         <div class="base-header__heading">
@@ -87,6 +88,7 @@
                         {
                             name: "Icon",
                             active: options.header.icon.show,
+
                             onToggle: () => onViewOptions("icon"),
                         },
                         {
@@ -126,7 +128,7 @@
         </div>
         {#if options.header.showEntry}
             {#key options.entry}
-                <div style:width="100%">
+                <div style:width="100%" style:margin="0px 0px 0px 0px">
                     <TextEntry 
                         id="header"
                         zIndex={100}
@@ -151,6 +153,9 @@
         &--has-icon {
             margin-top: -6px;
         }
+        &--pos-side {
+            margin-bottom: 0px;
+        }
         &__heading {
             margin: 0px 0px 0px 0px;
             position: relative;
@@ -158,7 +163,8 @@
             @include flex(flex-start, space-between);
 
             h1 {
-                @include text-style(1, var(--fw-400-500), 2.75rem, "Geist Mono");
+                @include text-style(1, var(--fw-400-500), 2.75rem);
+                margin-bottom: 4px;
             }
         }
         &__settings-btn {

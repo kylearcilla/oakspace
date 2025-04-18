@@ -89,7 +89,7 @@ export const IMG_COLLECTIONS: any = {
         src: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg/2560px-Cole_Thomas_The_Course_of_Empire_Desolation_1836.jpg",
         center: 45.2433
       },
-      headerIcon: "https://i.pinimg.com/736x/70/a9/54/70a954ddddb49bbe9b882e18188d96b6.jpg",
+      headerIcon: "https://i.pinimg.com/736x/26/3a/5b/263a5bff029ee65f638376ba515f2f54.jpg",
       headerTextBlockImg: {
         type: "img",
         src: "https://i.pinimg.com/736x/f0/9a/9c/f09a9c36370c62b82906bffa5f9d090e.jpg",
@@ -131,7 +131,7 @@ const IMG_COLLECTION_IDX = localStorage.getItem("theme-name") ?? "sand"
 export const TEST_TAGS: Tag[] = [
     {
       id: "0",
-      orderIdx: 13,
+      idx: 13,
       name: "Body",
       symbol: {
         color: COLOR_SWATCHES[0],
@@ -140,7 +140,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "1",
-      orderIdx: 1,
+      idx: 1,
       name: "SWE",
       symbol: {
 
@@ -150,7 +150,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "2",
-      orderIdx: 2,
+      idx: 2,
       name: "French",
       symbol: {
         color: COLOR_SWATCHES[7],
@@ -159,7 +159,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "3",
-      orderIdx: 3,
+      idx: 3,
       name: "Cooking",
       symbol: {
         color: COLOR_SWATCHES[1],
@@ -168,7 +168,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "4",
-      orderIdx: 4,
+      idx: 4,
       name: "English",
       symbol: {
         color: COLOR_SWATCHES[8],
@@ -177,7 +177,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "5",
-      orderIdx: 5,
+      idx: 5,
       name: "BBall",
       symbol: {
         color: COLOR_SWATCHES[2],
@@ -186,7 +186,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "6",
-      orderIdx: 6,
+      idx: 6,
       name: "Running",
       symbol: {
         color: COLOR_SWATCHES[2],
@@ -195,7 +195,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "7",
-      orderIdx: 7,
+      idx: 7,
       name: "Meditation",
       symbol: {
         color: COLOR_SWATCHES[5],
@@ -204,7 +204,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "8",
-      orderIdx: 8,
+      idx: 8,
       name: "Art",
       symbol: {
         color: COLOR_SWATCHES[1],
@@ -213,7 +213,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "9",
-      orderIdx: 9,
+      idx: 9,
       name: "Travel",
       symbol: {
         color: COLOR_SWATCHES[3],
@@ -222,7 +222,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "10",
-      orderIdx: 10,
+      idx: 10,
       name: "Reading",
       symbol: {
         color: COLOR_SWATCHES[7],
@@ -231,7 +231,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "11",
-      orderIdx: 11,
+      idx: 11,
       name: "Finance",
       symbol: {
         color: COLOR_SWATCHES[5],
@@ -240,7 +240,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "12",
-      orderIdx: 12,
+      idx: 12,
       name: "wefowe;ofiwje F;OIwefjw;eoFIJWef;owieFJWE;O FIJWe;o i",
       symbol: {
         color: COLOR_SWATCHES[5],
@@ -249,7 +249,7 @@ export const TEST_TAGS: Tag[] = [
     },
     {
       id: "*",
-      orderIdx: 0,
+      idx: 0,
       name: "Empty",
       symbol: {
         color: COLOR_SWATCHES[12],
@@ -798,7 +798,7 @@ export const BASE_BANNER = IMG_COLLECTIONS[IMG_COLLECTION_IDX].banner
 
 export const BASE_HEADER: BaseHeaderViewOptions = {
   showEntry: true,
-  pos: "side",
+  pos: "top",
   icon: {
     src: IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerIcon,
     type: "img",

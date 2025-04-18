@@ -1062,3 +1062,16 @@ export function betweenDates(date: Date, start: Date, end: Date) {
     const e = new Date(end.getFullYear(), end.getMonth(), end.getDate())
     return d >= s && d <= e
 }
+
+export function getQuarterIdx(string: string) {
+    const quarter = parseInt(string.split("-")[1])
+    return (quarter - 1) * 3
+}
+
+export function getQuarterIdxFromMonth(month: number) {
+    return Math.floor(month / 3)
+}
+
+export function getMoIdxFromQuarter(quarter: number) {
+    return (quarter - 1) * 3
+}

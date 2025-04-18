@@ -6,7 +6,7 @@
 	import { toast } from "$lib/utils-toast"
 	import { getYearBounds } from "$lib/utils-home"
 	import { TextEditorManager } from "$lib/text-editor"
-	import { datePicker, imageUpload } from "$lib/pop-ups"
+	import { datePicker, imageUpload, tagPicker } from "$lib/pop-ups"
 	import { formatDateLong, isSameDay } from "$lib/utils-date"
 	import { clamp, isVoid, kebabToNormal, normalToKebab, randomArrayElem } from "$lib/utils-general"
 	import { addGoal, closeViewGoal, deleteGoal, getDueDateDistStr, updateGoal } from "$lib/utils-goals"
@@ -52,6 +52,7 @@
     let options = false
     let dateOpen = false
     let statusOpen = false
+    let tagsOpen = false
     let imgOpen = false
     let dateContext: "due-date" | "completed-date" | null = null
     let dueDateStr = getDueDateStr()
@@ -122,7 +123,7 @@
         completedDate = val.date
         toggleEditMade()
     }
-    function toggleEditMade() {
+    async function toggleEditMade() {
         editHasBeenMade = true
     }
     function optionsClicked(optn: string) {
@@ -147,8 +148,27 @@
         options = false
     }
     function onTaskChange(_tasks: Task[]) {
-        toggleEditMade()
         tasks = _tasks as GoalActionItem[]
+    }
+    function toggleTagPicker() {
+        tagsOpen = !tagsOpen
+        tagsOpen ? initTagPicker() : tagPicker.close()
+    }
+    function initTagPicker() {
+        tagsOpen = true
+        tagPicker.init({
+            tag: tag ?? null,
+            onClose: () => {
+                tagsOpen = false
+            },
+            onSubmitTag: (_tag) => {
+                tag = _tag
+                tagsOpen = false
+                if (tag?.id != goal.tag?.id) {
+                    toggleEditMade()
+                }
+            }
+        })
     }
 
     /* drag */
@@ -203,20 +223,20 @@
         }
     }
     async function close() {
+        options = false
         try {
             if (confirmContext === "delete") {
                 saving = true
                 await deleteGoal(goal)
-                initDeleteToast({ goal, success: true })
+                initToast("delete")
             }
         }
         catch(e: any) {
-            initDeleteToast({ goal, success: false })
+            initToast("delete", false)
         }
         finally {
             confirmContext = null
             saving = false
-            // wait for abs float elem to close first
             requestAnimationFrame(() => closeViewGoal())
         }
     }
@@ -232,13 +252,13 @@
         }
     }
     async function saveAndClose() {
+        if (saving) return
         try {
             saving = true
             await saveData()
-            initEditToast("info")
         }
         catch(e: any) {
-            initEditToast("error")
+            initToast("error")
         }
         finally {
             close()
@@ -283,20 +303,14 @@
             }
         })
     }
-    function initEditToast(context: "info" | "error") {
-        const editMessage = context === "info" ? "Your changes have been saved." : "Error saving your changes."
-        const newMessage = context === "info" ? "New goal created!." : "Error creating your goal."
+    function initToast(context: "error" | "delete", success = true) {
+        const message = context === "error" 
+            ? "Error saving changes."
+            : success ? `"${goal.name}" deleted.` : "Error deleting goal."
 
-        toast(context, { 
-            message: type === "new" ? newMessage : editMessage,
-            contextId: "goal-view-modal",
-            groupExclusive: true
-        })
-    }
-    function initDeleteToast({ goal, success }: { goal: Goal, success: boolean }) {
-        toast("info", { 
-            message: success ? `"${goal.name}" deleted.` : "Error deleting goal.",
-            contextId: "goal-view-modal",
+        toast(context === "error" ? "error" : "info", {
+            message,
+            contextId: "goal-view-modal", 
             groupExclusive: true
         })
     }
@@ -306,6 +320,17 @@
     })
 </script>
 
+
+<svelte:window on:keydown={e => {
+    if (e.metaKey && e.key === "s") {
+        e.preventDefault()
+
+        if (editHasBeenMade && name) {
+            saveAndClose()
+        }
+    }
+}} />
+
 <Modal 
     options={{ 
         borderRadius: "7px", 
@@ -314,6 +339,12 @@
         overflowX: "scroll"
     }} 
     onClickOutSide={() => {
+        tagPicker.close()
+        if (tagsOpen) {
+        }
+        if (dateOpen){
+            datePicker.close()
+        }
         onAttemptClose()
     }}
 >
@@ -397,6 +428,10 @@
                             listItems: [
                                 {
                                     name: editHasBeenMade ? "Save & Close" : "",
+                                    rightIcon: {
+                                        type: "hotkey",
+                                        icon: ["meta", "s"]
+                                    },
                                     divider: true,
                                 },
                                 {
@@ -510,11 +545,8 @@
                             <div class="goal__info-content">
                                 <TagPickerBtn 
                                     {tag}
-                                    onChoose={(_tag) => { 
-                                        tag = _tag
-                                        if (tag?.id !== goal.tag?.id) {
-                                            toggleEditMade()
-                                        }
+                                    onClick={() => {
+                                        toggleTagPicker()
                                     }}
                                     styling={{ 
                                         borderRadius: "12px" 
@@ -625,12 +657,17 @@
                     <TasksList
                         {newTaskFlag}
                         {onTaskChange}
+                        {tasks}
                         allowInitTasksCall={false}
-                        tasks={tasks}
                         options={{
-                            id: "goal-tasks",
+                            id: "goal_tasks",
                             context: "modal",
                             hotkeyFocus: "default",
+                            handlers: {
+                                onTaskUpdate: () => toggleEditMade(), 
+                                onAddTask: () => toggleEditMade(), 
+                                onDeleteTask: () => toggleEditMade()
+                            },
                             settings: {
                                 checkSubtasks: false,
                                 allowDuplicate: false,

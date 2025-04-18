@@ -151,6 +151,8 @@
         @include text-style(0.25, var(--fw-400-500), 1.15rem);
         padding: 3px $side-padding 2px $side-padding;
         margin-bottom: 2px;
+        @include elipses-overflow;
+        max-width: 140px;
     }
     &__section-name--mono {
         @include text-style(_, var(--fw-400-500), 1.15rem, "Geist Mono");

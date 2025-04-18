@@ -69,7 +69,7 @@
         <h1>{year}</h1>
     {/if}
     {#if showTextEntry && yearEntry}
-        <div style:margin="4px 0px 0px 0px">
+        <div style:margin="4px 0px -10px 0px">
             <TextEntry 
                 id="yr"
                 zIndex={50}

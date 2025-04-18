@@ -136,7 +136,6 @@
             createdAt: new Date(),
             id: uuidv4(),
             streak: 0,
-            data: "000000000000000000000000000000000000000000",
             order: {
                 default: 0,
                 tod: 0

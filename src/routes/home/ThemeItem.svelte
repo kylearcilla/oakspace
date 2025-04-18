@@ -131,7 +131,7 @@
             overflow: hidden;
         }
         span {
-            @include text-style(0.6, var(--fw-400-500), 1.35rem, "DM Mono");
+            @include text-style(0.6, var(--fw-400-500), 1.35rem);
             @include flex(center);
             margin: 12px 0px 0px 2px
         }

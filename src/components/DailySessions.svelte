@@ -4,7 +4,6 @@
 	import EmptyList from './EmptyList.svelte'
     import { formatTimeToHHMM } from "$lib/utils-date"
     
-    export let date = new Date()
     export let sessions: Session[] = []
 
     $: light = !$themeState.isDarkTheme
@@ -20,13 +19,6 @@
         if (hours === 0) return `${mins}m`
         return `${hours}h ${mins > 0 ? mins + 'm' : ''}`
     }
-
-    function minsToTime(minutes: number): string {
-        const hours = Math.floor(minutes / 60)
-        const mins = minutes % 60
-        return `${hours}:${mins.toString().padStart(2, '0')}`
-    }
-
     function getSessionData(session: Session) {
         const { startTime, result } = session
         const endTime = result!.endTime!
@@ -42,14 +34,14 @@
         sessionHeights = sessions.map((_, i) => {
             const elem = document.getElementById(`ds-${i}`)!
 
-            return `${elem.clientHeight + 18}px`
+            return `${elem.clientHeight + 20}px`
         })
     })
 </script>
 
 <div class="ds" class:ds--light={light}>
     {#each sessions.sort((a, b) => a.startTime.getTime() - b.startTime.getTime()) as session, i}
-        {@const { duration, start, end } = getSessionData(session)}
+        {@const { duration, start } = getSessionData(session)}
         {@const isLast = i === sessions.length - 1}
         
         <div class="ds__session">

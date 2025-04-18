@@ -14,9 +14,9 @@
         formats: ALLOWED_IMAGE_TYPES
     }
 
+    $: isLight = !$themeState.isDarkTheme
     $: isOpen =  $state.isOpen
     $: position =  $state.position
-    $: isLight = !$themeState.isDarkTheme
     $: constraints =  $state.constraints ?? DEFAULT_CONSTRAINTS
 
     let url = ""

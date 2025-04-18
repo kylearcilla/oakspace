@@ -37,6 +37,7 @@
     $: position = $picker.position
     $: isOpen   = $picker.isOpen
     $: isLight  = !$themeState.isDarkTheme
+    $: dmenuId  = $picker.dmenuId
 
     let searchResults = [] as SearchResults
     let searchQuery = ""
@@ -501,21 +502,21 @@
 <svelte:window on:keydown={handleKeyDown}/>
 
 <BounceFade 
-    dmenuId="emoji-picker"
-    zIndex={10000}
+    zIndex={20000}
     isHidden={!isOpen}
     position={{
       top: `${position.top}px`,
       left: `${position.left}px`
     }}
     onClickOutside={() => {
-        dismounting = true
-        close()
+      dismounting = true
+      close()
     }}
+    {dmenuId}
     {onDismount}
 >
   {#if categories}
-    <div 
+    <div
       class="emoji-picker"
       class:emoji-picker--light={isLight}
     >
@@ -786,6 +787,7 @@
           width: calc(100% - 30px);
           @include flex(center);
           margin: 9px 0px 10px 3px;
+          padding: 6px 10px 7px 10px;
 
           i {
             @include text-style(0.5, _, 1.4rem);
@@ -802,7 +804,7 @@
           width: 100%;
           appearance: none;
           margin: 0px 10px 0px 8px;
-          padding-top: 0.5px;
+          padding: 0px;
 
           &::-webkit-search-cancel-button {
             display: none;

@@ -143,6 +143,17 @@ export const LIGHT_COLOR_PROGRESS = {
   gVal: 212, bVal: 145
 }
 
+export const EMPTY_COLOR = {
+  light1: "20, 20, 20",
+  light2: "200, 200, 200", 
+  light3: "140, 140, 140",
+  dark1: "255, 255, 255",
+  dark2: "30, 30, 30",
+  dark3: "35, 35, 35",
+  dark4: "25, 25, 25",
+  name: "empty"
+}
+
   
 export function getColorByName(name: string) {
   return COLOR_SWATCHES.find(color => color.name === name)
@@ -180,12 +191,18 @@ export function getColorTrio(color: Color, doGetLight: boolean): [string, string
 }
 
 export function getSwatchColors({ color, light, contrast = true }: { 
-  color: Color
+  color: Color | null
   light: boolean 
   contrast?: boolean
 }) {
 
-  if (light) {
+  if (!color && light) {
+    return [EMPTY_COLOR.light1, EMPTY_COLOR.light2, EMPTY_COLOR.light3]
+  }
+  else if (!color) {
+    return [EMPTY_COLOR.dark1, EMPTY_COLOR.dark2, EMPTY_COLOR.dark3]
+  }
+  else if (light) {
     return [color.light1, color.light2, color.light3]
   }
   else {

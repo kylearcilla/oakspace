@@ -7,6 +7,7 @@
 	import { Icon } from "$lib/enums";
 	import AccomplishedIcon from "./AccomplishedIcon.svelte";
 	import { formatDateLong } from "$lib/utils-date";
+	import ProgressBar from "./ProgressBar.svelte";
 
     export let goal: Goal
     export let pinned: boolean = false
@@ -28,21 +29,20 @@
         dueType = "date",
         description: showDesc = true,
         due: showDue = true,
+        progress: showProgress = true,
         tag: showTag = true
     } = options || {}
 
     $: isLight = !$themeState.isDarkTheme
     $: showImg = options?.img ?? false
-    $: tagColor = tag ? getColorTrio(tag.symbol.color, isLight) : ["", "", ""]
+    $: tagColor = goal.tag ? getColorTrio(goal.tag.symbol.color, isLight) : ["", "", ""]
     $: onOptionsChange(options)
-
-
-    let { name, description, tag, img, status, completedDate } = goal
 
     function onOptionsChange(options: any) {
         dueType = options.dueType
         showDue = options.due
         showTag = options.tag
+        showProgress = options.progress
     }
     function getDueString(goal: Goal, type: "distance" | "date") {
         const { due, dueType } = goal
@@ -51,86 +51,96 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div 
-    class="goal-card"
-    class:goal-card--light={isLight}
-    class:goal-card--completed={status === "accomplished"}
-    class:goal-card--highlighted={highlighted}
-    class:goal-card--hoz={type === "hoz"}
->
-    {#if showImg && img}
-        <div class="goal-card__img">
-            <img src={img.src} alt="Goal item">
-        </div>
-    {/if}
-    <div class="goal-card__details">
-        <div>
-            <div class="flx-top-sb">
-                <button 
-                    class="goal-card__title"
-                    on:click={() => setViewGoal(goal)}
-                >
-                    {name}
-                </button>
-                {#if status === "accomplished" && completedDate && type === "hoz"}
-                    <div title={`Completed on ${formatDateLong(completedDate)}`}>
-                        <AccomplishedIcon scale={0.65} />
+{#if goal}
+    {@const { name, description, tag, img, status, completedDate, tasks } = goal}
+    <div 
+        class="goal-card"
+        class:goal-card--light={isLight}
+        class:goal-card--completed={status === "accomplished"}
+        class:goal-card--highlighted={highlighted}
+        class:goal-card--hoz={type === "hoz"}
+    >
+        {#if showImg && img}
+            <div class="goal-card__img">
+                <img src={img.src} alt="Goal item">
+            </div>
+        {/if}
+        <div class="goal-card__details">
+            <div>
+                <div class="flx-top-sb">
+                    <button 
+                        class="goal-card__title"
+                        on:click={() => setViewGoal(goal)}
+                    >
+                        {name}
+                    </button>
+                    {#if status === "accomplished" && completedDate && type === "hoz"}
+                        <div title={`Completed on ${formatDateLong(completedDate)}`}>
+                            <AccomplishedIcon scale={0.65} />
+                        </div>
+                    {/if}
+                    {#if pinned}
+                        <div class="goal-card__pinned">
+                            <SvgIcon 
+                                icon={Icon.Pin} 
+                                options={{ scale: 1, opacity: 0.2, strokeWidth: 0.4 }} 
+                            />
+                        </div>
+                    {/if}
+                </div>
+                {#if showDesc && description}
+                    <div class="goal-card__description">
+                        {description}
                     </div>
                 {/if}
-                {#if pinned}
-                    <div class="goal-card__pinned">
-                        <SvgIcon 
-                            icon={Icon.Pin} 
-                            options={{ scale: 1, opacity: 0.2, strokeWidth: 0.4 }} 
-                        />
+                {#if tasks.length > 0 && showProgress}
+                    {@const checkCount = tasks.filter(task => task.isChecked).length}
+                    {@const total = tasks.length}
+                    <div style:margin="15px 0px 7px 0px">
+                        <ProgressBar progress={checkCount / total} />
                     </div>
                 {/if}
             </div>
-            {#if showDesc && description}
-                <div class="goal-card__description">
-                    {description}
-                </div>
-            {/if}
-        </div>
-        <div 
-            class="goal-card__bottom"
-            class:hidden={!tag && !showDue}
-        >
-            {#if showDue}
-                {@const { dueStr } = getDueString(goal, dueType)}
+            <div 
+                class="goal-card__bottom"
+                class:hidden={!tag && !showDue}
+            >
+                {#if showDue}
+                    {@const { dueStr } = getDueString(goal, dueType)}
 
-                <div 
-                    class="goal-card__due"
-                    style:margin-bottom={"0px"}
-                >
-                    {dueStr}
-                </div>
-            {/if}
-            {#if tag && showTag}
-                <div 
-                    class="goal-card__tag tag"
-                    style:--tag-color-primary={tag?.symbol.color.primary}
-                    style:--tag-color-1={tagColor[0]}
-                    style:--tag-color-2={tagColor[1]}
-                    style:--tag-color-3={tagColor[2]}
-                    title={tag.name}
-                >
-                    <div class="tag__title" style:font-size="1.225rem">
-                        {tag?.name}
+                    <div 
+                        class="goal-card__due"
+                        style:margin-bottom={"0px"}
+                    >
+                        {dueStr}
                     </div>
-                </div>
-            {:else}
-                <div 
-                    class="goal-card__due"
-                    class:no-bg={true}
-                    style:padding="2px"
-                >
-                    <span>{kebabToNormal(status)}</span>
-                </div>
-            {/if}
+                {/if}
+                {#if tag && showTag}
+                    <div 
+                        class="goal-card__tag tag"
+                        style:--tag-color-primary={tag?.symbol.color.primary}
+                        style:--tag-color-1={tagColor[0]}
+                        style:--tag-color-2={tagColor[1]}
+                        style:--tag-color-3={tagColor[2]}
+                        title={tag.name}
+                    >
+                        <div class="tag__title" style:font-size="1.225rem">
+                            {tag?.name}
+                        </div>
+                    </div>
+                {:else}
+                    <div 
+                        class="goal-card__due"
+                        class:no-bg={true}
+                        style:padding="2px"
+                    >
+                        <span>{kebabToNormal(status)}</span>
+                    </div>
+                {/if}
+            </div>
         </div>
     </div>
-</div>
+{/if}
 
 <style lang="scss">
     @mixin focus {

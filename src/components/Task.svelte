@@ -24,13 +24,12 @@
     let subtasks: Task[] = []
     let checkedSubtasks = 0
     let doCheck = false
-    let type = settings.type
-    let atMaxDepth = level + 1 === $manager.tasks.maxDepth
+    let atMaxDepth = level + 1 === $manager.settings.maxDepth
     let allowEdit = settings.allowEdit
 
     $: isDark = $themeState.isDarkTheme
     $: pickedTask = $manager.pickedTask
-    $: contextMenuOpen = $manager.contextMenuOpen
+    $: contextMenuOpen = $manager.contextMenu
 
     $: dragAction = $manager.dragAction
     $: dragTarget = $manager.dragTarget
@@ -89,7 +88,9 @@
             class="task__top-content"
             class:task__top-content--highlight={dragTarget?.id != task.id}
             class:task__top-content--focused={isFocused}
-            on:pointerdown={(e) => $manager.onPointerDown(e, task)}
+            on:pointerdown={(e) => {
+                $manager.onPointerDown(e, task)
+            }}
             on:contextmenu|preventDefault={(e) => {
                 onContextMenu(e, task.id, isChild)
             }}
@@ -100,10 +101,7 @@
             }}
         >
             <!-- checkbox or number -->
-            <div 
-                bind:clientWidth={leftSideWidth}
-                class="task__left"
-            >
+            <div class="task__left" bind:clientWidth={leftSideWidth}>
                 <div>
                     {#if numbered}
                         <div class="task__number">
@@ -159,18 +157,6 @@
                         spellcheck="false"
                         data-placeholder="Title goes here..."
                         contenteditable={allowEdit}
-                        on:click={() => { 
-                            $manager.onTaskTitleClick({
-                                id: task.id,
-                                doExpand: !isChild,
-                                isChild
-                            })
-                        }}
-                        on:pointerdown={(e) => {
-                            if (!allowEdit) {
-                                e.preventDefault()
-                            }
-                        }}
                     >
                         {task.title}
                     </div>

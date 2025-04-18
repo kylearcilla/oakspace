@@ -8,7 +8,7 @@
     import SvgIcon from "./SVGIcon.svelte"
 
     export let tag: Tag | null
-    export let onChoose: (newTag: Tag | null) => void
+    export let onClick: () => void
     export let styling: StylingOptions | undefined = undefined
 
     let { fontSize = "1.285rem" } = styling || {}
@@ -17,31 +17,6 @@
     $: empty = !tag
     $: isDarkTheme = $themeState.isDarkTheme
     $: tagColor = tag ? getColorTrio(tag.symbol.color, !isDarkTheme) : null
-
-
-    function onTagClicked(newTag: Tag | null) {
-        if (newTag) {
-            onChoose(newTag)
-        } 
-        tagPicker.close()
-        pickerOpen = false
-    }
-    function toggleTagPicker() {
-        pickerOpen = !pickerOpen
-        pickerOpen ? initTagPicker() : tagPicker.close()
-    }
-
-    function initTagPicker() {
-        tagPicker.init({
-            onClose: () => {
-                pickerOpen = false
-            },
-            props: {
-                tag,
-                onTagClicked
-            }
-        })
-    }
 </script>
 
 <div class="tag-picker-btn" class:tag-picker-btn--light={!isDarkTheme}>
@@ -57,7 +32,7 @@
         style:--tag-color-2={tagColor ? tagColor[1] : ""}
         style:--tag-color-3={tagColor ? tagColor[2] : ""}
         style={inlineStyling(styling)}
-        on:click={() => toggleTagPicker()}
+        on:click={() => onClick()}
     >
         {#if tag}
             <div class="flx-center">

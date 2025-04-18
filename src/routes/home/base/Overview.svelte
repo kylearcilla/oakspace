@@ -125,6 +125,7 @@
                 weeks[w][d] = data[7 * w + d]!
             }
 	    }
+        weeks = weeks
     }
     function addGoal(date: Date) {
         setViewGoalNew({ timeFrame, day: date })
@@ -183,7 +184,7 @@
         initEditEntry(entry)!
 
         const { left, top } = acalRef!.getBoundingClientRect()
-        clientPos = { left: pe.clientX, top: pe.clientY }
+        initClientPos(e)
 
         contextMenuPos = initFloatElemPos({
             dims: { 
@@ -212,6 +213,10 @@
         else {
             return count * 50 + 150
         }
+    }
+    function initClientPos(e: Event) {
+        const pe = e as PointerEvent
+        clientPos = { left: pe.clientX, top: pe.clientY }
     }
     function onViewOption(optn: string) {
         const { habits, goals, sessions } = editEntry!
@@ -249,7 +254,7 @@
                 width: acalRef!.clientWidth
             },
             cursorPos: {
-                left: clientPos.left - left,
+                left: clientPos.left - left - 30,
                 top: clientPos.top - top + 20
             }
         })
@@ -286,7 +291,7 @@
 
 {#if options.textBlock && monthEntry}
     {#key monthEntry}
-        <div style:margin="-2px 0px 0px 0px">
+        <div style:margin="-2px 0px -18px 0px">
             <TextEntry 
                 id="month"
                 zIndex={50}
@@ -312,10 +317,7 @@
             <div class="acal__dow">Fri</div>
             <div class="acal__dow">Sat</div>
         </div>
-        <div 
-            class="acal__month"
-            bind:clientWidth={gridWidth}
-        >
+        <div class="acal__month" bind:clientWidth={gridWidth}>
             {#each weeks as week, weekIdx}
                 <div class="acal__week">
                     {#each week as entry}
@@ -327,7 +329,7 @@
             
                         <!-- svelte-ignore a11y-no-static-element-interactions -->
                         <div 
-                            data-habit={habits?.trueChecked}
+                            data-goals={`${goals?.length}`}
                             class="acal__day"
                             class:acal__day--drag-over={dragOverDate && isSameDay(date, dragOverDate)}
                             class:acal__day--edit={editEntry?.date && isSameDay(date, editEntry.date)}
@@ -368,9 +370,17 @@
                                     </div>
                                     {#if showFocus && sessions && sessions.length > 0}
                                         {@const focusTimeStr = getTotalFocusTimeStr(sessions)}
-                                        <div class="acal__focus" title="Focus Time">
+                                        <button 
+                                            class="acal__focus hov-underline" 
+                                            title="Focus Time"
+                                            on:click={(e) => {
+                                                initClientPos(e)
+                                                initEditEntry(entry)
+                                                onViewOption("Focus Time")
+                                            }}
+                                        >
                                             {focusTimeStr}
-                                        </div>
+                                        </button>
                                     {/if}
                                 </div>
 
@@ -384,26 +394,26 @@
                                             {@const tag = goal.tag}
                                             {@const symbol = tag?.symbol ?? null}
                                             {@const color = symbol?.color ?? null}
-                                            {@const colors = color ? getSwatchColors({ color, light: isLight, contrast: false}) : []}
+                                            {@const colors = getSwatchColors({ color, light: isLight, contrast: false})}
                                             {@const completed = goal.status === "accomplished"}
                                             <!-- svelte-ignore a11y-interactive-supports-focus -->
                                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                                             <div 
                                                 title={goal.name}
-                                                tabindex={0}
                                                 role="button"
+                                                tabindex={0}
                                                 draggable={true}
                                                 class="acal__goal"
-                                                class:acal__goal--empty={!symbol}
+                                                class:acal__goal--empty={!tag}
                                                 class:acal__goal--completed={completed}
                                                 class:acal__goal--active={goalClicked === goal}
                                                 style:--tag-color-primary={symbol?.color.primary}
                                                 style:--tag-color-1={colors[0]}
                                                 style:--tag-color-2={colors[1]}
                                                 style:--tag-color-3={colors[2]}
+                                                style:--tag-bg-opacity={!tag && isLight ? 0.3 : 1}
                                                 on:pointerdown={(e) => pointerDown(e, goal)}
                                                 on:pointerup={() => pointerUp()}
-                                                on:drag={(e) => e.preventDefault()}
                                                 on:dragover={(e) => {
                                                     e.preventDefault()
                                                 }}
@@ -418,8 +428,7 @@
                                                             on:click={() => toggleGoalStatus(goal)}
                                                         >
                                                             <AccomplishedIcon 
-                                                                tag={tag ?? undefined}
-                                                                scale={0.65}
+                                                                tag={tag ?? undefined} scale={0.65}
                                                             />
                                                         </button>
                                                     {:else}
@@ -429,13 +438,12 @@
                                                         >    
                                                         </button>
                                                     {/if}
-
-                                                    {#if symbol}
-                                                        <div class="flx-center">
+                                                    <div class="flx-center">
+                                                        {#if symbol}
                                                             <i>{symbol.emoji}</i>
-                                                            <span>{goal.name}</span>
-                                                        </div>
-                                                    {/if}
+                                                        {/if}
+                                                        <span>{goal.name}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         {/each}
@@ -525,7 +533,7 @@
     >
         {#if editEntry}
             {@const date = editEntry?.date ?? new Date()}
-            {@const { habits, goals, sessions } = editEntry}
+            {@const { goals, sessions } = editEntry}
 
             <div class="acal__day-view">
                 <div class="acal__day-view-header">
@@ -537,7 +545,7 @@
                     {:else if dayView === "goals" && goals}
                         <DailyGoals {goals} {date} />
                     {:else if dayView === "sessions" && sessions}
-                        <DailySessions {date} {sessions}/>
+                        <DailySessions {sessions}/>
                     {/if}
                 </div>
             </div>
@@ -561,7 +569,7 @@
         position: relative;
 
         --dark-cell-opac: 0.0115;
-        --obscure-cell-opac: 0.2;
+        --obscure-cell-opac: 0.1;
         --hover-opacity: 0.02;
         --hover-opacity-dark: 0.035;
         
@@ -617,26 +625,18 @@
             &:hover &-add-btn {
                 opacity: 0.2;
             }
+            &--not-curr-month &-num {
+                opacity: var(--obscure-cell-opac);
+            }
             &--first-col {
                 background-color: rgba(var(--textColor1), var(--dark-cell-opac));
-
-                &:hover {
-                    background-color: rgba(var(--textColor1), var(--hover-opacity-dark)) !important;
-                }
             }
             &--last-col {
                 border-right: var(--divider-border);
                 background-color: rgba(var(--textColor1), var(--dark-cell-opac));
-
-                &:hover {
-                    background-color: rgba(var(--textColor1), var(--hover-opacity-dark)) !important;
-                }
             }
             &--bottom-row {
                 border-bottom: var(--divider-border);
-            }
-            &--not-curr-month &-num {
-                opacity: var(--obscure-cell-opac);
             }
             &--today &-num {
                 background-color: var(--calMarkColor);
@@ -676,7 +676,7 @@
         }
         &__day-num {
             @include center;
-            @include text-style(1, var(--fw-400-500), 1.2rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.2rem);
             margin: 2px 6px 2px 2px;
         }
         &__star {
@@ -692,7 +692,7 @@
             overflow: hidden;
             position: relative;
             padding: 4.5px 10px 5.5px 8px;
-            background-color: rgba(var(--tag-color-2), 1) !important;
+            background-color: rgba(var(--tag-color-2), var(--tag-bg-opacity)) !important;
             border-radius: 7px;
             white-space: nowrap;
             margin: 2px 0px 2px 2px;
@@ -710,7 +710,7 @@
             i {
                 font-style: normal;
                 font-size: 0.85rem;
-                margin: 0px 6px 0px 7px;
+                margin: 0px 6px 0px 0px;
             }
             span {
                 @include text-style(0.9, var(--fw-400-500), 1.225rem);
@@ -719,12 +719,12 @@
             }
         }
         &__goal-done-icon {
-            margin-left: -3px;
+            margin: 0px 8px 0px -3px;
         }
         &__goal-checkbox {
-            @include square(12px, 3px);
+            @include square(15px, 5px);
             background-color: rgba(var(--tag-color-1), 0.1);
-            margin: 0px 2px 0px -2px;
+            margin: 0px 7.5px 0px -2px;
 
             &:hover {
                 background-color: rgba(var(--tag-color-1), 0.2);
@@ -732,7 +732,7 @@
         }
         &__goal-cutoff {
             @include text-style(0.225, var(--fw-400-500), 1.15rem);
-            margin: 1px 3px 0px 4px;
+            margin: 4px 3px 6px 4px;
             float: right;
         }
 

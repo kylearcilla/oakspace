@@ -96,6 +96,7 @@ export class TasksListManager {
     scrollWindowCursorPos: OffsetPoint = { left: 0, top: 0 }
     scrollInterval: NodeJS.Timer | null = null
     debounceTimer: NodeJS.Timer | null = null
+    editor: TextEditorManager | null = null
     
     /* constants */
     SCROLL_INTERVAL = 25
@@ -332,6 +333,7 @@ export class TasksListManager {
      * Expands task only if it's a root task.
      */
     onTaskDescriptionFocus(id: string, isChild: boolean) {
+        console.log("xxx")
         if (!this.settings.allowEdit) {
             return
         }
@@ -401,7 +403,8 @@ export class TasksListManager {
         this.editMode = null
         this.justEdited = "edited"
 
-        this.update({ editTask: null, editMode: null })
+        this.editor = null
+        requestAnimationFrame(() => this.update({ editTask: null, editMode: null }))
     }
 
     /**
@@ -424,7 +427,7 @@ export class TasksListManager {
         }
         const initValue = field === "title" ? this.editTask.title : this.editTask.description
     
-        const editor = new TextEditorManager({
+        this.editor = new TextEditorManager({
             initValue,
             placeholder:  field === "title" ? "Title goes here..." : "No description",
             doAllowEmpty: field === "title" ? false : true,
@@ -435,15 +438,9 @@ export class TasksListManager {
 
         // making new task (sometimes contenteditable will take on previous text on add task above)
         if (!this.editTask.title) {
-            requestAnimationFrame(() => editor.updateText(initValue))
+            requestAnimationFrame(() => this.editor!.updateText(initValue))
         }
-    
-        elem.onpaste = (e) => editor.onPaste(e)
-        elem.oninput = (e) => editor.onInputHandler(e)
-        elem.onfocus = (e) => editor.onFocusHandler(e)
-        elem.onblur = (e) => editor.onBlurHandler(e)
-
-        requestAnimationFrame(() => editor.focus())
+        requestAnimationFrame(() => this.editor!.focus())
     }
 
     saveNewTitle = async () => {
@@ -512,7 +509,6 @@ export class TasksListManager {
 
     onPointerDown(e: PointerEvent, task: Task) {
         const target = e.target as HTMLElement
-
         if (e.button !== 0 || this.isTargetEditElem(target) || !this.settings.allowEdit) {
             return
         }
@@ -740,7 +736,6 @@ export class TasksListManager {
         parentId: string | null,
         type:  "sibling" | "child"
     }) {
-        const hasClientTaskHandler = !!this.options.handlers?.onAddTask
         const count = this.tasks.getTaskCount({ rootOnly: true })
         const { max, maxSubtasks } = this.settings
 
@@ -749,7 +744,7 @@ export class TasksListManager {
             return
         }
 
-        const tempId   = hasClientTaskHandler ? "69" : uuidv4()
+        const tempId  = uuidv4()
         const newIdx  =  idx ?? this.tasks.getSubtasks(parentId).length
         const isChild =  type === "child"
 
@@ -870,13 +865,22 @@ export class TasksListManager {
     getSubtasks(id: string) {
         return this.tasks.getSubtasks(id)
     }
+
     isAtMaxDepth(task: Task) {
         return this.tasks.isAtMaxDepth(task.id)
     }
+
     /* client handlers*/
 
     async finalizeAddTask(newTask: Task, action: "add" | "duplicate", added: Task[]) {
-        if (!this.options.handlers?.onAddTask) return
+        if (!this.options.handlers?.onAddTask) {
+            // needs > 1 rerender to solve issue where a reordering a newly added task will duplicate the title
+            // this gets rid of the text added by contentEditable editor
+            // this is to say, rerender so user sees the true 
+
+            this.tasks.updateTaskId(newTask.id, uuidv4())
+            return
+        }
         const tasks = this.tasks.getAllTasks()
 
         const res = await this.options.handlers.onAddTask({
@@ -1112,10 +1116,6 @@ export class TasksListManager {
             event.preventDefault()                  
             this.handleArrowkeyPressed(key)
         }
-        else if (!isEditing && key === "Escape") {
-            event.preventDefault()
-            this.closeRootTask()
-        }
 
         if (isEditing || !this.focusTask) return
 
@@ -1176,7 +1176,6 @@ export class TasksListManager {
         const taskContainer = this.getElemById("tasks-list")!
         return [...taskContainer.querySelectorAll(".task:not(.task--dummy)")]
     }
-
 
     getElemById(queryId: string) {
         const idPrefix = this.options.id
@@ -1262,7 +1261,7 @@ export class TasksListManager {
 
     initContextMenu() {
         const { focusTask, settings } = this
-        const { ui, id } = this.options
+        const { id } = this.options
         const { allowDuplicate } = settings
         const hasSubtasks = settings.subtasks && this.isAtMaxDepth(focusTask!)
         const options = {

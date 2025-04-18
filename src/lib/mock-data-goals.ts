@@ -448,10 +448,9 @@ export const YEARS: Record<string, YearEntry> = {
                 src: "https://i.pinimg.com/originals/42/f3/e6/42f3e6dd32467736bdc85dc8a6038e35.gif",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Growth</strong> <code>noun</code>
+            entry: `<strong>Growth</strong> noun
 Growth is the steady development 🌱, the progress that <i>builds gradually</i>.
 It's embracing <i>challenges</i> that stretch your capabilities, the <u>transformation that happens</u> with persistence 📈.
 To grow is to step outside comfort zones, to learn from setbacks, and to celebrate small victories, 💪.
@@ -471,10 +470,9 @@ It's about <i>becoming more</i>, investing in potential, and finding strength in
                 src: "https://i.pinimg.com/736x/ef/fb/f3/effbf31760c27673d5add67fa439522d.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Exploration</strong> <code>noun</code>
+            entry: `<strong>Exploration</strong> noun
 Exploration is the curious discovery 🧭, the adventure that <i>expands horizons</i>.
 It's pursuing <i>new paths</i> and unexpected opportunities, the <u>experiences that broaden</u> perspectives 🌍.
 To explore is to ask deeper questions, to try unfamiliar approaches, and to welcome diverse encounters, 🔍.
@@ -504,10 +502,9 @@ export const MONTH_ENTIRES: Record<string, PeriodEntry> = {
                 src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Comfort</strong> <code>noun</code>
+            entry: `<strong>Comfort</strong> noun
 Comfort is the gentle exhale 🧣, the relaxation that <i>finally arrives</i>.
 It's sinking into <i>home couches</i> after months away, the <u>warmth that wraps</u> around familiar places 🏠.
 To find comfort is to share family meals, to slow your pace, and to shed academic pressure, 🔥.
@@ -523,10 +520,9 @@ It's about <i>winding down</i>, reconnecting with loved ones, and finding ease i
                 src: "https://i.pinimg.com/736x/94/c9/dc/94c9dc78c021d0e11535beca257262c9.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Fresh</strong> <code>noun</code>
+            entry: `<strong>Fresh</strong> noun
 Renewal is the fresh start 📚, the opportunity that <i>begins now</i>.
 It's the blank <i>planner</i> waiting to be filled, the <u>clean slate</u> of a new semester 📅.
 To renew is to set achievable goals, to approach classes with energy, and to implement better habits, 🌱.
@@ -542,10 +538,9 @@ It's about <i>starting strong</i>, meeting new classmates, and finding excitemen
                 src: "https://i.pinimg.com/736x/81/3f/2d/813f2d5902d825cc520ef0f790d3a69d.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Renewal</strong> <code>noun</code>
+            entry: `<strong>Renewal</strong> noun
 Renewal is the gentle awakening 🌱, the hope that <i>blossoms softly</i>.
 It's watching <i>flowers</i> emerge from dormant ground, the <u>promise that unfolds</u> in tender green 🌷.
 To renew is to breathe in fresh air, to feel possibility returning, and to shed winter's heaviness, 🍃.
@@ -561,10 +556,9 @@ It's about <i>starting again</i>, embracing change, and finding joy in nature's 
                 src: "https://i.pinimg.com/736x/b7/d1/10/b7d11030947b7bd4d9cb619a50d654da.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Focus</strong> <code>noun</code>
+            entry: `<strong>Focus</strong> noun
 Focus is the productive flow 🎯, the concentration that <i>gets results</i>.
 It's the <i>study routine</i> that finally works, the <u>clarity of purpose</u> during midterms 📝.
 To focus is to minimize distractions, to work efficiently, and to make progress toward goals, 💪.
@@ -580,10 +574,9 @@ It's about <i>being intentional</i>, prioritizing what matters, and finding sati
                 src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Growth</strong> <code>noun</code>
+            entry: `<strong>Growth</strong> noun
 Growth is the measurable progress 📈, the improvement that <i>builds confidence</i>.
 It's seeing <i>concepts</i> connect across subjects, the <u>skills developing</u> with practice 🧠.
 To grow is to push beyond comfort zones, to ask questions, and to seek out challenges, 🌱.
@@ -599,10 +592,9 @@ It's about <i>embracing feedback</i>, implementing new methods, and finding your
                 src: "https://i.pinimg.com/736x/44/48/fc/4448fc485d48145e44f9abe522bb5aa0.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Freedom</strong> <code>noun</code>
+            entry: `<strong>Freedom</strong> noun
 Freedom is the well-earned break 🎉, the possibility that <i>summer brings</i>.
 It's the chance to <i>explore</i> interests outside class, the <u>time to recharge</u> and reset 🌞.
 To be free is to read for pleasure, to sleep without alarms, and to reconnect with hobbies, 😎.
@@ -618,10 +610,9 @@ It's about <i>finding balance</i>, enjoying downtime, and finding joy in simple 
                 src: "https://i.pinimg.com/736x/7b/ce/49/7bce49a5ea4ea6e11f39de0b58976993.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Adventure</strong> <code>noun</code>
+            entry: `<strong>Adventure</strong> noun
 Adventure is the summer experience 🧭, the exploration that <i>broadens horizons</i>.
 It's trying <i>new activities</i> and visiting new places, the <u>memories created</u> with friends 🚗.
 To adventure is to say yes to opportunities, to step outside comfort zones, and to collect experiences, 🌍.
@@ -637,10 +628,9 @@ It's about <i>being spontaneous</i>, discovering new passions, and finding excit
                 src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Serenity</strong>  <code>noun</code>
+            entry: `<strong>Serenity</strong>  noun
 Serenity is the gentle stillness 🌊, the calm that <i>flows within</i>.
 It's the soft glow of <i>dawn</i> breaking over quiet waters, the <u>peace that settles</u> in solitude 🌅.
 To be serene is to find balance in chaos, to breathe deeply, and to rest in the present, 🍃.
@@ -656,10 +646,9 @@ It's the art of <i>letting go</i>, embracing tranquility, and finding clarity in
                 src: "https://i.pinimg.com/736x/72/44/08/724408c450ce38a7be258ed489d8c64d.jpg",
                 size: "small"
             },
-            date: new Date(2024, 11),
             truncate: true,
             styling: "has-marker",
-            entry: `<strong>Preparation</strong> <code>noun</code>
+            entry: `<strong>Preparation</strong> noun
 Preparation is the excited planning 🎒, the organization that <i>creates confidence</i>.
 It's setting up <i>systems</i> for success, the <u>foundation being built</u> for achievements 📋.
 To prepare is to gather resources, to set semester goals, and to visualize success, 📝.

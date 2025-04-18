@@ -48,7 +48,8 @@
 	import { themes } from "$lib/data-themes"
 	import HabitViewModal from "$components/HabitViewModal.svelte";
 	import GoalViewModal from "$components/GoalViewModal.svelte";
-
+  import TagPicker from "$components/TagPicker.svelte";
+  
   export let data
 
   let toggledLeftBarWithKey = false
@@ -383,6 +384,7 @@
 <EmojiPicker/>
 <ImgUpload/>
 <AbsoluteFloatElem/>
+<TagPicker/>
 
 <style lang="scss">
     @import "../../scss/toasts.scss";

@@ -1,3 +1,4 @@
+
 <script lang="ts">
 	import { onMount } from "svelte";
 
@@ -117,11 +118,14 @@
     }
     /* layout */
     function getMinHeight(focused: boolean) {
+        const size = icon?.size ?? null
+        const type = icon?.type ?? null
+
         if (focused) {
-            return icon?.size === "big" ? 125 : 70
+            return !size || type === "emoji" ? 20 :  size === "big" ? 125 : 70 
         }
         else {
-            return icon?.size === "big" ? 100 : 35
+            return !size || type === "emoji" ? 20 :  size === "big" ? 100 : 52
         }
     }
     function setMarkerHeight() {
@@ -133,7 +137,7 @@
             markerHeight = Math.max(minHeight, markerHeight - 25)
         }
         else {
-            markerHeight = textEditorElem.clientHeight - padding + 1
+            markerHeight = Math.max(minHeight, textEditorElem.clientHeight - padding - 2)
         }
     }
     function updateStyling(styling: string, icon: any) {
@@ -142,61 +146,62 @@
         /* no icon */
         if (styling === "default" && !icon) {
             margin = "0px 0px 25px -12px"
-            padding = "4px 14px 0px 13px"    
+            padding = "4px 14px 0px 13px"
         }
         else if (styling === "background" && !icon) {
-            margin = "5px 0px 5px 0px"
+            margin = "5px 0px 10px 0px"
             padding = "5px 14px 14px 14px"
             txtBottomPadding = "0px"
         }
         else if (styling === "has-marker" && !icon) {
-            margin = "0px 0px 10px 0px"
+            margin = "0px 0px 20px 0px"
             padding = "5px 12px 5px 16px"
             txtBottomPadding = "0px"
         }
         /* emoji */
         else if (styling === "default" && type === "emoji") {
-            margin = "0px 0px 0px -14px"
-            padding = "5px 14px 14px 14px"
+            margin = "0px 0px 15px -14px"
+            padding = "5px 14px 7px 14px"
         }
         else if (styling === "background" && type === "emoji") {
-            margin = "8px 0px 15px 0px"
-            padding = "4px 14px 4px 13px"
-            txtBottomPadding = "15px"
+            margin = "8px 0px 20px 0px"
+            padding = "4px 14px 10px 13px"
+            txtBottomPadding = "20px"
         }
         else if (styling === "has-marker" && type === "emoji") {
-            margin = "4px 0px 10px 0px"
+            margin = "0px 0px 10px 0px"
             padding = "4px 14px 5px 14px"
-            txtBottomPadding = "0px"
+            txtBottomPadding = "12px"
         }
         /* big */
         else if (styling === "default" && size === "big") {
-            margin = "0px 0px 20px -15px"
+            margin = "0px 0px 35px -15px"
             padding = "3px 0px 0px 13px"
         }
         else if (styling === "background" && size === "big") {
-            margin = "10px 0px 15px 0px"
-            padding = "3px 14px 7px 13px"
-            txtBottomPadding = "20px"
+            margin = "10px 0px 20px 0px"
+            padding = "3px 14px 14px 13px"
+            txtBottomPadding = "12px"
         }
         else if (styling === "has-marker" && size === "big") {
-            margin = "0px 0px 0px 0px"
-            padding = "4px 14px 12px 14px"
+            margin = "0px 0px 25px 0px"
+            padding = "4px 14px 4px 14px"
         }
         /* med */
         else if (styling === "default") {
-            margin = "-2px 0px 16px -16px"
+            margin = "-2px 0px 35px -16px"
             padding = "4px 14px 0px 13px"
             txtBottomPadding = "9px"
         }
         else if (styling === "background") {
-            margin = "8px 0px 9px -2px"
+            margin = "8px 0px 12px -2px"
             padding = "4px 14px 14px 13px"
             txtBottomPadding = "0px"
         }
         else if (styling === "has-marker") {
             margin = "0px 0px 20px 0px"
             padding = "4px 14px 0px 13px"
+            txtBottomPadding = "10px"
         }
     }
     function getTextEditorHeight() {
@@ -217,19 +222,16 @@
             id,
             onSubmitIcon: (newIcon) => {
                 icon = { ...icon, ...newIcon } as TextEntryIcon
-                icon.size = icon.type === "emoji" ? "small" : "big"
                 entry.icon = icon
-                requestAnimationFrame(() => setMarkerHeight())
+                requestAnimationFrame(() => {
+                    displayHeight = getTextEditorHeight()
+                    textGradient = ""
+                    setMarkerHeight()
+                    handleEditorStyle(textEditorElem)
+                })
             }
         })
     }
-    function onIconSizeChange(size: string) {
-        icon!.size = size.toLowerCase() as "small" | "big"
-        imgSizeOpen = false
-        imgOpen = false
-    }
-    
-
     onMount(() => {
         handleEditorStyle(textEditorElem)
         updateData(entry)
@@ -239,8 +241,8 @@
 
 <div 
     style:height={`${containerHeight}px`}
-    style:position={"relative"}
-    style:has-marker-top={"-1.5px"}
+    style:position="relative"
+    style:has-marker-top="-1.5px"
     style:--z-index={zIndex}
     style:--img-size={icon?.size === "big" ? "100px" : "50px"}
     style:--marker-height={`${markerHeight - 0}px`}
@@ -289,9 +291,9 @@
                 class="text-editor"
                 contenteditable
                 spellcheck="false"
-                style={`${textGradient}; max-height: ${icon?.size === "big" ? "120px" : "90px"}; overflow: ${focused ? "auto" : "hidden"}`}
+                style={`${textGradient}; max-height: ${icon?.size === "big" ? "110px" : "90px"}; overflow: ${focused ? "auto" : "hidden"}`}
                 bind:this={textEditorElem}
-                on:scroll={(e) => {
+                on:scroll={() => {
                     handleEditorStyle(textEditorElem)
                 }}
             >
@@ -320,7 +322,7 @@
                 id={`${id}--style-dbtn`}
                 on:click={() => styleOpen = !styleOpen}
             >
-                Styling
+                Appearance
             </button>
         </div>
 
@@ -331,12 +333,7 @@
             options={{
                 listItems: [
                     {
-                        name: "Truncate",
-                        active: truncate,
-                        onToggle: () => {
-                            truncate = !truncate
-                            entry.truncate = truncate
-                        }
+                        sectionName: "Styling",
                     },
                     {
                         name: "Background",
@@ -346,15 +343,24 @@
                     {
                         name: "Divider",
                         active: toStyle === "has-marker",
+                        divider: true,
                         onToggle: () => onStylingChange("has-marker")
-                    }
+                    },
+                    {
+                        name: "Truncate",
+                        active: truncate,
+                        onToggle: () => {
+                            truncate = !truncate
+                            entry.truncate = truncate
+                        }
+                    },
                 ],
                 styling: { 
                     minWidth: "140px",
                     zIndex: 1
                 },
                 position: { 
-                    bottom: "-90px", 
+                    bottom: "-120px", 
                     right: "0px"
                 },
                 onClickOutside: () => {
@@ -368,25 +374,25 @@
             isHidden={!imgOpen}
             options={{
                 styling: { 
-                    minWidth: "140px",
+                    minWidth: "120px",
                     zIndex: 1,
                 },
                 position: { 
-                    bottom: "-70px", 
-                    left: `10px`,
+                    bottom: icon?.type === "emoji" ? "-60px" : "-100px",
+                    left: "10px",
                 },
                 listItems: [
                     { 
                         name: icon ? "Replace Icon" : "Add Icon"
                     },
                     {
-                        name: icon && icon.type === "img" ? "Icon Size" : "",
-                        childId: `${id}--img-sizes`,
-                        onPointerOver: () => {
-                            imgSizeOpen = true
-                        },
-                        onPointerLeave: () => {
-                            imgSizeOpen = false
+                        name: icon?.type === "img" ? "Bigger" : "",
+                        active: icon?.size === "big",
+                        onToggle: () => {
+                            imgSizeOpen = !imgSizeOpen
+                            if (icon?.type === "img") {
+                                icon.size = icon.size === "small" ? "big" : "small"
+                            }
                         },
                         divider: true
                     },
@@ -401,6 +407,7 @@
                     }
                     else if (name === "Remove") {
                         icon = null
+                        imgOpen = false
                     }
                 },
                 onClickOutside: () => {
@@ -408,34 +415,7 @@
                 }
             }}
         />
-    
-        <DropdownList 
-            id={`${id}--img-dmenu`}
-            childId={`${id}--img-sizes`}
-            isHidden={!imgSizeOpen}
-            options={{
-                pickedItem: capitalize(icon?.size ?? ""),
-                listItems: [
-                    { name: "Small" },
-                    { name: "Big" },
-                ],
-                styling:  { 
-                    minWidth: "90px",
-                    zIndex: 2
-                },
-                position: { 
-                    bottom: "-70px", 
-                    left: `152px`,
-                },
-                parentId: `${id}--img-dmenu`,
-                onListItemClicked: ({ name: size }) => {
-                    onIconSizeChange(size)
-                },
-                onPointerLeave: () => {
-                    imgSizeOpen = false
-                }
-           }}
-        />
+
     </div>
 
 </div>

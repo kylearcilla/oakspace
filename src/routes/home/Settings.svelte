@@ -438,7 +438,6 @@
     $section-spacing: 8px;
 
     .settings {
-        padding: $settings-modal-padding;
         width: 55vw;
         height: 630px;
         max-width: 650px;

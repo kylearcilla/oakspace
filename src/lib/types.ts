@@ -51,6 +51,7 @@ type InputOptions = {
 
 type AbsoluteFloatElem = {
     id: string
+    dmenuId: string
     bounceId: string
     isHidden: boolean
     props: any
@@ -230,9 +231,11 @@ type IconType = "emoji" | "img"
 /* emojis */
 
 type EmojiPicker = {
-    position: OffsetPoint,
-    isOpen: boolean,
+    position: OffsetPoint
+    isOpen: boolean
+    dmenuId: string
     onSubmitEmoji: (emoji: Emoji) => void
+    onClose?: () => void
 }
 
 type EmojiData = {
@@ -311,6 +314,13 @@ type ModalOptions = {
     scaleUp?: boolean
 }
 
+type TagPicker = {
+    tag: Tag | null
+    position: OffsetPoint
+    isOpen: boolean
+    onClose?: () => void
+    onSubmitTag: (tag: Tag) => void
+}
 
 /* øverview Calendar */
 
@@ -507,6 +517,7 @@ type Color = {
 }
 
 type ColorPicker = {
+    dmenuId: string
     isOpen: boolean
     position: OffsetPoint
     onSubmitColor: (color: Color) => void
@@ -863,7 +874,7 @@ type SessionResult = {
 
 type Tag = {
     id: string
-    orderIdx: number
+    idx: number
     name: string,
     symbol: {
         color: Color,
@@ -1414,6 +1425,7 @@ type GoalsViewOptions = {
     progress: number
     list: GoalsListOptions
     board: GoalsBoardOptions
+    period?: "month" | "quarter"
 }
 
 type GoalsListOptions = {

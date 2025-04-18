@@ -23,6 +23,9 @@ const ICON_PICKER_WIDTH  = 175
 const EMOJI_PICKER_HEIGHT = 305
 const EMOJI_PICKER_WIDTH  = 380
 
+const TAG_PICKER_HEIGHT = 305
+const TAG_PICKER_WIDTH  = 380
+
 export let imageUpload = ImageUpload()
 export let emojiPicker = EmojiPicker()
 
@@ -85,11 +88,16 @@ function ImageUpload() {
 function EmojiPicker() {
     const state: Writable<EmojiPicker> = writable({ 
         position: { top: -1000, left: -1000 },
+        dmenuId: "",
         isOpen: false,
-        onSubmitEmoji: () => {}
+        onSubmitEmoji: () => {},
     })
 
-    function init({ onSubmitEmoji }: { onSubmitEmoji: (emoji: Emoji) => void}) {
+    function init({ onSubmitEmoji, onClose, dmenuId = "emoji-picker" }: { 
+        onSubmitEmoji: (emoji: Emoji) => void,
+        onClose?: () => void
+        dmenuId?: string
+    }) {
         const position = getPopFloatElemPos({ 
             height: EMOJI_PICKER_HEIGHT, width: EMOJI_PICKER_WIDTH 
         })
@@ -99,7 +107,7 @@ function EmojiPicker() {
             return
         }
 
-        state.set({ isOpen: true, position, onSubmitEmoji })
+        state.set({ isOpen: true, position, dmenuId, onSubmitEmoji, onClose })
     }
     function onSubmitEmoji(emoji: Emoji) {
         const { onSubmitEmoji } = get(state)
@@ -107,7 +115,12 @@ function EmojiPicker() {
         close()
     }
     function close() {
+        const { onClose } = get(state)
         state.update((data) => ({ ...data, isOpen: false }))
+
+        if (onClose) {
+            onClose()
+        }
     }
 
     return { state, init, onSubmitEmoji, close }
@@ -163,15 +176,68 @@ function IconPicker() {
     return { init, close }
 }
 
+function TagPicker() {
+    const state: Writable<TagPicker> = writable({ 
+        tag: null,
+        position: { top: -1000, left: -1000 },
+        isOpen: false,
+        onSubmitTag: () => {}
+    })
+
+    function init({ onSubmitTag, tag, onClose = () => {} }: {
+        tag: Tag | null
+        onClose?: () => void
+        onSubmitTag: (tag: Tag) => void
+    }) {
+        if (get(state).isOpen) {
+            close()
+            return
+        }
+        const position = getPopFloatElemPos({ 
+            height: TAG_PICKER_HEIGHT, width: TAG_PICKER_WIDTH 
+        })
+        position.top += 25
+        position.left -= 10
+
+        state.set({ 
+            isOpen: true, 
+            position, 
+            onSubmitTag, 
+            onClose,
+            tag,
+        })
+    }
+    function onSubmitTag(tag: Tag) {
+        const { onSubmitTag } = get(state)
+        onSubmitTag(tag)
+        close()
+    }
+    function close() {
+        const { onClose } = get(state)
+        state.update((data) => ({ ...data, isOpen: false }))
+
+        if (onClose) {
+            onClose()
+        }
+    }
+
+    return { state, init, onSubmitTag, close }
+}
+
 function ColorPicker() {
-    function init({ onSubmitColor, picked, id = "color-picker", onClose = () => {} }: { 
+    function init({ 
+        picked, 
+        dmenuId = "color-picker", 
+        onSubmitColor, 
+        onClose = () => {}
+    }: { 
         onSubmitColor: (color: Color) => void
         picked: Color | null
-        id?: string
+        dmenuId?: string
         onClose?: () => void 
     }) {
         return absoluteElem.init({
-            id,
+            id: dmenuId,
             props: { onSubmitColor, picked },
             dims: { height: 370, width: 150 },
             offset: { top: 25, left: -30 },
@@ -204,27 +270,17 @@ function DatePicker() {
     return { init, close }
 }
 
-function TagPicker() {
-    function init({ props, onClose, id = "tag-picker" }: {
-        id?: string, props: TagPickerProps, onClose: () => void
-    }) {
-        return absoluteElem.init({
-            id,
-            props,
-            onClose,
-            component: TagPickerComponent
-        })
-    }
-    function close(id?: string) {
-        absoluteElem.close(id)
-    }
-    return { init, close }
-}
-
 function AbsoluteFloatElem() {
     const state: Writable<AbsoluteFloatElem[]> = writable([])
 
-    function init({ component, props, offset = { top: 18, left: -35 }, dims, id, onClose }: { 
+    function init({ 
+        id, 
+        dims, 
+        component, 
+        props, 
+        offset = { top: 18, left: -35 }, 
+        onClose
+    }: { 
         component: ComponentType 
         offset?: { top: number, left: number }
         dims?: { height: number, width: number }
@@ -251,13 +307,13 @@ function AbsoluteFloatElem() {
             props,
             position,
             component,
+            dmenuId: id,
             id: id,
             bounceId: id,
             onClose,
             isHidden: false
         }])
     }
-
     function close(id?: string) {
         state.update(elems => {
             const targetId = id || elems[elems.length - 1]?.id
@@ -280,7 +336,7 @@ function AbsoluteFloatElem() {
     }
 }
 
-function getPopFloatElemPos(box: { height: number, width: number }) {
+export function getPopFloatElemPos(box: { height: number, width: number }) {
     const { height, width } = box
 
     const fromPos = {

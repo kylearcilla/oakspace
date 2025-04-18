@@ -999,15 +999,17 @@ export function removeItemArr<T extends { idx: number }>({
   array,
   itemIdx
 }: { array: T[], itemIdx: number }): T[] {
-  const newArray = array.filter(item => item.idx !== itemIdx)
+  const itemIndex = array.findIndex(item => item.idx === itemIdx)
+  array.splice(itemIndex, 1)
   
-  for (let i = 0; i < newArray.length; i++) {
-    if (newArray[i].idx > itemIdx) {
-      newArray[i].idx -= 1
+  // Update indices for all items that had a higher index
+  array.forEach(item => {
+    if (item.idx > itemIdx) {
+      item.idx -= 1
     }
-  }
+  })
   
-  return newArray
+  return array
 }
 
 /**

@@ -4,11 +4,11 @@
 	import { goalTracker, themeState } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
-	import { PERIODS } from "$lib/utils-goals"
 	import { GoalsViewManager } from "$lib/goals-view-manager"
+    import { getWeekPeriodStr, months } from "$lib/utils-date"
 	import { getYearBounds, loadMonthView, saveMonthView } from "$lib/utils-home"
-    import { getNextMonth, getPrevMonth, getWeekPeriodStr, months } from "$lib/utils-date"
 	import { getElemById, getHozSpace, getMaskedGradientStyle, kebabToNormal, normalToKebab } from "$lib/utils-general"
+	import { getCurrentPeriod, getIdxFromMo, getMoFromIdx, getPeriodDate, getPeriodIdx, getPeriodStr, switchMoQuPeriod } from "$lib/utils-goals"
 
 	import YearView from "./YearView.svelte"
 	import Overview from "./Overview.svelte"
@@ -30,11 +30,12 @@
     let goalsView: GoalsViewOptions = {
         view: "list",
         progress: 0.5,
+        period: "month",
         list: {
             grouping: "status",
             showProgress: true,
             due: false,
-            dueType: "date"
+            dueType: "date",
         },
         board: {
             grouping: "status",
@@ -80,23 +81,23 @@
     let width = 0
     let renderFlag = false
     
-    let currMonth = today // for overview and goals
+    let periodIdx = today.getMonth()
+    let periodYearCurrent = true
+    let periodStr = months[today.getMonth()]
+    let periodDate = new Date()
+
+    // for goals & overview
+    let timeFrame = getCurrentPeriod("month")
     let currYear = today.getFullYear() // for year view
     let weeksAgoIdx = 0 // for habits
-    let timeFrame: { year: number, period: string }
     
     let leftArrow: HTMLButtonElement | null = null
     let rightArrow: HTMLButtonElement | null = null
-    
     let gradient = ""
 
     initOptions()
     
     $: isLight = !$themeState.isDarkTheme
-
-    $: currMoStr = months[currMonth.getMonth()]
-    $: isMoCurrYr = currMonth.getFullYear() === today.getFullYear()
-
     $: gm_progress = $goalsViewState?.viewProgress
     
     $: if ($goalTracker.init && !goalsInit) initGoalsView()
@@ -109,16 +110,126 @@
         gradient = ""
     }
 
-    function updateTimeFrame() {
-        timeFrame = { 
-            year: currMonth.getFullYear(), 
-            period: months[currMonth.getMonth()].slice(0, 3).toLowerCase()
-        }
-        
-        // update goals
-        goalsViewManager!.setViewPeriod({ ...timeFrame })
+    /* time frame */
+    function initGoalsView() {
+        if (goalsInit) return
+
+        goalsViewManager = new GoalsViewManager({ 
+            goals: [], 
+            grouping: goalsView.list.grouping,
+            timeFrame
+        })
+
+        goalsViewState = goalsViewManager.state
+        goalsInit = true
+        updateGoalData()
+    }
+    function updateGoalData() {
+        goalsViewManager!.setViewPeriod(timeFrame!)
         goalTracker.update(data => ({ ...data, view: goalsViewManager }))
     }
+    function updatePeriodStrs() {
+        periodYearCurrent = timeFrame.year === today.getFullYear()
+
+        periodIdx = getPeriodIdx(timeFrame)
+        periodDate = getPeriodDate(timeFrame)
+        periodStr = getPeriodStr(timeFrame)
+    }
+    function toggleGoalViewPeriod() {
+        const newPeriod = switchMoQuPeriod(timeFrame)
+        periodYearCurrent = newPeriod.year === today.getFullYear()
+        timeFrame = newPeriod
+        
+        updateGoalData()
+        updatePeriodStrs()
+    }
+    function updatePeriodIdx(dir: "left" | "right") {
+        let newIdx = dir === "left" ? periodIdx - 1 : periodIdx + 1
+        let periodYr = timeFrame.year
+        let updateMo = currView === "overview" || (currView === "goals" && goalsView.period === "month")
+
+        if (updateMo) {
+            if (newIdx < 0) {
+                periodIdx = 11
+                periodYr--
+            }
+            else if (newIdx >= 12) {
+                periodIdx = 0
+                periodYr++
+            }
+            else {
+                periodIdx = newIdx
+            }
+            timeFrame = { year: periodYr, period: getMoFromIdx(periodIdx) }
+        }
+        else {
+            if (newIdx < 0) {
+                periodIdx = 3
+                periodYr--
+            }
+            else if (newIdx >= 4) {
+                periodIdx = 0
+                periodYr++
+            }
+            else {
+                periodIdx = newIdx
+            }
+            timeFrame = { year: periodYr, period: `q${periodIdx + 1}` }
+        }
+
+        updatePeriodStrs()
+        updateGoalData()
+    }
+    function resetGoalPeriod() {
+        // switch to current time period when switching to overview / goals view
+        if (currView === "goals" && goalsView.period === "quarter") {
+            timeFrame = getCurrentPeriod("quarter")
+        }
+        else {
+            timeFrame = getCurrentPeriod("month")
+        }
+        updateGoalData()
+        updatePeriodStrs()
+    }
+    function onArrowBtnClicked(dir?: "left" | "right") {
+        if (leftArrow == null || rightArrow == null) return
+
+        if (currView === "yr-view") {
+            if (dir === "left") {
+                currYear--
+            }
+            else if (dir === "right") {
+                currYear++
+            }
+        }
+        else if (currView === "habits") {
+            if (dir === "left") {
+                weeksAgoIdx = Math.min(5, weeksAgoIdx + 1)
+            }
+            else if (dir === "right") {
+                weeksAgoIdx = Math.max(0, weeksAgoIdx - 1)
+            }
+        }
+        else {
+            updatePeriodIdx(dir!)
+        }
+        allowArrowHandler(currView)
+    }
+    function allowArrowHandler(context: "overview" | "goals" | "habits" | "yr-view") {
+        if (context === "yr-view") {
+            leftArrow!.disabled = currYear <= minDate.getFullYear()
+            rightArrow!.disabled = currYear >= maxDate.getFullYear()
+        }
+        else if (context === "habits") {
+            leftArrow!.disabled = weeksAgoIdx === 5
+            rightArrow!.disabled = weeksAgoIdx === 0
+        }
+        else {
+            leftArrow!.disabled = periodDate <= minDate
+            rightArrow!.disabled = periodDate >= maxDate
+        }
+    }
+    /* options*/
     function initOptions() {
         const { overview, goals, habits, year } = loadMonthView()
 
@@ -126,21 +237,6 @@
         if (goals) goalsView = goals
         if (habits) habitView = habits
         if (year) yearView = year
-    }
-    function initGoalsView() {
-        if (goalsInit) return
-        const currYear = today.getFullYear()
-        const viewPeriod = PERIODS[today.getMonth()]
-
-        goalsViewManager = new GoalsViewManager({ 
-            goals: [], 
-            grouping: goalsView.list.grouping,
-            timeFrame: { year: currYear, period: viewPeriod }
-        })
-
-        goalsViewState = goalsViewManager.state
-        goalsInit = true
-        updateTimeFrame()
     }
     function viewOption(optn: string, val?: string) {
         const type = goalsView.view
@@ -181,6 +277,14 @@
         else if (optn === "Show Image") {
             goalsView.board.imgs = !goalsView.board.imgs
         }
+        else if (optn === "Time Period") {
+            const newView = val as "month" | "quarter"
+
+            if (newView !== goalsView.period) {
+                goalsView.period = newView
+                toggleGoalViewPeriod()
+            }
+        }
         /* habits */
         else if (optn === "Group") {
             habitView.view = val as "default" | "time-of-day"
@@ -214,47 +318,6 @@
             yearView.pinnedGoals = !yearView.pinnedGoals
         }
     }
-    function onArrowBtnClicked(dir?: "left" | "right") {
-        if (leftArrow == null || rightArrow == null) return
-
-        if (currView === "yr-view") {
-            if (dir === "left") {
-                currYear--
-            }
-            else if (dir === "right") {
-                currYear++
-            }
-            allowArrowHandler("year")
-        }
-        else if (currView === "habits") {
-            if (dir === "left") {
-                weeksAgoIdx = Math.min(5, weeksAgoIdx + 1)
-            }
-            else if (dir === "right") {
-                weeksAgoIdx = Math.max(0, weeksAgoIdx - 1)
-            }
-            allowArrowHandler("weeks")
-        }
-        else {
-            currMonth = dir === "left" ? getPrevMonth(currMonth) : getNextMonth(currMonth)
-            updateTimeFrame()
-            allowArrowHandler("month")
-        }
-    }
-    function allowArrowHandler(context: "year" | "month" | "weeks") {
-        if (context === "year") {
-            leftArrow!.disabled = currYear <= minDate.getFullYear()
-            rightArrow!.disabled = currYear >= maxDate.getFullYear()
-        }
-        else if (context === "month") {
-            leftArrow!.disabled = currMonth <= minDate
-            rightArrow!.disabled = currMonth >= maxDate
-        }
-        else if (context === "weeks") {
-            leftArrow!.disabled = weeksAgoIdx === 5
-            rightArrow!.disabled = weeksAgoIdx === 0
-        }
-    }
 
     /* listeners */
     function onViewBtnClicked(view: MonthDetailsView) {
@@ -277,13 +340,16 @@
         btnHighlighter.width = width - 2
         btnHighlighter.left  = Math.max(left, 0) + scrollLeft
 
+        // reset
         currYear = today.getFullYear()
-        currMonth = today
         weeksAgoIdx = 0
+
         leftArrow!.disabled = false
         rightArrow!.disabled = false
 
-        updateTimeFrame()
+        if (currView === "overview" || currView === "goals") {
+            resetGoalPeriod()
+        }
     }
     function handleScroll(elem: HTMLElement | null) {
         if (!elem) return
@@ -366,8 +432,10 @@
                                 style:margin="4px -1px 0px 12px"
                                 style:font-size="1.4rem"
                             >   
-                                <span>{currMoStr}</span>
-                                <span class:hidden={isMoCurrYr}>{currMonth.getFullYear()}</span>
+                                <span>{periodStr}</span>
+                                <span class:hidden={periodYearCurrent}>
+                                    {timeFrame.year}
+                                </span>
                             </div>
                         {:else if currView === "habits"}
                             <div 
@@ -386,16 +454,15 @@
                                 class="flx-center"
                                 style:margin="4px -1px 0px 12px"
                                 style:font-size="1.4rem"
-                                data-month={currMonth}
                             >
                                 <div style:margin="1px 12px 0px 0px">
                                     <ProgressBar progress={gm_progress}/>
                                 </div>
                                 <span>
-                                    {currMoStr}
+                                    {periodStr}
                                 </span>
-                                <span class:hidden={isMoCurrYr} style:margin-left="9px">
-                                    {currMonth.getFullYear()}
+                                <span class:hidden={periodYearCurrent} style:margin-left="9px">
+                                    {timeFrame.year}
                                 </span>
                             </div>
                         {:else if currView === "yr-view"}
@@ -523,7 +590,6 @@
                         { 
                             name: "Grouping",
                             pickedItem: kebabToNormal(goalsView[goalsView.view].grouping),
-                            divider: true,
                             items: [
                                 { name: goalsView.view === "list" ? "Default" : "" },
                                 { name: "Status" },
@@ -531,6 +597,18 @@
                             ],
                             onListItemClicked: ({ name }) => {
                                 viewOption("Grouping", normalToKebab(name))
+                            }
+                        },
+                        { 
+                            name: "View By",
+                            pickedItem: kebabToNormal(goalsView.period || "month"),
+                            divider: true,
+                            items: [
+                                { name: "Month" },
+                                { name: "Quarter" }
+                            ],
+                            onListItemClicked: ({ name }) => {
+                                viewOption("Time Period", normalToKebab(name))
                             }
                         },
                         { 
@@ -819,8 +897,8 @@
             opacity: 1 !important;
         }
         &__highlight {
-            @include abs-bottom-left(-2px);
-            height: 3.5px;
+            @include abs-bottom-left(1px);
+            height: 2px;
             background-color: rgba(var(--textColor1), 0.9);
             transition: 0.18s cubic-bezier(.4, 0, .2, 1);
         }

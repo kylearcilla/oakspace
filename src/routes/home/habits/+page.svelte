@@ -85,7 +85,7 @@
     class="habits" 
     class:habits--light={light}
     class:habits--banner-linked={bannerLinked}
-    style:--left-width={showHabitsLeft ? "135px" : "0px"}
+    style:--left-width={showHabitsLeft ? "140px" : "0px"}
 >
     <div class="habits__content">
         {#if showHabitsLeft}
@@ -217,6 +217,8 @@
             margin-left: 0.5em;
             opacity: 0.65;
             width: fit-content;
+            max-width: 80%;
+            @include elipses-overflow;
 
             &:hover {
                 opacity: 1;

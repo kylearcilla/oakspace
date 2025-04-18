@@ -74,11 +74,11 @@
         }
         button {
             opacity: var(--btn-opacity);
-            margin-top: 20px;
+            margin-top: 15px;
             background-color: rgba(var(--textColor1), var(--btn-bg-opacity));
-            padding: 8px 17px 9px 17px;
+            padding: 7px 17px 8px 17px;
             border-radius: 4px;
-            @include text-style(1, var(--fw-400-500), 1.2rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.14rem, "Geist Mono");
             
             &:hover {
                 opacity: 1;

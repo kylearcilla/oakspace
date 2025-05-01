@@ -30,7 +30,7 @@ export const TIMES_OF_DAY_MAP: { [key: string]: number } = {
 export const HABIT_MONTH_STATS_CACHE: Record<string, HabitMonthMetrics> = {}      // y-mo-habit: habit stats
 export const HABITS_MONTH_STATS_CACHE: Record<string, HabitMonthMetrics> = {}     // y-mo:      habits stats
 
-export const HABIT_MONTH_DATA_CACHE: Record<string, HabitHeatMapDay[]> = {}   // y-mo-habit: habit data
+export const HABIT_MONTH_DATA_CACHE: Record<string, HabitHeatMapDay[]> = {}       // y-mo-habit: habit data
 export const HABITS_MONTH_HEATMAP_CACHE: Record<string, HabitHeatMapData[]> = {}  // y-mo:       habits data
 
 /* inits + caches */
@@ -160,6 +160,7 @@ export function getHabitsYearHeatMap(year: number) {
     const map = []
     let idx = 0
 
+
     for (let i = 0; i <= toMonth; i++) {
         const data = HABITS_MONTH_HEATMAP_CACHE[`${year}-${i}`]
 
@@ -186,6 +187,7 @@ export function getHabitYearHeatMap(year: number, habit: Habit) {
         cache[key] ||= getHabitMonthData({ habit, monthIdx: i, year })
 
         const data = cache[key]
+        const nowMonth = now.getMonth() === i
 
         for (let day = 0; day < data.length; day++) {
             const { date, done, due, trueDone, noData } = data[day]
@@ -198,7 +200,7 @@ export function getHabitYearHeatMap(year: number, habit: Habit) {
 /**
  * Get all habit data for a month.
  */
-export async function getMonthHabitsHeatMap(year: number, monthIdx: number) {
+export async function getMonthOverviewData(year: number, monthIdx: number) {
     const now = new Date()
     const map = []
     const cache = HABITS_MONTH_HEATMAP_CACHE
@@ -281,7 +283,7 @@ function calculateYearMetrics({ type, toMonth, habit, year }: {
         missed: 0
     }
     const statsCache = type === "all" ? HABITS_MONTH_STATS_CACHE : HABIT_MONTH_STATS_CACHE
-    const mapCache = type === "all" ? HABITS_MONTH_HEATMAP_CACHE : HABIT_MONTH_DATA_CACHE
+    const mapCache = type === "all" ? HABITS_MONTH_HEATMAP_CACHE : `HABIT_MONTH_DATA_CACHE`
     const days: HabitHeatMapData[] = []
     
     let longestStreak = { count: 0, start: new Date(), end: new Date() }
@@ -555,9 +557,17 @@ export function getHabitWeekDayData({ habit, weeksAgoIdx }: {
 }) {
     const { start, end } = getWeekBounds(weeksAgoIdx)
 
-    const s_data =  HABIT_MONTH_DATA_CACHE[`${start.getFullYear()}-${start.getMonth()}--${habit.id}`]
-    const e_data =  HABIT_MONTH_DATA_CACHE[`${end.getFullYear()}-${end.getMonth()}--${habit.id}`]
+    const s_month = start.getMonth()
+    const s_year = start.getFullYear()
+    const e_month = end.getMonth()
+    const e_year = end.getFullYear()
+
+    let s_data =  HABIT_MONTH_DATA_CACHE[`${s_year}-${s_month}--${habit.id}`]
+    let e_data =  HABIT_MONTH_DATA_CACHE[`${e_year}-${e_month}--${habit.id}`]
     const data: HabitHeatMapDay[] = []
+
+    s_data ||= getHabitMonthData({ habit, monthIdx: s_month, year: s_year })
+    e_data ||= getHabitMonthData({ habit, monthIdx: e_month, year: e_year })
 
     for (let i = 0; i < s_data.length; i++) {
         if (betweenDates(s_data[i].date, start, end)) {
@@ -873,7 +883,7 @@ export function getHabitTableData({ habit, timeFrame, weekIdx, currMonth, dayPro
     return data
 }
 
-export function getDayHabistData(date: Date) {
+export function getDayHabitsData(date: Date) {
     const key = `${date.getFullYear()}-${date.getMonth()}`
     const month = HABITS_MONTH_HEATMAP_CACHE[key]
 
@@ -956,15 +966,30 @@ function getSatIdx(day: number, date: Date): number {
 
 /* updates  */
 
-function resetHabitMonthData({ habit, date, resetYear }: { habit: Habit, date: Date, resetYear: boolean }) {
+/**
+ * Recalculates the data caches that need to be updated after a toggle complete for a day.
+ * 
+ * @param habit - The habit to reset the data for
+ * @param date  - The date to reset the data for
+ * @param resetYear - Whether to reset the year data
+ * @param days - The days to update the habits monthheat map cache for
+ */
+async function resetDataOnToggleComplete({ habit, date, resetYear, days }: { habit: Habit, date: Date, resetYear: boolean, days?: Date[] }) {
     const year = date.getFullYear()
     const monthIdx = date.getMonth()
-    const mkey = `${year}-${monthIdx}--${habit.id}`
+    const mKey = `${year}-${monthIdx}`
+    const hKey = `${mKey}--${habit.id}`
     const yKey = `${year}-${monthIdx}`
 
-    HABIT_MONTH_DATA_CACHE[mkey] = getHabitMonthData({ habit, monthIdx, year })
-    HABIT_MONTH_STATS_CACHE[mkey] = getHabitMonthMetrics({ habit, monthIdx, year })
+    HABIT_MONTH_STATS_CACHE[hKey] = getHabitMonthMetrics({ habit, monthIdx, year })
     HABITS_MONTH_STATS_CACHE[yKey] = getHabitsMonthMetrics({ habits, monthIdx, year })
+
+    HABIT_MONTH_DATA_CACHE[hKey] = getHabitMonthData({ habit, monthIdx, year })
+
+    // update HABITS_MONTH_HEATMAP_CACHE
+    if (days) {
+        updateHeatMapCache({ date, days })
+    }
 
     if (resetYear) {
         YEAR_DATA_CACHE[year] = {
@@ -985,7 +1010,7 @@ export function toggleCompleteHabit({ habit, date, currMonth }: {
     toggleHabitYearBit({ habit, date })
 
     if (!sameMonth) {
-        resetHabitMonthData({ habit, date, resetYear: !sameYear })
+        resetDataOnToggleComplete({ habit, date, resetYear: !sameYear })
     }
 
     habitTracker.update((state) => {
@@ -999,10 +1024,9 @@ export function toggleCompleteHabit({ habit, date, currMonth }: {
         state.habits = habits
         state.activeStreak = getActiveStreak()
 
-        resetHabitMonthData({ habit, date: currMonth, resetYear: true })
+        resetDataOnToggleComplete({ habit, date: currMonth, resetYear: true, days })
+        
         state.monthMetrics = HABITS_MONTH_STATS_CACHE[`${year}-${monthIdx}`]
-
-        updateHeatMapCache({ date, days })
         state.yearHeatMap = YEAR_DATA_CACHE[year].yearHeatMap
         state.yearMetrics = YEAR_DATA_CACHE[year].yearMetrics
 
@@ -1258,7 +1282,7 @@ export function saveViewOptions({ pageView, tableView, cardView }: {
 
 export function getMinYear() {
     const user = get(globalContext).user
-    const createdYear = new Date(user.createdAt).getFullYear()
+    const createdYear = new Date(user.created).getFullYear()
     return createdYear - 1
 }
 

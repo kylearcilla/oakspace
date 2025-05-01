@@ -310,7 +310,7 @@
 
     .active-routine {
         border-radius: 13px;
-        padding: 2px 0px 0px 0px;
+        padding: 2px 0px 10px 0px;
         position: relative;
         width: 340px;
         max-width: 340px;

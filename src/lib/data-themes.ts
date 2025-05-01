@@ -120,7 +120,7 @@ export const themes: Theme[] = [
             lightColor2: "#d3cbbd",
             calMarkColor: "#6b5f4f",
             textEntryBgColor: "#dcd6cd",
-            modalBgColor: "#f4efe6",
+            modalBgColor: "#f1ebdf",
             modalBgAccentColor: "#EFEBDD",
             bentoBoxBgColor: "#FBF7E9",
             bentoBoxBorder: "none",

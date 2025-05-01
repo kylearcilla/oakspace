@@ -7,12 +7,9 @@ import { initFloatElemPos } from "./utils-general"
 import { ALLOWED_IMAGE_TYPES } from "./utils-media-upload"
 import { DEFAULT_MAX_SIZE_MB } from "./utils-media-upload"
 
-import TagPickerComponent from "$components/TagPicker.svelte"
-import ImgUploadComponent from "$components/ImgUpload.svelte"
 import DatePickerComponent from "$components/DatePicker.svelte"
 import IconPickerComponent from "$components/IconPicker.svelte"
 import ColorPickerComponent from "$components/ColorPicker.svelte"
-import EmojiPickerComponent from "$components/EmojiPicker.svelte"
 
 const IMG_DIM_HEIGHT = 290
 const IMG_DIM_WIDTH  = 460
@@ -24,7 +21,7 @@ const EMOJI_PICKER_HEIGHT = 305
 const EMOJI_PICKER_WIDTH  = 380
 
 const TAG_PICKER_HEIGHT = 305
-const TAG_PICKER_WIDTH  = 380
+const TAG_PICKER_WIDTH  = 320
 
 export let imageUpload = ImageUpload()
 export let emojiPicker = EmojiPicker()

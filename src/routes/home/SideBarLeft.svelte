@@ -40,6 +40,7 @@
     
     $: isDarkTheme = $themeState.isDarkTheme
     $: open = $globalContext.leftBarOpen
+    $: user = $globalContext.user
     $: updateSelectTab($page.url.pathname)
 
     $: if (activeTheme != "dark") {
@@ -67,27 +68,14 @@
     }
     function selectTabBtn(tabStr: string) {
         const option = tabStr.toLowerCase()
+
+        console.log(option)
         
-        if (option === "home") {
-            goto("/home")
-        }
-        else if (option === "goals") {
-            goto("/home/goals")
-        }
-        else if (option === "habits") {
-            goto("/home/habits")
-        }
-        else if (option === "routines") {
-            goto("/home/routines")
-        }
-        else if (option === "workspace") {
-            goto("/home/space")
-        }
-        else if (option === "themes") {
+        if (option === "themes") {
             openModal(ModalType.Themes)
         }
         else if (option === "settings") {
-            // openModal(ModalType.Settings)
+            openModal(ModalType.Settings)
         }
         else if (option === "help") {
             helpOpen = !helpOpen
@@ -124,6 +112,16 @@
 
         helpOpen = false
     }
+    function getTabHref(option: string) {
+        switch(option) {
+            case "home": return "/home"
+            case "goals": return "/home/goals"
+            case "habits": return "/home/habits" 
+            case "routines": return "/home/routines"
+            case "workspace": return "/home/space"
+            default: return null
+        }
+    }
 </script>
 
 <div 
@@ -137,11 +135,11 @@
 >
     <div>
         <div class="bar__profile">
-            <img src="https://i.pinimg.com/474x/87/7a/f8/877af84ee302075f969be04f809a0e5f.jpg" alt="">
+            <img src={user.profileImg} alt="">
             <div class="bar__profile-details">
-                <span class="bar__profile-name">
-                    Kyle Arcilla
-                </span>
+                <div class="bar__profile-name">
+                    {user.name}
+                </div>
             </div>
         </div>
     
@@ -155,17 +153,16 @@
                     </div>
                 {/if}
                 {#if name === "Workspace"}
-                    <div 
-                        class="bar__tab-section"
-                        style:margin={"10px 0px 6px 7px"}
-                    >
+                    <div class="bar__tab-section" style:margin="10px 0px 6px 7px">
                         Appearance
                     </div>
                 {/if}
-                <div class="bar__icon-tab-container">
-                    <button 
+                <div style:width="100%">
+                    <a 
+                        href={getTabHref(name.toLowerCase())}
                         class="bar__tab-btn"
                         class:bar__tab-btn--selected={name === selectedTabName}
+                        style:width="calc(100% - 9px)"
                         on:click={() => {
                             handleTabBtnClicked(name, tabIdx)
                         }}
@@ -175,7 +172,7 @@
                     >
                         <i class={`${icon} bar__tab-btn-icon`}></i>
                         <span>{name}</span>
-                    </button>
+                    </a>
                 </div>
             {/each}
         </div>
@@ -185,7 +182,7 @@
         <div class="bar__tabs">
             {#each bottomTabs as tab, tabIdx}
                 {@const { name, icon } = tab}
-                <div class="bar__icon-tab-container">
+                <div style:width="100%">
                     <button 
                         data-dmenu-id={name === "Help" ? "left-bar" : ""}
                         class="bar__tab-btn"
@@ -350,14 +347,18 @@
                 opacity: 0.85;
             }
         }
+        a {
+            text-decoration: unset;
+        }
         &__divider {
             margin: 15px auto;
         }
         &__profile {
             position: relative;
             margin: 10px 0px 12px 14px;
+            width: 100%;
             @include flex(center);
-
+            
             img {
                 @include circle(20px);
                 object-fit: cover;
@@ -365,9 +366,12 @@
         }
         &__profile-details {
             margin-left: 10.5px;
+            width: 100%;
         }
         &__profile-name {
             @include text-style(0.9, var(--fw-400-500), 1.3rem);
+            @include elipses-overflow;
+            max-width: 80%;
         }
         &__tab-section {
             @include text-style(0.15, var(--fw-400-500), 1.1rem);

@@ -59,9 +59,9 @@
     $: weekRoutine       = $_weekRoutine
     $: weekRoutineElems  = $_weekRoutineElems as WeekBlockElems ?? []
     $: currViewOption    = $_currViewOption
-    $: editContext       = $_editContext
-    $: editBlock      = $_editBlock
-    $: contextMenuPos    = $_contextMenuPos
+    $: editContext = $_editContext
+    $: editBlock   = $_editBlock
+    $: contextMenuPos = $_contextMenuPos
     $: locked = contextMenuOpen || colorsOpen
     $: dayIdx = currTime.dayIdx
 
@@ -120,42 +120,7 @@
         contextMenuOpen = false
     }
     function deleteBlock() {
-        initUndoToast()
         manager.deleteEditBlock()
-    }
-    function initUndoToast() {
-        const block = editBlock!
-        const routineId = weekRoutine!.id
-        const dayKey = manager.editDayKey as keyof WeeklyRoutineBlocks
-
-        const onClick = () => {
-            if (routineId === weekRoutine!.id) {
-                manager.finishEdit(block, "new-stretch")
-                manager.updateSingleDayEdit()
-            }
-            else {
-                const routineIdx = routines.findIndex(r => r.id === routineId)
-                if (routineIdx >= 0) {
-                    const dayRoutine = routines[routineIdx].blocks[dayKey]
-                    if ("blocks" in dayRoutine) {
-                        dayRoutine.blocks.push(block)
-                    }
-                    else {
-                        dayRoutine.push(block)
-                    }
-                    routines = routines
-                }
-            }
-        }
-
-        toast("default", {
-            message: `"${block.title}" deleted.`,
-            contextId: "routines",
-            groupExclusive: true,
-            action: { 
-                label: "Undo", onClick
-            }
-        })
     }
     function onEditBlockPointerDown(e: PointerEvent) {
         if (!pointCaptureSet && editContext !== "duplicate") {
@@ -362,7 +327,7 @@
                         {/if}
     
                         <!-- floating or new block-->
-                        {#if editBlock && editContext && editContext !== "details"}
+                        {#if editBlock && editContext}
                             {@const colorTrio    = getColorTrio(editBlock.color, isLight)}
                             {@const startTimeStr = minsFromStartToHHMM(editBlock.startTime)}
                             {@const endTimeStr   = minsFromStartToHHMM(editBlock.endTime)}

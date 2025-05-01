@@ -25,8 +25,7 @@ label {
     display: inline-block;
 }
 body {
-    //   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-family: "Geist Mono";
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 img {
     -webkit-user-drag: none;
@@ -40,22 +39,6 @@ div[contenteditable] {
     -webkit-user-select: none;
 }
 
-/* Custom Fonts */
-@font-face {
-    font-family: 'Apercu Medium';
-    font-style: normal;
-    src: url("/src/fonts/Apercu\ Medium.woff2") format('woff2');
-}
-@font-face {
-    font-family: 'Apercu Bold';
-    font-style: normal;
-    src: url("/src/fonts/Apercu\ Bold.woff2") format('woff2');
-}
-@font-face {
-    font-family: 'Gordita Medium';
-    font-style: normal;
-    src: url("/src/fonts/Gordita\ Medium.woff2") format('woff2');
-}
 
 @mixin divider($opacity: 0.06, $height: 0.5px, $width: 100%) {
     width: $width;
@@ -298,7 +281,6 @@ input::placeholder {
     opacity: 0.3;
 }
 button {
-    font-weight: 600;
     font-size: 0.95rem;
     transition: 0.1s cubic-bezier(.4,0,.2,1);
     border-radius: 3px;

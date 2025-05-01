@@ -2,12 +2,29 @@
 
 // avoid checking, issues occur when enums are imported
 
+type User = {
+    name: string
+    profileImg: string
+    email: string
+    description: string
+    created: Date
+    pro: boolean
+    stats: {
+        goalsReached: number
+        habitsDone: number
+        sessions: number
+        focusTime: string
+        routinesMade: number
+    }
+}
+
 /* Misc. */
+
 type Result<T, E> = {
     result: T
     error: E
 }
-InputOptions
+
 type HhMmFormat = "full-letters" | "mid-letters" | "min-letters" | "numbers"
 
 type RoutineBlockEditContext = "old-stretch" | "lift" | "details" | "new-stretch" | "duplicate"
@@ -706,9 +723,9 @@ type KeyContext = {
 type HotkeyContext = "side-bar" | "default"  
 
 type GlobalContext = {
-    user: {
-        createdAt: Date
-    }
+    user: User
+    fontStyle: "mono" | "system"
+    showStats: boolean
     leftBarOpen: boolean
     leftBarFixed: boolean
     rightBarOpen: boolean

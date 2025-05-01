@@ -9,8 +9,22 @@ import { WEEKLY_ROUTINES } from '../tests/routines/routines.data'
 /* global ui */
 export const globalContext = writable<GlobalContext>({
     user: {
-        createdAt: new Date()
+        name: "Kyle Arcilla",
+        profileImg: "https://i.pinimg.com/736x/2a/72/37/2a7237c749f279f29d561f77daf566f7.jpg",
+        email: "kylearcilla09@gmail.com",
+        description: "Human",
+        pro: true,
+        created: new Date(2023, 7, 22),
+        stats: {
+            goalsReached: 18,
+            habitsDone: 1832,
+            sessions: 43,
+            focusTime: "111h 14m",
+            routinesMade: 10
+        }
     },
+    fontStyle: "system",
+    showStats: true,
     leftBarOpen: true,
     rightBarOpen: true,
     rightBarFixed: false,

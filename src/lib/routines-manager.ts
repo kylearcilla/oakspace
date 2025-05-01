@@ -937,10 +937,10 @@ export class RoutinesManager {
         excludeId,
         excludeDayCompare = false
     }: {
-        blocks: RoutineBlockElem[], 
-        startTime: number, 
-        endTime: number, 
-        excludeId?: string,
+        blocks: RoutineBlockElem[]
+        startTime: number 
+        endTime: number 
+        excludeId?: string
         excludeDayCompare?: boolean
     }) {
         const overlappingInterval = blocks.find((block) => {
@@ -1167,8 +1167,6 @@ export class RoutinesManager {
         else {
             placement = "top"
         }
-
-        console.log(placement)
 
         return placement
     }

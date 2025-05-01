@@ -68,7 +68,7 @@
     &__breakdown-btn {
         opacity: 0.2;
         padding: 2px 6px;
-        @include text-style(1, var(--fw-400-500), 1.225rem, "Geist Mono");
+        @include text-style(1, var(--fw-400-500), 1.25rem);
 
         &:hover {
             opacity: 1;

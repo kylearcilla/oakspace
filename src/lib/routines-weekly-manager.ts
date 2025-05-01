@@ -984,8 +984,8 @@ export class WeeklyRoutinesManager extends RoutinesManager {
      * @returns   Returns true if the two daily routines have the same linked routine, otherwise false.
      */
     hasSameLinkedRoutine({ weekRoutine, srcKey, queryKey }: { 
-        weekRoutine: WeeklyRoutine,
-        srcKey: keyof WeekBlockElems,
+        weekRoutine: WeeklyRoutine
+        srcKey: keyof WeekBlockElems
         queryKey: keyof WeekBlockElems
     }) {
         const srcDay   = weekRoutine.blocks[srcKey]
@@ -1080,7 +1080,7 @@ export class WeeklyRoutinesManager extends RoutinesManager {
      * @param newOptn   Chosen view option
      */
     updateCurrViewOption(newOptn: ViewOption) {
-        const todayIdx = (new Date().getDay() + 6) % 7
+        const todayIdx = new Date().getDay()
 
         if (newOptn === ViewOption.Today) {
             this.daysInView = [this.DAYS_WEEK[todayIdx]]
@@ -1133,12 +1133,23 @@ export class WeeklyRoutinesManager extends RoutinesManager {
         const isDragging = editBlock.isDragging
         const isDuplicate = editContext === "duplicate"
 
+        // duplicate position
         if (isDuplicate && !isDragging) {
             const landingOffsetIdx = editBlock.dropArea!.offsetIdx
             const offsetIdx = landingOffsetIdx >= 0 ? landingOffsetIdx : this.editOffsetIdx
 
             return this.getXOffsetFromDayIdx(offsetIdx)
         }
+        // details edit 
+        else if (!isDragging) {
+            const viewOptn = get(this.currViewOption)
+            const fss = viewOptn === ViewOption.FSS
+            const fssIdx = this.editDayIdx >= 5
+            const colIdx = fss && fssIdx ? this.editDayIdx - 4 : this.editDayIdx
+
+            return this.getXOffsetFromDayIdx(colIdx)
+        }
+        // floating x position
         else {
             return `${editBlock.xOffset + 2}px`
         }

@@ -1,78 +1,49 @@
 <script lang="ts">
-	import { SHORT_CUTS } from "$lib/data-general";
-	import { ModalType } from "$lib/enums";
-	import { themeState } from "$lib/store";
-	import { closeModal } from "$lib/utils-home";
-	import Modal from "../../components/Modal.svelte";
+	import { themeState } from "$lib/store"
+    
+    import { ModalType } from "$lib/enums"
+	import { closeModal } from "$lib/utils-home"
+	import { SHORT_CUTS } from "$lib/data-general"
 
+	import Modal from "$components/Modal.svelte"
+    import Hotkeys from "$components/Hotkeys.svelte"
+
+    $: light = !$themeState.isDarkTheme
 
     const exitModal = () => closeModal(ModalType.Shortcuts)
 </script>
 
-
-<Modal options={{ borderRadius: "22px" }} onClickOutSide={exitModal}>
-    <div class={`shortcuts ${$themeState.isDarkTheme ? "" : "shortcuts--light"}`}>
-        <h1 class="shortcuts__title">
-            Keyboard Shortcuts
-        </h1>
+<Modal  
+    options={{ borderRadius: "15px", scaleUp: true }} 
+    onClickOutSide={() => closeModal(ModalType.Shortcuts)}
+>
+    <div 
+        class="shortcuts"
+        class:shortcuts--light={light}
+    >
+        <div class="shortcuts__title">
+            <div style:margin-left="20px">
+                Keyboard Shortcuts
+            </div>
+        </div>
         <ul class="shortcuts__section-list">
-            <li>
-                <h2 class="shortcuts__subtitle">General</h2>
-                <ul class="shortcuts__list">
-                    {#each SHORT_CUTS.general as shortcut}
-                        <li class="shortcuts__shortcut">
-                            <div class="shortcuts__shortcut-title">
-                                {shortcut.title}
-                            </div>
-                            <div class="shortcuts__shortcut-keys-container">
-                                {#each shortcut.controls as control}
-                                    <div class={`shortcuts__key ${control.length === 1 ? "shortcuts__key--square" : ""}`}>
-                                        {control}
-                                    </div>
-                                {/each}
-                            </div>
-                        </li>
-                    {/each}
-                </ul>
-            </li>
-            <li>
-                <h2 class="shortcuts__subtitle">Pomodoro</h2>
-                <ul class="shortcuts__list">
-                    {#each SHORT_CUTS.pomodoro as shortcut}
-                        <li class="shortcuts__shortcut">
-                            <div class="shortcuts__shortcut-title">
-                                {shortcut.title}
-                            </div>
-                            <div class="shortcuts__shortcut-keys-container">
-                                {#each shortcut.controls as control}
-                                    <div class={`shortcuts__key ${control.length === 1 ? "shortcuts__key--square" : ""}`}>
-                                        {control}
-                                    </div>
-                                {/each}
-                            </div>
-                        </li>
-                    {/each}
-                </ul>
-            </li>
-            <li>
-            <h2 class="shortcuts__subtitle">Tasks</h2>
-                <ul class="shortcuts__list">
-                    {#each SHORT_CUTS.tasks as shortcut}
-                        <li class="shortcuts__shortcut">
-                            <div class="shortcuts__shortcut-title">
-                                {shortcut.title}
-                            </div>
-                            <div class="shortcuts__shortcut-keys-container">
-                                {#each shortcut.controls as control}
-                                    <div class={`shortcuts__key ${control.length === 1 ? "shortcuts__key--square" : ""}`}>
-                                        {control}
-                                    </div>
-                                {/each}
-                            </div>
-                        </li>
-                    {/each}
-                </ul>
-            </li>
+            {#each SHORT_CUTS.sections as section}
+                <li>
+                    {#if section.title !== "General"}
+                        <h2 class="shortcuts__subtitle">{section.title}</h2>
+                    {/if}
+                    <ul class="shortcuts__list">
+                        {#each section.shortcuts as shortcut}
+                            <li class="shortcuts__shortcut">
+                                <div class="shortcuts__shortcut-title">
+                                    {shortcut.title}
+                                </div>
+                                <Hotkeys hotkeys={shortcut.controls} type="boxed" />
+                            </li>
+                        {/each}
+                    </ul>
+                </li>
+            {/each}
         </ul>
     </div>
 </Modal>
@@ -80,67 +51,45 @@
 
 <style lang="scss">
     .shortcuts {
-        padding: 17px 0px 0px 27px;
-        width: 350px;
+        padding: 15px 0px 0px 0px;
 
-        &--light &__subtitle {
-            font-weight: 500;
-        }
         &--light &__shortcut-title {
-            font-weight: 500;
-            color: rgba(var(--textColor1), 0.5);
-        }
-        &--light &__key {
-            color: rgba(var(--textColor1), 0.65);
-            font-weight: 500;
-            background-color: rgba(0, 0, 0, 0.03);
+            @include text-style(1);
         }
 
         &__section-list {
             overflow-y: scroll;
             height: 500px;
+            padding-bottom: 20px;
         }
         &__title {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-            font-weight: 500;
+            @include text-style(1, var(--fw-400-500), 1.5rem);
+            border-bottom: var(--divider-border);
+            margin-bottom: 4px;
+            padding-bottom: 14px;
         }
         &__subtitle {
-            font-size: 1.4rem;
-            font-weight: 400;
+            @include text-style(0.9, var(--fw-400-500), 1.4rem);
             margin-bottom: 5px;
+            padding: 0px 20px;
+            border-top: var(--divider-border);
+            padding-top: 10px;
         }
         &__list {
-            margin-bottom: 18px;  
-            padding-right: 27px;
+            margin-bottom: 13px;  
+            padding: 0px 20px;
         }
         &__shortcut {
             height: 30px;
             @include flex(center, space-between);
-            
-            &-title {
-                font-size: 1.25rem;
-                font-weight: 300;
-                color: rgba(var(--textColor1), 0.5)
-            }
-            &-keys-container {
-                @include flex(center, center);
-            }
         }
-        &__key {
-            @include flex(center, center);
-            margin-left: 4px;
-            background-color: rgba(255, 255, 255, 0.03);
-            padding: 5.5px 11px;
-            border-radius: 9px;
-            font-size: 1.05rem;
-
-            &--square {
-                width: 24px;
-                height: 24px;
-                padding: 0px;
-            }
+        &__divider {
+            border-bottom: var(--divider-border);
+            margin: 8px 0px 8px 0px;
+        }
+        &__shortcut-title {
+            @include text-style(0.5, var(--fw-400-500), 1.35rem);
+            margin-right: 50px;
         }
     }
 </style>

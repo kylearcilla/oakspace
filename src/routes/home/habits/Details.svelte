@@ -93,7 +93,6 @@
         yearMetrics = data.yearMetrics
         yearHeatMap = data.yearHeatMap
     })
-
     function init() {
         const { page, table, card} = loadViewOptions()
 
@@ -188,198 +187,436 @@
     }
 </script>
 
-{#if monthMetrics}
-    <div 
-        class="details" 
-        class:details--light={light}
-        class:details--icon={pageView.showIcon}
-        style:--side-padding={`${sidePadding}px`}
-        style:--icon-offset={!pageView.linkImgBanner ? "0px" : pageView.showIcon ? "35px" : "0px"}
-    >
-        <div class="details__top">
-            {#if pageView.linkImgBanner}
-                <div style:margin-bottom="20px">
-                    <BannerHeader 
-                        year={currYear}
-                        showIcon={pageView.showIcon}
+<div 
+    class="details" 
+    class:details--light={light}
+    class:details--icon={pageView.showIcon}
+    style:--side-padding={`${sidePadding}px`}
+    style:--icon-offset={!pageView.linkImgBanner ? "0px" : pageView.showIcon ? "35px" : "0px"}
+>
+    <div class="details__top">
+        {#if pageView.linkImgBanner}
+            <div style:margin-bottom="20px">
+                <BannerHeader 
+                    year={currYear}
+                    showIcon={pageView.showIcon}
+                />
+            </div>
+        {/if}
+        <div class="details__header">
+            <h1 class="details__header-title">
+                Habits
+            </h1>
+            <div class="flx">
+                <div class="flx" style:margin="0px 0px -4px 0px">
+                    <div class="details__year">
+                        {currYear}
+                    </div>
+                    <button 
+                        on:click={() => updateYear(currYear - 1)}
+                        disabled={currYear === minYear}
+                        class="details__arrow"
+                        style:margin-left="10px"
+                    >
+                        <div style:margin-left={"-2px"}>
+                            <SvgIcon 
+                                icon={Icon.ChevronLeft} options={{ scale: 1.4 }}
+                            />
+                        </div>
+                    </button>
+                    <button 
+                        on:click={() => updateYear(currYear + 1)}
+                        class="details__arrow"
+                        style:margin-left="5px" 
+                        disabled={isYearCurr}
+                    >
+                        <div style:margin-right={"-2px"}>
+                            <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
+                        </div>
+                    </button>
+                </div>
+                <div class="details__settings-btn">
+                    <SettingsBtn 
+                        id={"habits"}
+                        onClick={() => monthOptions = !monthOptions}
                     />
                 </div>
+            </div>
+            <DropdownList 
+                id={"habits"}
+                isHidden={!monthOptions}
+                options={{
+                    listItems: [
+                        { 
+                            name: "Left Margin",
+                            active: showHabitsLeft,
+                            onToggle: () => updateView("Left Margin")
+                        },
+                        {
+                            name: "Heat Map",
+                            divider: true,
+                            active: pageView.heatmap,
+                            onToggle: () => updateView("Heat Map")
+                        },
+                        {
+                            sectionName: "Goal Image Banners"
+                        },
+                        { 
+                            name: "Link Banner",
+                            active: pageView.linkImgBanner,
+                            divider: !pageView.linkImgBanner,
+                            onToggle: () => updateView("Link Img Banner")
+                        },
+                        { 
+                            name: pageView.linkImgBanner ? "Show Icon" : "",
+                            active: pageView.showIcon,
+                            divider: true,
+                            onToggle: () => updateView("Show Icon")
+                        },
+                        {
+                            sectionName: "Period Entries"
+                        },
+                        { 
+                            name: "Year Entry",
+                            active: pageView.yearEntry,
+                            onToggle: () => updateView("Year Entry")
+                        },
+                        { 
+                            name: "Month Entry",
+                            active: pageView.monthEntry,
+                            divider: true,
+                            onToggle: () => updateView("Month Entry")
+                        },
+                        {
+                            sectionName: "Habits",
+                        },
+                        { 
+                            name: "View Styling",
+                            pickedItem: kebabToNormal(pageView.viewStyling),
+                            items: [
+                                { name: "Card" },
+                                { name: "Table" }
+                            ],
+                            onListItemClicked: ({ name }) => updateView("View Styling", name)
+                        },
+                        { 
+                            name: habits.length < MAX_HABITS_COUNT ? "Add New Habit" : ""
+
+                        },
+                    ],
+                    onClickOutside: () => {
+                        monthOptions = false
+                    },
+                    onListItemClicked: ({ name }) => {
+                        if (name === "Add New Habit") {
+                            newHabitModal = true
+                        }
+                    },
+                    styling:  { 
+                        zIndex: 100,
+                        minWidth: "150px",
+                    },
+                    position: { 
+                        top: "40px",
+                        right: "0px",
+                    }
+                }}
+            />
+        </div>
+    </div>
+
+    {#if pageView.yearEntry && yearTextEntry}
+        <div 
+            class="details__thought" 
+            style:padding-left={`${sidePadding}px`}
+        >
+            {#key yearTextEntry}
+                <TextEntry 
+                    id="yr"
+                    zIndex={50}
+                    entry={yearTextEntry}
+                />
+            {/key}
+        </div>
+    {/if}
+
+    <p  
+        class:hidden={pageView.yearEntry} 
+        style:margin={`0px 0px 20px ${sidePadding}px`}
+    >
+        {#if currYear != new Date().getFullYear()}
+            Overview of your habits for the year of {currYear}.
+        {:else}
+            Overview of your habits this year.
+        {/if}
+    </p>
+
+    {#if yearMetrics && activeStreak}
+        {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak, year } = yearMetrics}
+        {@const zero = habitsDue === 0}
+        {@const now = year === new Date().getFullYear()}
+        {@const streak = now && zero ? "--" : activeStreak.count}
+
+        <div 
+            class="details__year-stats stats"
+            class:stats--light={light}
+        >
+            <div 
+                class="stat" 
+                class:hidden={!isYearCurr}
+                style:margin-right="32px"
+            >
+                <div class="stat__bottom">
+                    <div class="flx">
+                        <span class="stat__value">
+                            {streak}
+                        </span>
+                        <span class="stat__unit">
+                            {streak === "--" ? "" : streak === 1 ? "day" : "days"}
+                        </span>
+                    </div>
+                    <span class="stat__label">Active Streak</span>
+                </div>     
+            </div>
+            <div class="stat" style:margin-right="35px">
+                <div class="stat__bottom">
+                    <div class="flx">
+                        <span class="stat__value">
+                            {zero ? "--" : Math.floor((habitsDone / habitsDue) * 100)}
+                        </span>
+                        <span class="stat__unit" style:margin="0px 0px 0px 5px">
+                            {zero ? "" : "%"}
+                        </span>
+                    </div>
+                    <span class="stat__label">Consistency</span>
+                </div>                    
+            </div>
+            {#if longestStreak}
+                <div class="stat" style:margin-right="35px">
+                    <div class="stat__bottom">
+                        <div class="flx">
+                            <span class="stat__value">
+                                {zero ? "--" : longestStreak.count}
+                            </span>
+                            <span class="stat__unit">
+                                {zero ? "" : longestStreak.count === 1 ? "day" : "days"}
+                        </span>
+                    </div>
+                    <span class="stat__label">Longest Streak</span>
+                    </div>                    
+                </div>
             {/if}
-            <div class="details__header">
-                <h1 class="details__header-title">
-                    Habits
-                </h1>
-                <div class="flx">
-                    <div class="flx" style:margin="0px 0px -4px 0px">
-                        <div class="details__year">
-                            {currYear}
+            <div class="stat">
+                <div class="stat__bottom">
+                    <div class="flx">
+                        <span class="stat__value">
+                            {zero ? "--" : perfectDays}
+                        </span>
+                        <span class="stat__unit">
+                            {zero ? "" : perfectDays === 1 ? "day" : "days"}
+                        </span>
+                    </div>
+                    <span class="stat__label">100% Days</span>
+                </div>                    
+            </div>
+            <div class="stat">
+                <div class="stat__bottom">
+                    <div class="flx">
+                        <span class="stat__value">
+                            {zero ? "--" : missed}
+                        </span>
+                        <span class="stat__unit">
+                            {zero ? "" : missed === 1 ? "time" : "times"}
+                        </span>
+                    </div>
+                    <span class="stat__label">Missed</span>
+                </div>
+            </div>
+        </div>
+    {/if}
+
+    {#if yearHeatMap && pageView.heatmap}
+        <div 
+            style:margin="18px 0px 0px 0px" 
+            style:padding-left={`${sidePadding}px`}
+        >
+            <HeatMap 
+                type="habits"
+                data={yearHeatMap}
+                year={currYear}
+                options={{
+                    single: habits.length === 1
+                }}
+            />
+        </div>
+    {/if}
+
+    <div class="details__month">
+        <div class="details__month-header">
+            <div class="flx">
+                {#each monthItems as month, idx}
+                    <button 
+                        class="details__month-item"
+                        class:details__month-item--active={idx === currMonthIdx}
+                        on:click={() => currMonthIdx = idx}
+                    >
+                        {month.slice(0, 3)}
+                    </button>
+                {/each}
+            </div>
+            <div class="flx">
+                <div class="flx" style:margin="0px 0px -4px 0px">
+                    <button 
+                        on:click={() => updateMonth(currMonthIdx - 1)}
+                        class="details__arrow"
+                        style:margin-left="10px"
+                    >
+                        <div style:margin-left={"-2px"}>
+                            <SvgIcon 
+                                icon={Icon.ChevronLeft} options={{ scale: 1.4 }}
+                            />
                         </div>
-                        <button 
-                            on:click={() => updateYear(currYear - 1)}
-                            disabled={currYear === minYear}
-                            class="details__arrow"
-                            style:margin-left="10px"
-                        >
-                            <div style:margin-left={"-2px"}>
-                                <SvgIcon 
-                                    icon={Icon.ChevronLeft} options={{ scale: 1.4 }}
-                                />
-                            </div>
-                        </button>
-                        <button 
-                            on:click={() => updateYear(currYear + 1)}
-                            class="details__arrow"
-                            style:margin-left="5px" 
-                            disabled={isYearCurr}
-                        >
-                            <div style:margin-right={"-2px"}>
-                                <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="details__settings-btn">
-                        <SettingsBtn 
-                            id={"habits"}
-                            onClick={() => monthOptions = !monthOptions}
-                        />
-                    </div>
+                    </button>
+                    <button 
+                        on:click={() => updateMonth(currMonthIdx + 1)}
+                        class="details__arrow"
+                        class:details__arrow--opaque={isMonthCurr} 
+                        style:margin-left="5px"
+                    >
+                        <div style:margin-right={"-2px"}>
+                            <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
+                        </div>
+                    </button>
+                </div>
+                <div class="details__settings-btn" >
+                    <SettingsBtn 
+                        id={"breakdown"}
+                        onClick={() => breakdownOptions = !breakdownOptions}
+                    />
                 </div>
                 <DropdownList 
-                    id={"habits"}
-                    isHidden={!monthOptions}
+                    id={"breakdown"}
+                    isHidden={!breakdownOptions || pageView.viewStyling === "table"}
                     options={{
                         listItems: [
                             { 
-                                name: "Left Margin",
-                                active: showHabitsLeft,
-                                onToggle: () => updateView("Left Margin")
-                            },
-                            {
-                                name: "Heat Map",
-                                divider: true,
-                                active: pageView.heatmap,
-                                onToggle: () => updateView("Heat Map")
-                            },
-                            {
-                                sectionName: "Goal Image Banners"
-                            },
-                            { 
-                                name: "Link Banner",
-                                active: pageView.linkImgBanner,
-                                divider: !pageView.linkImgBanner,
-                                onToggle: () => updateView("Link Img Banner")
-                            },
-                            { 
-                                name: pageView.linkImgBanner ? "Show Icon" : "",
-                                active: pageView.showIcon,
-                                divider: true,
-                                onToggle: () => updateView("Show Icon")
-                            },
-                            {
-                                sectionName: "Period Entries"
-                            },
-                            { 
-                                name: "Year Entry",
-                                active: pageView.yearEntry,
-                                onToggle: () => updateView("Year Entry")
-                            },
-                            { 
-                                name: "Month Entry",
-                                active: pageView.monthEntry,
-                                divider: true,
-                                onToggle: () => updateView("Month Entry")
-                            },
-                            {
-                                sectionName: "Habits",
-                            },
-                            { 
-                                name: "View Styling",
-                                pickedItem: kebabToNormal(pageView.viewStyling),
+                                name: "Card Style",
+                                pickedItem: kebabToNormal(cardView.style),
                                 items: [
-                                    { name: "Card" },
-                                    { name: "Table" }
+                                    { name: "Tall" },
+                                    { name: "Wide" }
                                 ],
-                                onListItemClicked: ({ name }) => updateView("View Styling", name)
+                                onListItemClicked: ({ name }) => updateView("Card Style", name)
                             },
                             { 
-                                name: habits.length < MAX_HABITS_COUNT ? "Add New Habit" : ""
-    
-                            },
+                                name: `"×" as Checked`,
+                                active: cardView.xAsChecked,
+                                onToggle: () => updateView("X as checked")
+                            }
                         ],
                         onClickOutside: () => {
-                            monthOptions = false
-                        },
-                        onListItemClicked: ({ name }) => {
-                            if (name === "Add New Habit") {
-                                newHabitModal = true
-                            }
+                            breakdownOptions = false
                         },
                         styling:  { 
                             zIndex: 100,
-                            minWidth: "150px",
+                            minWidth: "180px"
                         },
                         position: { 
                             top: "40px",
-                            right: "0px",
+                            right: "0px"
+                        }
+                    }}
+                />     
+                <DropdownList 
+                    id={"breakdown"}
+                    isHidden={!breakdownOptions || pageView.viewStyling === "card"}
+                    options={{
+                        listItems: [
+                            { 
+                                name: "Group",
+                                pickedItem: kebabToNormal(tableView.view),
+                                items: [
+                                    { name: "Default" },
+                                    { name: "Time of Day" }
+                                ],
+                                onListItemClicked: ({ name }) => updateView(name)
+                            },
+                            { 
+                                name: "Checkbox",
+                                pickedItem: kebabToNormal(tableView.checkboxStyle),
+                                divider: true,
+                                items: [
+                                    { name: "Box" },
+                                    { name: "Minimal" }
+                                ],
+                                onListItemClicked: ({ name }) => updateView(name)
+                            },
+                            { 
+                                name: "Emojis",
+                                active: tableView.emojis,
+                                onToggle: () => updateView("Emojis")
+                            },
+                            { 
+                                name: "Captions",
+                                active: tableView.allowCaptions,
+                                onToggle: () => updateView("Captions")
+                            },
+                            { 
+                                name: "Bottom Details",
+                                active: tableView.bottomDetails,
+                                divider: true,
+                                onToggle: () => updateView("Bottom Details") 
+                            },
+                            {
+                                sectionName: "Progress",
+                            },
+                            { 
+                                name: "Detailed",
+                                active: tableView.progress.numbers,
+                                onToggle: () => updateView("Detailed")
+                            }
+                        ],
+                        onClickOutside: () => {
+                            breakdownOptions = false
+                        },
+                        styling:  { 
+                            zIndex: 200,
+                            minWidth: "160px"
+                        },
+                        position: { 
+                            top: "40px",
+                            right: "0px"
                         }
                     }}
                 />
             </div>
         </div>
-
-        {#if pageView.yearEntry && yearTextEntry}
-            <div 
-                class="details__thought" 
-                style:padding-left={`${sidePadding}px`}
-            >
-                {#key yearTextEntry}
+    
+        <p class:hidden={pageView.monthEntry}>
+            Your habits for the month of {monthName}{currYear === new Date().getFullYear() ? "" : ` ${currYear}`}.
+        </p>
+        {#if pageView.monthEntry && monthTextEntry}
+            <div class="details__thought">
+                {#key monthTextEntry}
                     <TextEntry 
-                        id="yr"
+                        id="month"
                         zIndex={50}
-                        entry={yearTextEntry}
+                        entry={monthTextEntry}
                     />
                 {/key}
             </div>
         {/if}
 
-        <p  
-            class:hidden={pageView.yearEntry} 
-            style:margin={`0px 0px 20px ${sidePadding}px`}
-        >
-            {#if currYear != new Date().getFullYear()}
-                Overview of your habits for the year of {currYear}.
-            {:else}
-                Overview of your habits this year.
-            {/if}
-        </p>
-
-        {#if yearMetrics && activeStreak}
-            {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak, year } = yearMetrics}
+        {#if monthMetrics && activeStreak && habits.length > 0}
+            {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = monthMetrics}
             {@const zero = habitsDue === 0}
-            {@const now = year === new Date().getFullYear()}
-            {@const streak = now && zero ? "--" : activeStreak.count}
 
             <div 
-                class="details__year-stats stats"
+                class="details__month-stats stats"
                 class:stats--light={light}
+                class:border-none={!pageView.monthEntry}
+                style:padding-top={pageView.monthEntry ? "12px" : "0px"}
             >
-                <div 
-                    class="stat" 
-                    class:hidden={!isYearCurr}
-                    style:margin-right="32px"
-                >
-                    <div class="stat__bottom">
-                        <div class="flx">
-                            <span class="stat__value">
-                                {streak}
-                            </span>
-                            <span class="stat__unit">
-                                {streak === "--" ? "" : streak === 1 ? "day" : "days"}
-                            </span>
-                        </div>
-                        <span class="stat__label">Active Streak</span>
-                    </div>     
-                </div>
                 <div class="stat" style:margin-right="35px">
                     <div class="stat__bottom">
                         <div class="flx">
@@ -436,288 +673,48 @@
                 </div>
             </div>
         {/if}
-
-        {#if yearHeatMap && pageView.heatmap}
-            <div 
-                style:margin="18px 0px 0px 0px" 
-                style:padding-left={`${sidePadding}px`}
-            >
-                <HeatMap 
-                    type="habits"
-                    data={yearHeatMap}
-                    year={currYear}
-                    options={{
-                        single: habits.length === 1
-                    }}
-                />
-            </div>
-        {/if}
-
-        <div class="details__month">
-            <div class="details__month-header">
-                <div class="flx">
-                    {#each monthItems as month, idx}
-                        <button 
-                            class="details__month-item"
-                            class:details__month-item--active={idx === currMonthIdx}
-                            on:click={() => currMonthIdx = idx}
-                        >
-                            {month.slice(0, 3)}
-                        </button>
-                    {/each}
-                </div>
-                <div class="flx">
-                    <div class="flx" style:margin="0px 0px -4px 0px">
-                        <button 
-                            on:click={() => updateMonth(currMonthIdx - 1)}
-                            class="details__arrow"
-                            style:margin-left="10px"
-                        >
-                            <div style:margin-left={"-2px"}>
-                                <SvgIcon 
-                                    icon={Icon.ChevronLeft} options={{ scale: 1.4 }}
+    
+        <div class="details__breakdown">
+            <div class="details__habits">
+                {#if pageView.viewStyling === "card"}
+                    <ul style:margin-top="14px">
+                        {#each habits.sort((a, b) => a.order.default - b.order.default) as habit}
+                            <li>
+                                <HabitCard
+                                    style={cardView.style}
+                                    dotStyle={cardView.xAsChecked ? "x-mark" : "default"}
+                                    monthIdx={currMonthIdx}
+                                    year={currYear}
+                                    {habit}
+                                    {light}
                                 />
-                            </div>
-                        </button>
-                        <button 
-                            on:click={() => updateMonth(currMonthIdx + 1)}
-                            class="details__arrow"
-                            class:details__arrow--opaque={isMonthCurr} 
-                            style:margin-left="5px"
-                        >
-                            <div style:margin-right={"-2px"}>
-                                <SvgIcon icon={Icon.ChevronRight} options={{ scale: 1.4 }}/>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="details__settings-btn" >
-                        <SettingsBtn 
-                            id={"breakdown"}
-                            onClick={() => breakdownOptions = !breakdownOptions}
+                            </li>
+                        {:else}
+                            <li style:margin="30px auto 0px auto">
+                                <EmptyList 
+                                    emptyText="No habits"
+                                    buttonText="Add a habit"
+                                    subtitle={randomArrayElem(EXAMPLE_HABITS)}
+                                    onButtonClick={() => {
+                                        newHabitModal = true
+                                    }}
+                                />
+                            </li>
+                        {/each}
+                    </ul>
+                {:else}
+                    <div style:margin="5px 0px 0px 0px" style:width="100%">
+                        <HabitsTable 
+                            month={currMonth}
+                            timeFrame="monthly"
+                            options={tableView} 
                         />
                     </div>
-                    <DropdownList 
-                        id={"breakdown"}
-                        isHidden={!breakdownOptions || pageView.viewStyling === "table"}
-                        options={{
-                            listItems: [
-                                { 
-                                    name: "Card Style",
-                                    pickedItem: kebabToNormal(cardView.style),
-                                    items: [
-                                        { name: "Tall" },
-                                        { name: "Wide" }
-                                    ],
-                                    onListItemClicked: ({ name }) => updateView("Card Style", name)
-                                },
-                                { 
-                                    name: `"×" as Checked`,
-                                    active: cardView.xAsChecked,
-                                    onToggle: () => updateView("X as checked")
-                                }
-                            ],
-                            onClickOutside: () => {
-                                breakdownOptions = false
-                            },
-                            styling:  { 
-                                zIndex: 100,
-                                minWidth: "180px"
-                            },
-                            position: { 
-                                top: "40px",
-                                right: "0px"
-                            }
-                        }}
-                    />     
-                    <DropdownList 
-                        id={"breakdown"}
-                        isHidden={!breakdownOptions || pageView.viewStyling === "card"}
-                        options={{
-                            listItems: [
-                                { 
-                                    name: "Group",
-                                    pickedItem: kebabToNormal(tableView.view),
-                                    items: [
-                                        { name: "Default" },
-                                        { name: "Time of Day" }
-                                    ],
-                                    onListItemClicked: ({ name }) => updateView(name)
-                                },
-                                { 
-                                    name: "Checkbox",
-                                    pickedItem: kebabToNormal(tableView.checkboxStyle),
-                                    divider: true,
-                                    items: [
-                                        { name: "Box" },
-                                        { name: "Minimal" }
-                                    ],
-                                    onListItemClicked: ({ name }) => updateView(name)
-                                },
-                                { 
-                                    name: "Emojis",
-                                    active: tableView.emojis,
-                                    onToggle: () => updateView("Emojis")
-                                },
-                                { 
-                                    name: "Captions",
-                                    active: tableView.allowCaptions,
-                                    onToggle: () => updateView("Captions")
-                                },
-                                { 
-                                    name: "Bottom Details",
-                                    active: tableView.bottomDetails,
-                                    divider: true,
-                                    onToggle: () => updateView("Bottom Details") 
-                                },
-                                {
-                                    sectionName: "Progress",
-                                },
-                                { 
-                                    name: "Detailed",
-                                    active: tableView.progress.numbers,
-                                    onToggle: () => updateView("Detailed")
-                                }
-                            ],
-                            onClickOutside: () => {
-                                breakdownOptions = false
-                            },
-                            styling:  { 
-                                zIndex: 200,
-                                minWidth: "160px"
-                            },
-                            position: { 
-                                top: "40px",
-                                right: "0px"
-                            }
-                        }}
-                    />
-                </div>
-            </div>
-        
-            <p class:hidden={pageView.monthEntry}>
-                Your habits for the month of {monthName}{currYear === new Date().getFullYear() ? "" : ` ${currYear}`}.
-            </p>
-            {#if pageView.monthEntry && monthTextEntry}
-                <div class="details__thought">
-                    {#key monthTextEntry}
-                        <TextEntry 
-                            id="month"
-                            zIndex={50}
-                            entry={monthTextEntry}
-                        />
-                    {/key}
-                </div>
-            {/if}
-
-            {#if monthMetrics && activeStreak && habits.length > 0}
-                {@const { habitsDone, habitsDue, perfectDays, missed, longestStreak } = monthMetrics}
-                {@const zero = habitsDue === 0}
-
-                <div 
-                    class="details__month-stats stats"
-                    class:stats--light={light}
-                    class:border-none={!pageView.monthEntry}
-                    style:padding-top={pageView.monthEntry ? "12px" : "0px"}
-                >
-                    <div class="stat" style:margin-right="35px">
-                        <div class="stat__bottom">
-                            <div class="flx">
-                                <span class="stat__value">
-                                    {zero ? "--" : Math.floor((habitsDone / habitsDue) * 100)}
-                                </span>
-                                <span class="stat__unit" style:margin="0px 0px 0px 5px">
-                                    {zero ? "" : "%"}
-                                </span>
-                            </div>
-                            <span class="stat__label">Consistency</span>
-                        </div>                    
-                    </div>
-                    {#if longestStreak}
-                        <div class="stat" style:margin-right="35px">
-                            <div class="stat__bottom">
-                                <div class="flx">
-                                    <span class="stat__value">
-                                        {zero ? "--" : longestStreak.count}
-                                    </span>
-                                    <span class="stat__unit">
-                                        {zero ? "" : longestStreak.count === 1 ? "day" : "days"}
-                                </span>
-                            </div>
-                            <span class="stat__label">Longest Streak</span>
-                            </div>                    
-                        </div>
-                    {/if}
-                    <div class="stat">
-                        <div class="stat__bottom">
-                            <div class="flx">
-                                <span class="stat__value">
-                                    {zero ? "--" : perfectDays}
-                                </span>
-                                <span class="stat__unit">
-                                    {zero ? "" : perfectDays === 1 ? "day" : "days"}
-                                </span>
-                            </div>
-                            <span class="stat__label">100% Days</span>
-                        </div>                    
-                    </div>
-                    <div class="stat">
-                        <div class="stat__bottom">
-                            <div class="flx">
-                                <span class="stat__value">
-                                    {zero ? "--" : missed}
-                                </span>
-                                <span class="stat__unit">
-                                    {zero ? "" : missed === 1 ? "time" : "times"}
-                                </span>
-                            </div>
-                            <span class="stat__label">Missed</span>
-                        </div>
-                    </div>
-                </div>
-            {/if}
-        
-            <div class="details__breakdown">
-                <div class="details__habits">
-                    {#if pageView.viewStyling === "card"}
-                        <ul style:margin-top="14px">
-                            {#each habits.sort((a, b) => a.order.default - b.order.default) as habit}
-                                <li>
-                                    <HabitCard
-                                        style={cardView.style}
-                                        dotStyle={cardView.xAsChecked ? "x-mark" : "default"}
-                                        monthIdx={currMonthIdx}
-                                        year={currYear}
-                                        {habit}
-                                        {light}
-                                    />
-                                </li>
-                            {:else}
-                                <li style:margin="30px auto 0px auto">
-                                    <EmptyList 
-                                        emptyText="No habits"
-                                        buttonText="Add a habit"
-                                        subtitle={randomArrayElem(EXAMPLE_HABITS)}
-                                        onButtonClick={() => {
-                                            newHabitModal = true
-                                        }}
-                                    />
-                                </li>
-                            {/each}
-                        </ul>
-                    {:else}
-                        <div style:margin="5px 0px 0px 0px" style:width="100%">
-                            <HabitsTable 
-                                month={currMonth}
-                                timeFrame="monthly"
-                                options={tableView} 
-                            />
-                        </div>
-                    {/if}
-                </div>
+                {/if}
             </div>
         </div>
     </div>
-{/if}
+</div>
 
 {#if newHabitModal}
     <HabitViewModal 

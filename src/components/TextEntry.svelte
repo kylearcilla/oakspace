@@ -5,7 +5,7 @@
 	import { themeState } from "$lib/store"
 	import { iconPicker } from "$lib/pop-ups"
 	import { TextEditorManager } from "$lib/text-editor"
-	import { formatPlural, capitalize, getElemPadding } from "$lib/utils-general"
+	import { formatPlural, getElemPadding } from "$lib/utils-general"
 	import { clickOutside, findElemVertSpace, getMaskedGradientStyle } from "$lib/utils-general"
     
 	import DropdownList from "$components/DropdownList.svelte"

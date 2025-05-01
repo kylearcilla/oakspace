@@ -8,7 +8,7 @@ import { initGoals } from "./utils-goals"
 import { POPULAR_SPACES } from "./data-spaces"
 import { initHabits } from "./utils-habits-data"
 import { didTodoistAPIRedirect } from "./api-todoist"
-import { loadTheme, setNewTheme } from "./utils-appearance"
+import { loadTheme, setDefaultFont, setNewTheme } from "./utils-appearance"
 import { continueFocusSession, didInitSession, initSessions } from "./utils-session"
 import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { initYoutubePlayer, didInitYtPlayer, handleChooseItem, initYtUserData } from "./utils-youtube"
@@ -101,16 +101,16 @@ export function initTimer() {
 
 /**
  * Keyboard shortcut handler for key down events. 
+ * 
  * @param event                  The keyboard key down event to handle.
  * @param toggledLeftBarWithKey  If user opened the left side bar with a short cut.
- * @param width                  Total window width
  * 
- * @returns                             If user still has toggled left side bar.
+ * @returns If user still has toggled left side bar.
  */
-export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeftBarWithKey: boolean, totalWidth: number) => {    
+export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeftBarWithKey: boolean) => {    
     const target = event.target as HTMLElement
     const context = get(globalContext)
-    const { shiftKey, key, ctrlKey } = event
+    const { shiftKey, key, ctrlKey, code } = event
     const isTargetContentEditable = target.contentEditable === "true"
     const width = window.innerWidth
     
@@ -133,15 +133,11 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
     const hasAmbience = context.ambience?.active
     const wideLeftBarCtrl = !hasAmbience && ctrlKey && (leftBarFixed === false || leftBarFixed === true)
 
-    // if (key === "Escape" && context.modalsOpen.length != 0) {
-    //     const modals = get(globalContext).modalsOpen
-    //     console.log(event)
-
-    //     closeModal(modals[modals.length - 1])
-    // }
-
+    /* left bar */
     if (event.ctrlKey && key === "]" && doNotFixBars) {
-        updateGlobalContext({ rightBarOpen: !context.rightBarOpen })
+        updateGlobalContext({ 
+            rightBarOpen: !context.rightBarOpen 
+        })
     }
     else if (event.ctrlKey && key === "]") {
         updateGlobalContext({ 
@@ -149,18 +145,30 @@ export const keyboardShortCutHandlerKeyDown = (event: KeyboardEvent, toggledLeft
             rightBarFixed: !context.rightBarOpen === false
         })
     }
+    else if (key === "/" && wideLeftBarCtrl && !doNotFixBars) {
+        updateGlobalContext({ leftBarFixed: !leftBarFixed })
+    }
+    /* right bar */
     else if (ctrlKey && key === "[") {
         updateGlobalContext({ leftBarOpen: !context.leftBarOpen })
         return true
     }
-    else if (key === "/" && wideLeftBarCtrl && !doNotFixBars) {
-        updateGlobalContext({ leftBarFixed: !leftBarFixed })
+    /* modals */
+    else if (key === "?") {
+        closeAllModals()
+        openModal(ModalType.Shortcuts)
     }
-    else if (key === "?" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Shortcuts))) {
-        isModalOpen(ModalType.Shortcuts) ? closeModal(ModalType.Shortcuts) : openModal(ModalType.Shortcuts)
+    else if (shiftKey && key === "Q") {
+        closeAllModals()
+        openModal(ModalType.Quote)
     }
-    else if (key === "q" && (context.modalsOpen.length === 0 || isModalOpen(ModalType.Quote))) {
-        isModalOpen(ModalType.Quote) ? closeModal(ModalType.Quote) : openModal(ModalType.Quote)
+    else if (shiftKey && key === "S") {
+        closeAllModals()
+        openModal(ModalType.Settings)
+    }
+    else if (shiftKey && code === "Space") {
+        closeAllModals()
+        openModal(ModalType.NewSession)
     }
 
     return toggledLeftBarWithKey
@@ -276,10 +284,13 @@ const loadGlobalContext = () => {
     const storedData = localStorage.getItem("home-ui")
     if (!storedData) return
     const data: GlobalContext = JSON.parse(storedData)
+    const fontStyle = data.fontStyle
 
-    updateGlobalContext({ 
-        ...data, modalsOpen: [] 
-    })
+    updateGlobalContext({ ...data, modalsOpen: []  })
+    
+    if (fontStyle === "mono") {
+        setDefaultFont("mono")
+    }
 }
 
 export function hideRightBar() {
@@ -289,20 +300,14 @@ export function hideRightBar() {
 export function showRightBar() {
     updateGlobalContext({ rightBarOpen: true  })
 }
-/**
- * Add modal to "open modals" array
- * @param modal  Modal to be opened
- */
+
+
 export const openModal = (modal: ModalType) => {
     globalContext.update((data: GlobalContext) => {
         return { ...data, modalsOpen: [ ...data.modalsOpen, modal ]}
     })
 }
 
-/**
- * Remove modal from modals array
- * @param modal  Modal to be opened
- */
 export const closeModal = (modalToRemove: ModalType) => {
     globalContext.update((data: GlobalContext) => {
 
@@ -310,6 +315,12 @@ export const closeModal = (modalToRemove: ModalType) => {
             ...data, 
             modalsOpen: data.modalsOpen.filter((modal: ModalType) => modal !== modalToRemove)
         }
+    })
+}
+
+export function closeAllModals() {
+    globalContext.update((data: GlobalContext) => {
+        return { ...data, modalsOpen: [] }
     })
 }
 

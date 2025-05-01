@@ -73,7 +73,7 @@
                         noBg: false,
                         styles: { 
                             backgroundColor: "rgba(255, 255, 255, 0.025)",
-                            width: "64px",
+                            minWidth: "64px",
                             borderRadius: "10px"
                         },
                         onClick: () => {
@@ -92,7 +92,7 @@
                             top: "40px", right: "10px"
                         },
                         styling:  {
-                            width: "75px",
+                            minWidth: "75px",
                             zIndex: 500
                         },
                         pickedItem: capitalize(elementStyling),

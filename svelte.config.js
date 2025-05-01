@@ -13,7 +13,8 @@ const config = {
 	},
 	preprocess: preprocess({
 		scss: {
-			prependData: "@use './src/scss/global.scss' as *;"
+			prependData: "@use './src/scss/global.scss' as *;",
+			includePaths: ['./src/scss']
 		}
 	}),
 	kit: {

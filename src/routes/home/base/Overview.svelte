@@ -3,7 +3,7 @@
 
 	import { Icon } from "$lib/enums"
     import { getSwatchColors } from "$lib/utils-colors"
-	import { getMonthHabitsHeatMap } from "$lib/utils-habits";
+	import { getMonthOverviewData } from "$lib/utils-habits";
 	import { formatDateLong, uptoToday } from "$lib/utils-date"
     import { genMonthCalendar, isSameDay } from "$lib/utils-date"
 	import { initFloatElemPos, randomArrayElem } from "$lib/utils-general"
@@ -73,7 +73,7 @@
         monthEntry = periodData.entry
 
         const goals = getMonthGoalsOverview({ year, moIdx })
-        const habits = await getMonthHabitsHeatMap(year, moIdx)
+        const habits = await getMonthOverviewData(year, moIdx)
         const sessions = getMonthSessionData(year, moIdx)
 
         const data: DayEntry[] = []

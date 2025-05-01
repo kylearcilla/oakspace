@@ -4,7 +4,6 @@
 
 	import { Icon } from '$lib/enums'
 	import Details from './Details.svelte'
-	import { toast } from '$lib/utils-toast'
 	import { colorPicker } from '$lib/pop-ups'
 	import { getColorTrio } from '$lib/utils-colors'
 	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
@@ -78,34 +77,7 @@
         contextMenu = false
     }
     function deleteBlock() {
-        initUndoToast()
         manager.deleteEditBlock()
-    }
-    function initUndoToast() {
-        const block = editBlock!
-        const routineId = editDayRoutine!.id
-
-        const onClick = () => {
-            if (routineId === editDayRoutine!.id) {
-                manager.finishEdit(block, "new-stretch")
-            }
-            else {
-                const routineIdx = routines.findIndex(r => r.id === routineId)
-                if (routineIdx >= 0) {
-                    routines[routineIdx].blocks.push(block)
-                    routines = routines
-                }
-            }
-        }
-
-        toast("default", {
-            message: `"${block.title}" deleted.`,
-            contextId: "routines",
-            groupExclusive: true,
-            action: {
-                label: "Undo", onClick
-            }
-        })
     }
     
     function onMenuDismount() {

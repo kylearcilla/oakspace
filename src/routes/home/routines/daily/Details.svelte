@@ -8,7 +8,7 @@
 	import { TextEditorManager } from '$lib/text-editor'
 	import { formatCoreData } from '$lib/utils-routines'
 	import { DailyRoutinesManager } from '$lib/routines-daily-manager'
-	import { capitalize, decrementIdx, insertItemArr, randomArrayElem, removeItemArr, reorderItemArr } from '$lib/utils-general'
+	import { decrementIdx, insertItemArr, randomArrayElem, removeItemArr, reorderItemArr } from '$lib/utils-general'
 
 	import SvgIcon from '$components/SVGIcon.svelte'
 	import EmptyList from '$components/EmptyList.svelte'

@@ -156,20 +156,6 @@
         class:session--workspace={location === "workspace"}
         style:--focus-time-color={defaultTheme ? "var(--textColor1)" : "var(--ringColor)"}
     >
-        <button 
-            class="session__back-btn"
-            on:click={() => backToPrevPage()}
-            class:hidden={location === "workspace"}
-        >
-            <SvgIcon 
-                icon={Icon.ChevronLeft}
-                options={{ scale: 0.97, strokeWidth: 2 }}
-            />
-            <span>
-                Back to {prevPage === "Base" ? "Home" : prevPage}
-            </span>
-        </button>
-
         <div class="session__content">
             <div 
                 bind:clientWidth={focusTimeWidth}

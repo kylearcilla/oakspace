@@ -7,7 +7,6 @@
   import SideBarRight from "./SideBarRight.svelte"
 
   // main modals
-	import Settings from "./Settings.svelte"
 	import Appearance from "./Appearance.svelte"
 
   // modals
@@ -49,6 +48,7 @@
 	import HabitViewModal from "$components/HabitViewModal.svelte";
 	import GoalViewModal from "$components/GoalViewModal.svelte";
   import TagPicker from "$components/TagPicker.svelte";
+	import SettingsModal from "./SettingsModal.svelte";
   
   export let data
 
@@ -148,7 +148,7 @@
   }
 
   function handleKeyDown(event: KeyboardEvent) {
-    toggledLeftBarWithKey = keyboardShortCutHandlerKeyDown(event, toggledLeftBarWithKey, totalWidth)!
+    toggledLeftBarWithKey = keyboardShortCutHandlerKeyDown(event, toggledLeftBarWithKey)!
   }
   function handleKeyUp(event: KeyboardEvent) {
     keyboardShortCutHandlerKeyUp(event)
@@ -329,10 +329,6 @@
 </div>
 
   <!-- modals -->
-  {#if modalsOpen.includes(ModalType.Settings)} 
-      <Settings/> 
-  {/if}
-  
   {#if modalsOpen.includes(ModalType.Themes)} 
       <Appearance />
   {/if}
@@ -365,9 +361,13 @@
       <ShortcutsModal /> 
   {/if}
 
+  {#if modalsOpen.includes(ModalType.Settings) && $globalContext} 
+      <SettingsModal globalContext={$globalContext} /> 
+  {/if}
+
   <!-- toasts -->
   {#if $globalContext.hasToaster}
-      <Toaster  />
+      <Toaster />
   {/if}
 
   <!-- yt player -->

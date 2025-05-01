@@ -68,6 +68,7 @@
     $: if (!isOpen) {
         closeOpenPickers()
         dropdownOpen = false
+        searchQuery = ""
     }
 
     /* edits */
@@ -116,6 +117,7 @@
             newName = editTag.name
         }
 
+        searchQuery = ""
         editTag.name = newName
         initChanges()
     }
@@ -267,8 +269,11 @@
     onClickOutside={() => {
         if (emojiOpen || colorsOpen) {
             closeOpenPickers()
+            return
         }
-        if (renaming || deleteConfirm) return
+        if (renaming || deleteConfirm) {
+            return
+        }
         close()
     }}
 >
@@ -363,9 +368,7 @@
                                         spellcheck="false"
                                         autocapitalize="off"
                                         bind:value={newName}
-                                        on:blur={() => {
-                                            onRename(newName)
-                                        }}
+                                        on:blur={() => onRename(newName)}
                                     />
                                 {:else}
                                     <div class="tag__title">
@@ -513,9 +516,9 @@
         }
         
         &__dmenu-container {
-            max-width: 210px;
+            width: 220px;
             padding: 7px 0px 0px 0px;
-            border-radius: 8px;
+            border-radius: 15px;
             width: 100%;
 
             // @include contrast-bg("bg-2");
@@ -590,12 +593,12 @@
         }
         &__search-input {
             width: calc(100% - 25px);
-            padding: 5px 8px;
-            border-radius: 4px;
+            padding: 7px 8px 7px 8px;
+            border-radius: 9px;
             background: rgba(var(--textColor1), var(--ip-bg-opacity));
             color: rgba(var(--textColor1), var(--ip-text-opacity));
             border: 1px solid transparent;
-            @include text-style(1, var(--fw-400-500), 1.25rem);
+            @include text-style(1, var(--fw-400-500), 1.3rem);
             transition: box-shadow 0.2s ease-in-out,
             background-color 0.1s ease-in-out;
 
@@ -632,7 +635,7 @@
             }
         }
         &__dmenu-add .tag {
-            border-radius: 4px;
+            border-radius: 6px;
             max-width: calc(100% - 0px);
             margin-right: 10px;
         }
@@ -646,7 +649,7 @@
         }
     }
     .tag {
-        border-radius: 4px;
+        border-radius: 6px;
         transition: 0.1s ease-in-out;
         padding: 3px 5px 3.5px 7px;
 

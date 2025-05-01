@@ -83,7 +83,7 @@
 		firstYearDay = new Date(year, 0, 1)
 		firstDay = getFirstDay()
 		idxOffset = getDiffBetweenTwoDays(firstYearDay, firstDay)
-	}
+	}``
 
 	/* data */
 	function getRenderData({ idx, ..._ }: { 
@@ -104,10 +104,10 @@
 		if (outofBounds || !idxData) {
 			return { opacity: 0, show: false, day }
 		}
-		
-		const { due, trueDone: done, noData } = idxData
-		const val = due === 0 ? 0 : Math.min(done / due, 1)
 
+		const { due, done, trueDone, noData } = idxData
+		const val = due === 0 ? 0 : Math.min(trueDone / due, 1)
+		
 		if (noData) {
 			return { opacity: 0, show: false, day }
 		}
@@ -237,59 +237,61 @@
 			on:pointerleave={() => hoverDayIdx = -1}
 		>
 			<div class="flx">
-				{#each Array(53) as _, colIdx}
-					<div 
-						class="heat-map__week-col"
-						style:flex-direction={'column'}
-					>
-						{#each Array(7) as _, cellIdx}
-							{@const dayIdx = colIdx * 7 + cellIdx}
-							{@const { show, opacity, day, emoji } = getRenderData({ idx: dayIdx, light, single, data })}
-							{@const sameDay = isSameDay(new Date(), day)}
-							{@const color = type === 'habits' ? `rgba(var(--heatMapColor), ${opacity})` : ''}
-							{@const hasGoal = type === 'goals' && emoji}
-							
-							<button
-								class="heat-map__cell-container"
-								class:no-box-shadow={type === 'goals'}
-								on:pointerover={(e) => onPointerOver(e, day, dayIdx)}
-								on:click={() => {
-									onCellClick(dayIdx)
-								}}
-							>
-								<div
-									class="heat-map__cell"
-									class:heat-map__cell--goal={type === 'goals'}
-									class:heat-map__cell--has-goal={hasGoal}
-									class:heat-map__cell--emoji={emojis}
-									class:heat-map__cell--ahead={!show}
-									class:heat-map__cell--today={sameDay}
-									style:--ahead-opacity={opacityAhead}
-									style:--color={opacity > 0 ? color : 'auto'}
-									style:--goal-fill={hasGoal ? 0 : sameDay ? goalsSameDayOpacity : goalPastOpacity}
+				{#if data}
+					{#each Array(53) as _, colIdx}
+						<div 
+							class="heat-map__week-col"
+							style:flex-direction={'column'}
+						>
+							{#each Array(7) as _, cellIdx}
+								{@const dayIdx = colIdx * 7 + cellIdx}
+								{@const { show, opacity, day, emoji } = getRenderData({ idx: dayIdx, light, single, data })}
+								{@const sameDay = isSameDay(new Date(), day)}
+								{@const color = type === 'habits' ? `rgba(var(--heatMapColor), ${opacity})` : ''}
+								{@const hasGoal = type === 'goals' && emoji}
+								
+								<button
+									class="heat-map__cell-container"
+									class:no-box-shadow={type === 'goals'}
+									on:pointerover={(e) => onPointerOver(e, day, dayIdx)}
+									on:click={() => {
+										onCellClick(dayIdx)
+									}}
 								>
-									<div class="heat-map__cell-content" class:no-bg={hasGoal && (emojis || light)}>
-										{#if hasGoal}
-											{#if emojis}
-												<div class="heat-map__cell-emoji">	
-													{emoji}
-												</div>
-											{:else}
-												<AccomplishedIcon scale={0.6} />
+									<div
+										class="heat-map__cell"
+										class:heat-map__cell--goal={type === 'goals'}
+										class:heat-map__cell--has-goal={hasGoal}
+										class:heat-map__cell--emoji={emojis}
+										class:heat-map__cell--ahead={!show}
+										class:heat-map__cell--today={sameDay}
+										style:--ahead-opacity={opacityAhead}
+										style:--color={opacity > 0 ? color : 'auto'}
+										style:--goal-fill={hasGoal ? 0 : sameDay ? goalsSameDayOpacity : goalPastOpacity}
+									>
+										<div class="heat-map__cell-content" class:no-bg={hasGoal && (emojis || light)}>
+											{#if hasGoal}
+												{#if emojis}
+													<div class="heat-map__cell-emoji">	
+														{emoji}
+													</div>
+												{:else}
+													<AccomplishedIcon scale={0.6} />
+												{/if}
 											{/if}
-										{/if}
+										</div>
 									</div>
-								</div>
-							</button>
+								</button>
 
-							{#if day.getDate() === 1 && day.getFullYear() === year}
-								<div class="heat-map__month">
-									{getMonthStr(day)}
-								</div>
-							{/if}
-						{/each}
-					</div>
-				{/each}
+								{#if day.getDate() === 1 && day.getFullYear() === year}
+									<div class="heat-map__month">
+										{getMonthStr(day)}
+									</div>
+								{/if}
+							{/each}
+						</div>
+					{/each}
+				{/if}
 			</div>
 		</div>
 	</div>

@@ -1071,3 +1071,7 @@ export function findTag(name: string) {
 export function isVoid(value: any) {
   return value === null || value === undefined 
 }
+
+export function formatNumber(num: number) {
+  return num.toLocaleString("en-US")
+}

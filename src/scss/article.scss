@@ -1,0 +1,113 @@
+* {
+    text-size-adjust: 100%;
+    font: inherit;
+    vertical-align: baseline
+}
+.article-container {
+    font-family: 'Lora', serif;
+    background-color: #FFFAF0;
+    min-width: 100vw;
+    min-height: 100vh;
+    padding-bottom: 200px;
+}
+
+article header {
+    margin: 0rem 0 0 0;
+    p {
+        width: 540px;
+        max-width: 70vw;
+        margin: 0 auto;
+        line-height: 1.3rem;
+        font-size: 0.85rem;
+        text-align: center;
+    }
+}
+
+.header h1 {
+    @include l-text-style(1, 200, 2.85rem, "Lora");
+    max-width: none;
+    margin: 0 auto 0.9rem auto;
+    position: relative;
+    width: 70vw;
+    -webkit-text-wrap: auto;
+    text-wrap: auto;
+    text-align: center;
+}
+
+.img-wrapper img {
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    overflow-clip-margin: content-box;
+    overflow: clip;
+}   
+figure {
+    max-width: 700px;
+    width: calc(100% - 40px);
+    margin: 25px auto 2.5rem auto;
+}
+
+figcaption {
+    margin-top: 0.25rem;
+    @include l-text-style(0.4, 400, 0.65rem, "system");
+    text-align: center;
+}
+
+section {
+    gap: 3rem;
+    display: grid;
+    max-width: 800px;
+    margin: 3.5rem auto 0 auto;
+    padding: 0 1.8rem;
+}
+
+.sidebar {
+    position: sticky;
+    top: 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    block-size: fit-content;
+
+    h3 {
+        @include l-text-style(0.85, 500, 0.7rem, "system");
+        margin: 2px 0px 5px 0px;
+    }
+    ul {
+        block-size: fit-content;
+        max-block-size: calc(100vh - (6rem * 2));
+        overflow: scroll;
+    }
+    li {
+        @include l-text-style(1, 400, 0.7rem, "system");
+        position: relative;
+        inline-size: 100%;
+        text-align: left;
+        margin-bottom: 0.45rem;
+        display: block;
+        opacity: 0.5;
+        transition: 0.04s opacity cubic-bezier(.4,0,.2,1);
+    }
+    li:hover {
+        opacity: 1;
+    }
+    li a {
+        transition: 0.1s transform cubic-bezier(.4,0,.2,1);
+    }
+    li a:hover {
+        text-decoration: none;
+    }
+    li a:active {
+        transform: scale(0.98);
+    }
+}
+
+.body-container {
+    grid-column: 2;
+    max-width: 500px;
+}
+
+.body {
+    padding: 0 1.8rem;
+    margin-bottom: 2rem;
+}

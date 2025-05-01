@@ -36,6 +36,28 @@ div[contenteditable]:focus {
     @include text-style(0.8, var(--fw-400-500), 1.45rem);
 }
 
+.box-shadow-focus {
+    transition: box-shadow 0.2s ease-in-out,
+                background-color 0.1s ease-in-out;
+
+    --border-focus-opacity: 0.05;
+    --placeholder-opacity: 0.1;
+    --bg-opacity: 0.015;
+    --empty-before-opacity: 0.12;
+
+    &--light {
+        --border-focus-opacity: 0.1;
+        --placeholder-opacity: 0.125;
+        --bg-opacity: 0.045;
+        --empty-before-opacity: 0.175;
+    }
+    &--focus {
+        background: rgba(var(--textColor1), calc(var(--bg-opacity) + 0.01));
+        box-shadow: rgba(var(--textColor1), var(--border-focus-opacity)) 0px 0px 0px 1.5px inset, 
+                    rgba(var(--textColor1), calc(var(--border-focus-opacity) - 0.01)) 0px 0px 0px 3px;
+    }
+}
+
 .input-box {
     @include flex(center, space-between);
     border: none;

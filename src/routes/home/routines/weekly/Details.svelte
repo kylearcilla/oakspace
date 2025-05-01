@@ -337,8 +337,7 @@
                     styles: { 
                         padding: "4px 12px 4px 11px",
                         margin: "0px 0px 0px -10px",
-                        fontSize: "1.375rem",
-                        fontFamily: "Geist Mono"
+                        fontSize: "1.375rem"
                     },
                     onClick: () => { 
                         breakdownOptnOpen = !breakdownOptnOpen

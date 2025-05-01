@@ -57,12 +57,13 @@
         })
         onAttemptClose()
     }
-
     function onAttemptClose() {
         closeModal(ModalType.NewSession)
     }
 
-    onMount(() => titleElem.focus())
+    onMount(() => {
+        requestAnimationFrame(() => titleElem.focus())
+    })
 </script>
 
 <Modal 
@@ -404,7 +405,7 @@
             margin: 11px 0px 0px 0px;
             padding: 7px 8px;
             border-radius: 12px;
-            @include text-style(0.7, var(--fw-400-500), 1.3rem, "Geist Mono");
+            @include text-style(0.7, var(--fw-400-500), 1.3rem);
             @include flex(center, space-between);
             background-color: rgba(var(--textColor1), var(--time-btn-bg-opacity));
         }

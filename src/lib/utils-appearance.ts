@@ -2,6 +2,11 @@ import { get } from "svelte/store"
 import { themeState } from "./store"
 import { themes } from "$lib/data-themes"
 
+const FONTS = {
+  system: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  mono: '"Geist Mono"'
+}
+
 const STYLES = {
   dividerBorder: {
     light: "1px solid rgba(var(--textColor1), 0.1)",
@@ -111,6 +116,7 @@ export function setRootColors(name: string, theme: ThemeStyling) {
     const dividerBgStyle = STYLES.dividerBg[isDark ? "dark" : "light"]
 
     const weight_300_400 = isDark ? "300" : "400"
+    const weight_300_500 = isDark ? "300" : "500"
     const weight_400_500 = isDark ? "400" : "500"
     const weight_500_600 = isDark ? "500" : "600"
 
@@ -160,6 +166,7 @@ export function setRootColors(name: string, theme: ThemeStyling) {
           --fw-300-400: ${weight_300_400};
           --fw-400-500: ${weight_400_500};
           --fw-500-600: ${weight_500_600};
+          --fw-300-500: ${weight_300_500};
           --card-light-border: ${cardLightBorder};
           --card-light-shadow: ${cardLightShadow};
           --confirm-color-1: ${deleteColor1};
@@ -168,6 +175,10 @@ export function setRootColors(name: string, theme: ThemeStyling) {
           --error-color: ${errorColor};
     `
     headTag.appendChild(styleTag)
+  }
+
+  export function setDefaultFont(fontStyle: "system" | "mono") {
+    document.body.style.fontFamily = FONTS[fontStyle] || FONTS.system
   }
 
   /**

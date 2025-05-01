@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getDayHabistData } from "$lib/utils-habits"
+    import { getDayHabitsData } from "$lib/utils-habits"
 	import { habitTracker, themeState } from "$lib/store"
     import { formatDatetoStr, genMonthCalendar, uptoToday } from "$lib/utils-date"
 
@@ -34,7 +34,7 @@
         {#each weeklyHeatMap as week}
             <div class="cal__week">
                 {#each week as day}
-                    {@const data = getDayHabistData(day.date)}
+                    {@const data = getDayHabitsData(day.date)}
                     {@const date = day.date.getDate()}
                     {@const inBounds = day.isInCurrMonth && uptoToday(day.date)}
                     <div

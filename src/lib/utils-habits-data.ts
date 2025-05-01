@@ -125,7 +125,10 @@ export function toggleHabitYearBit({ habit, date }: { habit: Habit, date: Date }
     
     if (!chunkKey) return
 
+    const bit = (data[chunkKey] >> bitPosition) & 1
     data[chunkKey] ^= (1 << bitPosition)
+    const chunk = data[chunkKey]
+    console.log({ chunkKey, bitPosition, chunk: chunk.toString(2) })
 }
 
 /**

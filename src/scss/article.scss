@@ -8,7 +8,7 @@
     background-color: #FFFAF0;
     min-width: 100vw;
     min-height: 100vh;
-    padding-bottom: 200px;
+    padding-bottom: 80px;
 }
 
 article header {
@@ -25,7 +25,7 @@ article header {
 
 .header h1 {
     @include l-text-style(1, 200, 2.85rem, "Lora");
-    max-width: none;
+    max-width: 600px;
     margin: 0 auto 0.9rem auto;
     position: relative;
     width: 70vw;
@@ -86,7 +86,7 @@ section {
         margin-bottom: 0.45rem;
         display: block;
         opacity: 0.5;
-        transition: 0.04s opacity cubic-bezier(.4,0,.2,1);
+        transition: 0.1s opacity cubic-bezier(.4,0,.2,1);
     }
     li:hover {
         opacity: 1;
@@ -99,6 +99,10 @@ section {
     }
     li a:active {
         transform: scale(0.98);
+    }
+    li.active {
+        opacity: 1;
+        font-weight: 500;
     }
 }
 

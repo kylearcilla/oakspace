@@ -1,14 +1,15 @@
 <script lang="ts">
     export let section: {
-        type: 'heading' | 'body' | 'numbered-list' | 'image' | 'table'
+        type: 'h1' | 'h2' | 'body' | 'numbered-list' | 'image' | 'table'
         content: any
         href?: string
     }
 </script>
 
-{#if section.type === 'heading'}
+{#if section.type === 'h1'}
     <h2 id={section.href?.slice(1)}>{section.content}</h2>
-
+{:else if section.type === 'h2'}
+    <h3 id={section.href?.slice(1)}>{section.content}</h3>
 {:else if section.type === 'body'}
     <p>{@html section.content}</p>
 
@@ -21,25 +22,39 @@
         {/each}
     </ol>
 {:else if section.type === 'image'}
-    {@const { src, alt, artist, source, height, description } = section.content}
+    {@const { src, alt, artist, source, height, description, centerPos, name } = section.content}
     <figure>
         <img 
             src={src} 
             alt={alt}
             style:height={`${height}px`}
             style:object-fit="cover"
+            style:object-position={`center ${centerPos}%`}
         />
-        {#if source}
+        {#if source || artist}
             <figcaption>
-                <div class="fig-caption">
-                    {#if artist}
+                <div 
+                    class="fig-caption"
+                    class:flx-sb={description}
+                    class:txt-center={!description}
+                >
+                    {#if description}
+                        <span style:text-align="left">{@html description}</span>
+                    {/if}
+                    <!-- paintings: artist + name -->
+                    {#if artist && name}
+                        <span style:text-align={description ? "right" : "center"}>
+                            <i>{name}</i> by {artist.name}
+                        </span>
+                    <!-- photos: artist + source -->
+                    {:else if artist && source}
                         <span>
                             Photo by 
                             <a href={artist.href} target="_blank">{artist.name}</a>
                             on 
                             <a href={source.href} target="_blank">{source.text}</a>
                         </span>
-                    {:else}
+                    {:else if source}
                         <span>
                             Photo from
                             <a href={source.href} target="_blank">{source.text}</a>
@@ -50,20 +65,25 @@
         {/if}
     </figure>
 {:else if section.type === 'table'}
+    {@const { headers, rows, widths = [] } = section.content}
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    {#each section.content.headers as header}
-                        <th>{header}</th>
+                    {#each headers as header, idx}
+                        <th style:width={widths[idx] ?? 'auto'}>
+                            {header}
+                        </th>
                     {/each}
                 </tr>
             </thead>
             <tbody>
-                {#each section.content.rows as row}
+                {#each rows as row}
                     <tr>
-                        {#each row as cell}
-                            <td>{@html cell}</td>
+                        {#each row as cell, idx}
+                            <td style:width={widths[idx] ?? 'auto'}>
+                                {@html cell}
+                            </td>
                         {/each}
                     </tr>
                 {/each}
@@ -82,6 +102,10 @@
             margin-top: 0;
         }
     }
+    h3 {
+        @include l-text-style(0.85, 500, 0.9rem);
+        margin: 25px 0px 6px 0px;
+    }   
     p, li {
         @include l-text-style(0.85, 400, 0.85rem);
         margin: 2px 0px 0px 0px;
@@ -93,11 +117,11 @@
     ol li {
         margin: 0px 0px 2px 30px;
         list-style-type: decimal;
-        line-height: 1.25rem;
+        line-height: 1.25rem; 
     }
 
     figure {
-        margin: 2rem 0;
+        margin: 2rem 0 2rem 0;
         
         img {
             width: 100%;
@@ -106,7 +130,6 @@
     figcaption {
         margin-top: 0.25rem;
         @include l-text-style(0.4, 400, 0.65rem, "system");
-        text-align: center;
     }
 
     .table-container {
@@ -117,11 +140,16 @@
     table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
     }
     
     th, td {
         text-align: left;
         border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        padding: 0.45rem 0.75rem 0.45rem;
+    }
+    th:first-child, td:first-child {
+        padding-left: 0;
     }
     th {
         @include l-text-style(1, 500, 0.7rem, "system");
@@ -131,9 +159,11 @@
         @include l-text-style(_, 400, 0.7rem, "system");
         color: #282828;
         vertical-align: top;
-        padding: 0.45rem 0;
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+        line-height: 1.025rem;
     }
-    th:first-child, td:first-child {
+    th:nth-child(2), td:nth-child(2) {
         min-width: 95px;
     }
     tr:last-child td {

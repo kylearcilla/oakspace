@@ -18,7 +18,7 @@
         Personalize your space with the freedom of a bullet journal.
     </p>
     <p class="exp__description" style:max-width="600px">
-        Pick from a selection of themes, write personalize affirmations & intentions, or add wallpapers & icons of your choice.
+        Pick from a selection of themes, write personal affirmations & intentions, or add wallpapers & icons of your choice.
     </p>
     <div class="exp__bento">
         <div class="header-box exp__bento-box" style:height="380px" style:grid-row="span 1">

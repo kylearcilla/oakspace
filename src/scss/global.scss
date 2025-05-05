@@ -407,6 +407,10 @@ button.tab-btn {
     @include abs-center();
 }
 
+.txt-center {
+    text-align: center;
+}
+
 $bento-box-border-radius: 14px;
 $bento-box-padding: 8px;
 

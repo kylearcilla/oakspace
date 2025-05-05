@@ -166,20 +166,20 @@ export const FOOTER = {
             name: "Resources",
             links: [
                 {
-                    name: "Goal Tracking",
-                    href: "/resources/goals"
+                    name: "Finding Goals",
+                    href: "/resources/goals/coming-up-with-goals"
                 },
                 {
-                    name: "Habit Tracking",
-                    href: "/habit-tracking"
+                    name: "Classifying Goals",
+                    href: "/resources/goals/goal-classification"
                 },
                 {
-                    name: "Building Routines",
-                    href: "/building-routines"
+                    name: "Systems & Mindsets",
+                    href: "/resources/goals/systems-mindsets"
                 },
                 {
-                    name: "Deep Work",
-                    href: "/deep-work"
+                    name: "What Comes After?",
+                    href: "/resources/goals/after-goal-success"
                 },
             ],
         },
@@ -191,13 +191,9 @@ export const FOOTER = {
                     href: "/designing-oakspace"
                 },
                 {
-                    name: "Make Oakspace your space",
-                    href: "/make-oakspace-your-space"
-                },
-                {
-                    name: "Oakspace for ADHD",
-                    href: "/oakspace-for-adhd"
-                },
+                    name: "Designing for ADHD",
+                    href: "/designing-for-adhd"
+                }
             ],
         },
         {

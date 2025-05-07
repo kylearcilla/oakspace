@@ -17,7 +17,7 @@ jobs:
       run: npm install && npm run build
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: build-artifact
         path: .svelte-kit/output
@@ -27,7 +27,7 @@ jobs:
     needs: build
 
     steps:
-    - uses: actions/download-artifact@v4.1.7
+    - uses: actions/download-artifact@v2
       with:
         name: build-artifact
         path: deploy-files/

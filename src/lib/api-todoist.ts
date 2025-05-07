@@ -14,7 +14,7 @@ type UpdateTodoistTaskOptions = {
     action: TaskUpdateActions
     name?: string
     parentId?: string | null
-    description?: string
+    description?: string,
     idx?: number
     completeCommand?: any
 }

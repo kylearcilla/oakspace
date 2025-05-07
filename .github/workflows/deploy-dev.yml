@@ -19,6 +19,12 @@ jobs:
       with:
         node-version: '18.18.0'
 
+    - name: Create environment file
+      run: |
+        echo "PUBLIC_TODOIST_CLIENT_ID=${{ secrets.PUBLIC_TODOIST_CLIENT_ID }}" >> .env
+        echo "PUBLIC_TODOIST_CLIENT_SECRET=${{ secrets.PUBLIC_TODOIST_CLIENT_SECRET }}" >> .env
+        echo "PUBLIC_YT_DATA_V3_API_KEY=${{ secrets.PUBLIC_YT_DATA_V3_API_KEY }}" >> .env
+
     - name: Build SvelteKit App
       run: |
         npm install --legacy-peer-deps

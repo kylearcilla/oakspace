@@ -36,7 +36,7 @@ jobs:
         zip -r deploy.zip .
 
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@b8c74de
+      uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-region: us-east-1
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}

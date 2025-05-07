@@ -21,7 +21,7 @@ jobs:
 
     - name: Build SvelteKit App
       run: |
-        npm install
+        npm install --legacy-peer-deps
         npm run build
         zip -r deploy.zip .
 

@@ -7,8 +7,24 @@ on:
       - master
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build SvelteKit App
+      run: npm install && npm run build
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifact
+        path: .svelte-kit/output
+
   deploy:
     runs-on: ubuntu-latest
+    needs: build
 
     steps:
     - uses: actions/download-artifact@v4.1.7

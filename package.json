@@ -1,21 +1,23 @@
 {
-  "name": "spaces-fe",
+  "name": "oakspace",
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "vite dev",
     "build": "vite build",
-    "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "test": "vitest",
-    "test:e2e": "playwright test",
+    "dev": "vite dev",
+    "format": "prettier --plugin-search-dir . --write .",
     "lint": "prettier --plugin-search-dir . --check . && eslint .",
-    "format": "prettier --plugin-search-dir . --write ."
+    "preview": "vite preview",
+    "sso": "aws sso login --sso-session=oakspace",
+    "test": "vitest",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.45.0",
     "@sveltejs/adapter-auto": "^3.0.0",
+    "@sveltejs/adapter-node": "^5.2.12",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@testing-library/svelte": "^5.1.0",
@@ -43,12 +45,8 @@
   },
   "type": "module",
   "dependencies": {
-    "@types/d3": "^7.4.0",
-    "d3": "^7.8.5",
     "dotenv": "^16.4.5",
-    "firebase": "^9.19.1",
     "i": "^0.3.7",
-    "jwt-decode": "^3.1.2",
     "npm": "^9.6.4",
     "playwright": "^1.46.1",
     "sass": "^1.58.0",

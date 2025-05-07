@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - PUBLIC_TODOIST_CLIENT_ID=${PUBLIC_TODOIST_CLIENT_ID}
+        - PUBLIC_TODOIST_CLIENT_SECRET=${PUBLIC_TODOIST_CLIENT_SECRET}
+        - PUBLIC_YT_DATA_V3_API_KEY=${PUBLIC_YT_DATA_V3_API_KEY}
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+      - .env.dev
+    volumes:
+      - ./src:/app/src
+      - ./static:/app/static
+      - ./package.json:/app/package.json
+      - ./svelte.config.js:/app/svelte.config.js
+      - ./vite.config.js:/app/vite.config.js
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

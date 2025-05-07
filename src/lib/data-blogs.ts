@@ -905,7 +905,7 @@ The sections ahead will help you navigate what comes after and realize that mayb
         {
             type: "image",
             content: {
-                src: "https://lh3.googleusercontent.com/ci/AL18g_SeBO1kv2thoZVSTsG3ByiNkvNhin5JKBZY6nM77eGtREMZlhBUj8s344BGH7tBIBk5t8qLKkY=s1200",
+                src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Joaqu%C3%ADn_Sorolla_y_Bastida_-_La_Siesta_-_Google_Art_Project.jpg/1212px-Joaqu%C3%ADn_Sorolla_y_Bastida_-_La_Siesta_-_Google_Art_Project.jpg?20131125101500",
 
                 description: `"A well-earned rest."`,
                 alt: "la-siesta",

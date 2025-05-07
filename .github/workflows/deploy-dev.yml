@@ -13,6 +13,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: aws-elastic-beanstalk
 
     steps:
     - name: Checkout code

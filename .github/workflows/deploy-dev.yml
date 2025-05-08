@@ -34,8 +34,7 @@ jobs:
       run: |
         npm install --legacy-peer-deps
         npm run build
-        echo "web: node .output/server/index.js" > Procfile
-        zip -r deploy.zip .output Procfile package.json package-lock.json
+        zip -r deploy.zip .
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1

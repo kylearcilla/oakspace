@@ -474,7 +474,7 @@ $todo-padding-left: 8px;
             position: relative; 
         }
         @keyframes strike {
-            0%   { width : 0; }
+            0%   { width : 0%; }
             100% { width: 100%; }
         }
         .strike::after {

@@ -14,7 +14,8 @@ const config = {
 	preprocess: preprocess({
 		scss: {
 			prependData: "@use './src/scss/global.scss' as *;",
-			includePaths: ['./src/scss']
+			includePaths: ['./src/scss'],
+			silenceDeprecations: ["legacy-js-api", "mixed-decls"]
 		}
 	}),
 	kit: {

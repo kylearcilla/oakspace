@@ -726,150 +726,150 @@
 </BounceFade>
 
 <style lang="scss">
-    @import "../scss/inputs.scss";
+    @use "../scss/inputs.scss" as *;
 
-    .emoji-picker {
-        width: min-content;
-        height: 370px;
-        min-height: 230px;
-        position: relative;
+.emoji-picker {
+    width: min-content;
+    height: 370px;
+    min-height: 230px;
+    position: relative;
+    background-color: var(--bg-2);
+    border: 1px solid rgba(var(--textColor1), 0.05);
+    padding: 7px 8px 0px 8px;
+    border-radius: 13px;
+
+    &--light {
+      @include contrast-bg("bg-2");
+    }
+    &--light &__sticky-heading {
+      background-color: var(--bg-1);
+    }
+    &--light &__nav-icon--picked {
+      color: var(--elemColor1) !important;
+    }
+    &--light &__skins {
+      @include contrast-bg;
+    }
+    &--light &__emoji-tooltip span {
+      @include contrast-bg;
+    }
+
+    &__nav {
+      @include flex(center, space-between);
+      padding: 2px 2px 0px 2px;
+      margin-left: -1px;
+    }
+    &__nav-icon {
+      font-size: 1.5rem;
+      color: rgba(var(--textColor1), 0.65);
+      opacity: 0.2;
+      transition: 0s ease-in-out;
+      height: 26px;
+      width: 26px;
+      border-radius: 8px;
+      @include center;
+      
+      &:hover {
+        opacity: 0.35;
+        background-color: rgba(var(--textColor1), 0.09);
+        color: rgba(var(--textColor1), 1);
+      }
+    }
+    &__nav-icon--picked {
+      opacity: 1 !important;
+      color: rgba(var(--textColor1), 1) !important;
+      background-color: rgba(var(--textColor1), 0.06) !important;
+    }
+    &__search-container {
+      @include flex(center)
+    }
+    &__search {
+      width: calc(100% - 30px);
+      @include flex(center);
+      margin: 9px 0px 10px 3px;
+      padding: 6px 10px 7px 10px;
+
+      i {
+        @include text-style(0.5, _, 1.4rem);
+      }
+      button {
+        margin-top: 2px;
+        opacity: 0.2;
+      }
+      button:hover {
+        opacity: 0.6;
+      }
+    }
+    &__search input {
+      width: 100%;
+      appearance: none;
+      margin: 0px 10px 0px 8px;
+      padding: 0px;
+
+      &::-webkit-search-cancel-button {
+        display: none;
+      }
+    }
+    &__skin-btn {
+      font-size: 2.2rem;
+      margin-left: 8px;
+      @include square(33px, 12px);
+      @include center;
+      
+      &--optn {
+        font-size: 2rem !important;
+        margin: 0px 2px 0px 0px;
+        @include square(29px, 8px);
+      }
+      &:hover {
+        background-color: rgba(var(--textColor1), 0.085);
+      }
+    }
+    &__skins {
+      @include flex(center);
+      padding: 3px 3px 3px 5px;
+      border-radius: 9px;
+      background-color: var(--bg-3);
+    }
+    &__scroll {
+      overflow-x: hidden;
+      overflow-y: scroll;
+      width: calc(100% + 10px);
+      height: calc(100% - 80px);
+    }
+    &__category {
+        margin: 0px 0px 10px 0px;
+        padding-right: 1px;
+    }
+    &__category-row {
+      @include flex(center, space-between);
+      height: 32px;
+    }
+    &__sticky-heading {
+        z-index: 1;
         background-color: var(--bg-2);
-        border: 1px solid rgba(var(--textColor1), 0.05);
-        padding: 7px 8px 0px 8px;
-        border-radius: 13px;
-
-        &--light {
-          @include contrast-bg("bg-2");
-        }
-        &--light &__sticky-heading {
-          background-color: var(--bg-1);
-        }
-        &--light &__nav-icon--picked {
-          color: var(--elemColor1) !important;
-        }
-        &--light &__skins {
-          @include contrast-bg;
-        }
-        &--light &__emoji-tooltip span {
-          @include contrast-bg;
-        }
-
-        &__nav {
-          @include flex(center, space-between);
-          padding: 2px 2px 0px 2px;
-          margin-left: -1px;
-        }
-        &__nav-icon {
-          font-size: 1.5rem;
-          color: rgba(var(--textColor1), 0.65);
-          opacity: 0.2;
-          transition: 0s ease-in-out;
-          height: 26px;
-          width: 26px;
-          border-radius: 8px;
-          @include center;
-          
-          &:hover {
-            opacity: 0.35;
-            background-color: rgba(var(--textColor1), 0.09);
-            color: rgba(var(--textColor1), 1);
-          }
-        }
-        &__nav-icon--picked {
-          opacity: 1 !important;
-          color: rgba(var(--textColor1), 1) !important;
-          background-color: rgba(var(--textColor1), 0.06) !important;
-        }
-        &__search-container {
-          @include flex(center)
-        }
-        &__search {
-          width: calc(100% - 30px);
-          @include flex(center);
-          margin: 9px 0px 10px 3px;
-          padding: 6px 10px 7px 10px;
-
-          i {
-            @include text-style(0.5, _, 1.4rem);
-          }
-          button {
-            margin-top: 2px;
-            opacity: 0.2;
-          }
-          button:hover {
-            opacity: 0.6;
-          }
-        }
-        &__search input {
-          width: 100%;
-          appearance: none;
-          margin: 0px 10px 0px 8px;
-          padding: 0px;
-
-          &::-webkit-search-cancel-button {
-            display: none;
-          }
-        }
-        &__skin-btn {
-          font-size: 2.2rem;
-          margin-left: 8px;
-          @include square(33px, 12px);
-          @include center;
-          
-          &--optn {
-            font-size: 2rem !important;
-            margin: 0px 2px 0px 0px;
-            @include square(29px, 8px);
-          }
-          &:hover {
-            background-color: rgba(var(--textColor1), 0.085);
-          }
-        }
-        &__skins {
-          @include flex(center);
-          padding: 3px 3px 3px 5px;
-          border-radius: 9px;
+        font-weight: 500;
+        position: sticky;
+        padding: 0px 0px 5.5px 5px;
+        top: -1px;
+        text-align: left;
+        @include text-style(0.7, 500, 1.35rem);
+    }
+    &__emoji-tooltip {
+        position: absolute;
+        pointer-events: none;
+        @include text-style(0.8, var(--fw-400-500), 1.1rem);
+        z-index: 2000;
+        height: 10px;
+        width: 10px;
+        
+        span {
+          @include abs-center;
           background-color: var(--bg-3);
-        }
-        &__scroll {
-          overflow-x: hidden;
-          overflow-y: scroll;
-          width: calc(100% + 10px);
-          height: calc(100% - 80px);
-        }
-        &__category {
-            margin: 0px 0px 10px 0px;
-            padding-right: 1px;
-        }
-        &__category-row {
-          @include flex(center, space-between);
-          height: 32px;
-        }
-        &__sticky-heading {
-            z-index: 1;
-            background-color: var(--bg-2);
-            font-weight: 500;
-            position: sticky;
-            padding: 0px 0px 5.5px 5px;
-            top: -1px;
-            text-align: left;
-            @include text-style(0.7, 500, 1.35rem);
-        }
-        &__emoji-tooltip {
-            position: absolute;
-            pointer-events: none;
-            @include text-style(0.8, var(--fw-400-500), 1.1rem);
-            z-index: 2000;
-            height: 10px;
-            width: 10px;
-            
-            span {
-              @include abs-center;
-              background-color: var(--bg-3);
-              padding: 4px 8px;
-              border-radius: 5px;
-              width: max-content;
-            }
+          padding: 4px 8px;
+          border-radius: 5px;
+          width: max-content;
         }
     }
+}
 </style>

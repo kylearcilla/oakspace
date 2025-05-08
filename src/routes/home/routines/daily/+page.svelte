@@ -449,10 +449,10 @@
 
 
 <style lang="scss">
-    @import "../../../../scss/day-box.scss";
-    @import "../../../../scss/dropdown.scss";
-    @import "../../../../scss/inputs.scss";
-    @import "../../../../scss/components/routines.scss";
+    @use "../../../../scss/day-box.scss" as *;
+    @use "../../../../scss/dropdown.scss" as *;
+    @use "../../../../scss/inputs.scss" as *;
+    @use "../../../../scss/components/routines.scss" as *;
 
     $hour-blocks-top-offset: 55px;
     $hour-block-height: 50px;

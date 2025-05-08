@@ -1,3 +1,5 @@
+@use "./global.scss" as *;
+
 @mixin blur-bg($blur-val: 80px, $bg: rgba(91, 91, 91, 0.5)) {
     backdrop-filter: blur($blur-val);
     -webkit-backdrop-filter: blur($blur-val);

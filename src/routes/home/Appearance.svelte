@@ -144,7 +144,7 @@
 </Modal>
 
 <style lang="scss">
-    @import "../../scss/dropdown.scss";
+    @use "../../scss/dropdown.scss" as *;
 
     .themes {
         width: 540px;

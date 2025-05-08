@@ -281,8 +281,8 @@
 </Modal>
 
 <style lang="scss">
-    @import "../../scss/global.scss";
-    @import "../../scss/inputs.scss";
+    @use "../../scss/global.scss" as *;
+    @use "../../scss/inputs.scss" as *;
 
 
     .settings {

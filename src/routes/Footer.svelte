@@ -33,7 +33,8 @@
 </footer>
 
 <style lang="scss">
-    @import '../scss/landing-page.scss';
+    @use "../scss/landing-page.scss" as *;
+
     .footer {
         background-color: #F5EEE1;
         width: 100%;

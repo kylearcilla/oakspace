@@ -220,6 +220,6 @@
  </div>
 
 <style lang="scss">
-    @import "../scss/inputs.scss";
-    @import "../scss/task.scss";
+    @use "../scss/inputs.scss" as *;
+    @use "../scss/task.scss" as *;
 </style>

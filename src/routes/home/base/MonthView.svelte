@@ -797,7 +797,7 @@
 </div>
 
 <style lang="scss">
-    @import "../../../scss/dropdown.scss";
+    @use "../../../scss/dropdown.scss" as *;
 
     .month-view {
         --arrow-opacity: 0.45;

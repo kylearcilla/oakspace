@@ -673,8 +673,8 @@
 </div>
 
 <style lang="scss">
-    @import "../../scss/day-box.scss";
-    @import "../../scss/dropdown.scss";
+    @use "../../scss/day-box.scss" as *;
+    @use "../../scss/dropdown.scss" as *;
 
     $hour-block-height: 45px;
 

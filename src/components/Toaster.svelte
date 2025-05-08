@@ -77,5 +77,5 @@
 {/if}
 
 <style lang="scss">
-    @import '../scss/toasts.scss';
+    @use "../scss/toasts.scss" as *;
 </style>

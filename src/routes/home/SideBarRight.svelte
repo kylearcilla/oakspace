@@ -230,9 +230,9 @@
 </div>
 
 <style lang="scss">
-    @import "../../scss/dropdown.scss";
-    @import "../../scss/inputs.scss";
-    @import "../../scss/blurred-bg.scss";
+    @use "../../scss/dropdown.scss" as *;
+    @use "../../scss/inputs.scss" as *;
+    @use "../../scss/blurred-bg.scss" as *;
 
     $side-padding: 18px;
     $color-a: rgba(var(--textColor1), 0.15);

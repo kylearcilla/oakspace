@@ -1,3 +1,5 @@
+@use "./global.scss" as *;
+
 * {
     &::selection {
         // background-color: #f9f1aa;

@@ -104,7 +104,7 @@ onMount(() => {
 </main>
 
 <style lang="scss">
-    @import '../scss/landing-page.scss';
+    @use "../scss/landing-page.scss" as *;
 
     main {
         overflow: hidden;

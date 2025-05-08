@@ -257,7 +257,7 @@
 </BounceFade>
 
 <style lang="scss">
-    @import "../../../scss/dropdown.scss";
+    @use "../../../scss/dropdown.scss" as *;
 
     .ambient {
         background: var(--bg-2);

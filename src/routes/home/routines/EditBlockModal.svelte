@@ -596,8 +596,8 @@
 {/if}
 
 <style lang="scss">
-    @import "../../../scss/inputs.scss";
-    @import "../../../scss/dropdown.scss";
+    @use "../../../scss/inputs.scss" as *;
+    @use "../../../scss/dropdown.scss" as *;
 
     .edit-routine {
         max-width: 500px;

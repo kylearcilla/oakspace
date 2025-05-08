@@ -1,3 +1,6 @@
+@use "./global.scss" as *;
+@use "./landing-page.scss" as *;
+
 * {
     text-size-adjust: 100%;
     font: inherit;

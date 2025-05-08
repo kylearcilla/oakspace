@@ -649,8 +649,8 @@
 </Modal>
 
 <style lang="scss">
-    @import "../../../scss/blurred-bg.scss";
-    @import "../../../scss/skeleton.scss";
+    @use "../../../scss/blurred-bg.scss" as *;
+    @use "../../../scss/skeleton.scss" as *;
 
     .spaces {
         height: 85vh;

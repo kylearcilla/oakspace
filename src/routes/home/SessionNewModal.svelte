@@ -304,7 +304,7 @@
 </Modal>
 
 <style lang="scss">
-    @import "../../scss/inputs.scss";
+    @use "../../scss/inputs.scss" as *;
 
     .new-session {
         width: 470px;

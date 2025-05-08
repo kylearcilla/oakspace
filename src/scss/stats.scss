@@ -1,3 +1,5 @@
+@use "./global.scss" as *;
+
 .stats {
     display: flex;
     overflow: auto;

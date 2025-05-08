@@ -555,8 +555,8 @@
 {/if}
 
 <style lang="scss">
-    @import "../../../../scss/components/routines.scss";
-    @import "../../../../scss/dropdown.scss";
+    @use "../../../../scss/components/routines.scss" as *;
+    @use "../../../../scss/dropdown.scss" as *;
 
     .routine {
         width: 100%;

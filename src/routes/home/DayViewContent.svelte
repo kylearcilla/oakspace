@@ -433,8 +433,8 @@
 </BounceFade>
 
 <style lang="scss">
-    @import "../../scss/day-box.scss";
-    @import "../../scss/components/routines.scss";
+    @use "../../scss/day-box.scss" as *;
+    @use "../../scss/components/routines.scss" as *;
     .day-view {
         width: 100%;
         height: calc(100% - 38px);

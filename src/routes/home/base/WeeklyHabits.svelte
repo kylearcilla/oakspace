@@ -146,7 +146,7 @@
 {/if}
 
 <style lang="scss">
-    @import "../../../scss/stats.scss";
+    @use "../../../scss/stats.scss" as *;
 
     .weekly {
         min-height: 200px;

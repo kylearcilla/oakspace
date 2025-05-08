@@ -196,7 +196,7 @@
 </div>
 
 <style lang="scss">
-    @import "../../../scss/stats.scss";
+    @use "../../../scss/stats.scss" as *;
 
     .yr-view {
         margin-top: 8px;

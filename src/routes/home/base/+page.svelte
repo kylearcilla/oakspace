@@ -155,7 +155,7 @@
 </div>
 
 <style lang="scss">
-    @import "../../../scss/dropdown.scss";
+    @use "../../../scss/dropdown.scss" as *;
 
     .base {
         width: 100%;

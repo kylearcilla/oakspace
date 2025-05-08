@@ -163,7 +163,7 @@
 </div>
 
 <style lang="scss">
-    @import "../../../scss/goals.scss";
+    @use "../../../scss/goals.scss" as *;
 
     .margin {
         width: 100%;

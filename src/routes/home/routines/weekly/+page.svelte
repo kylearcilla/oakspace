@@ -563,10 +563,10 @@
 {/if}
 
 <style lang="scss">
-    @import "../../../../scss/dropdown.scss";
-    @import "../../../../scss/day-box.scss";
-    @import "../../../../scss/inputs.scss";
-    @import "../../../../scss/components/routines.scss";
+    @use "../../../../scss/dropdown.scss" as *;
+    @use "../../../../scss/day-box.scss" as *;
+    @use "../../../../scss/inputs.scss" as *;
+    @use "../../../../scss/components/routines.scss" as *;
 
     $hr-col-height: 50px;
     $hr-col-width: 60px;

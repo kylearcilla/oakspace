@@ -421,7 +421,7 @@
 </div>
 
 <style global lang="scss">
-    @import "../scss/inputs.scss";
+    @use "../scss/inputs.scss" as *;
 
     @mixin background {
         background-color: rgba(var(--textColor1), 0.035);

@@ -1,4 +1,5 @@
-@import "../../scss/inputs.scss";
+@use "./global.scss" as *;
+@use "../../scss/inputs.scss" as *;
 
 /* Actual Active Session Component */
 $bento-box-padding: 8px;

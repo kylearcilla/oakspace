@@ -97,7 +97,7 @@
 
 
 <style lang="scss">
-    @import "../../scss/inputs.scss";
+    @use "../../scss/inputs.scss" as *;
 
     .tasks {
         width: 100%;

@@ -93,7 +93,7 @@
 {/if}
 
 <style lang="scss">
-    @import '../../scss/landing-page.scss';
+    @use "../../scss/landing-page.scss" as *;
     h2 {
         @include l-text-style(0.85, 500, 1.2rem);
         margin: 30px 0px 10px 0px;

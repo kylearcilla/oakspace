@@ -730,8 +730,8 @@
 {/if}
 
 <style lang="scss">
-    @import "../scss/dropdown.scss";
-    @import "../scss/stats.scss";
+    @use "../scss/dropdown.scss" as *;
+    @use "../scss/stats.scss" as *;
 
     .habit {
         width: 90vw;

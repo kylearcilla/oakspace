@@ -87,6 +87,6 @@
 </article>
 
 <style lang="scss">
-    @import '../../../../scss/landing-page.scss';
-    @import '../../../../scss/article.scss';
+    @use "../../../../scss/landing-page.scss" as *;
+    @use "../../../../scss/article.scss" as *;
 </style>

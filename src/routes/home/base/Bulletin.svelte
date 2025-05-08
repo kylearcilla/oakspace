@@ -214,8 +214,8 @@
 </div>
 
 <style lang="scss">
-    @import "../../../scss/dropdown.scss";
-    @import "../../../scss/inputs.scss";
+    @use "../../../scss/dropdown.scss" as *;
+    @use "../../../scss/inputs.scss" as *;
 
     .bulletin {
         width: 100%;

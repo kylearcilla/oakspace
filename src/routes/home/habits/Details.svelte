@@ -741,7 +741,7 @@
 {/if}
 
 <style lang="scss">
-    @import "../../../scss/stats.scss";
+    @use "../../../scss/stats.scss" as *;
 
     .details {
         height: calc(100% - 50px);

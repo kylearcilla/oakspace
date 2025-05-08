@@ -203,7 +203,7 @@
 {/if}
 
 <style lang="scss">
-    @import "../../../scss/inputs.scss";
+    @use "../../../scss/inputs.scss" as *;
 
     .new-routine {
         width: 420px;

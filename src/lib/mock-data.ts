@@ -413,6 +413,7 @@ export const TEST_SESSIONS: Session[] = [
 
 export const TEST_TASKS: Task[] = [
   {
+      userId: "0",
       id: "f82be9cd-8f42-477e-b833-e74feed75a78",
       idx: 0,
       title: "Morning Routine",
@@ -421,6 +422,7 @@ export const TEST_TASKS: Task[] = [
       parentId: null
   },
   {
+      userId: "1",
       id: "9e2d813a-b7c2-48a5-9e47-87654aebbe7a",
       idx: 0,
       title: "Wake Up",
@@ -429,6 +431,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "f82be9cd-8f42-477e-b833-e74feed75a78"  // Nested under "Morning Routine"
   },
   {
+      userId: "2",
       id: "2d92e4a5-01ab-4d12-9a3f-4f6f2f0c6f7f",
       idx: 1,
       title: "Make Breakfast",
@@ -437,6 +440,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "f82be9cd-8f42-477e-b833-e74feed75a78"  // Nested under "Morning Routine"
   },
   {
+      userId: "3",
       id: "bf3e3c33-7d8e-4293-937e-67b78d4516b1",
       idx: 1,
       title: "Check Emails",
@@ -445,6 +449,7 @@ export const TEST_TASKS: Task[] = [
       parentId: null
   },
   {
+      userId: "4",
       id: "bb746a50-b674-4285-8504-4fada3283243",
       idx: 2,
       title: "Work Tasks",
@@ -453,6 +458,7 @@ export const TEST_TASKS: Task[] = [
       parentId: null
   },
   {
+      userId: "5",
       id: "6b5686c0-1676-4e5d-9b33-eeb29de83b3a",
       idx: 0,
       title: "Write Report",
@@ -461,6 +467,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "bb746a50-b674-4285-8504-4fada3283243"  // Nested under "Work Tasks"
   },
   {
+      userId: "6",
       id: "ca9f636b-2457-47a5-b48a-13c9ed7e4686",
       idx: 0,
       title: "Gather Data",
@@ -469,6 +476,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "6b5686c0-1676-4e5d-9b33-eeb29de83b3a"  // Nested under "Write Report"
   },
   {
+      userId: "7",
       id: "397f5f0a-d234-4c61-a17a-d8d9238c2299",
       idx: 3,
       title: "Plan Weekend Trip",
@@ -477,6 +485,7 @@ export const TEST_TASKS: Task[] = [
       parentId: null
   },
   {
+      userId: "8",
       id: "781a5fe3-b855-4ec9-8bc6-49249c82adf7",
       idx: 0,
       title: "Choose Destination",
@@ -485,6 +494,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "397f5f0a-d234-4c61-a17a-d8d9238c2299"  // Nested under "Plan Weekend Trip"
   },
   {
+      userId: "9",
       id: "c3488a1e-2581-467e-b285-17797a5e0000",
       idx: 0,
       title: "Book Flights",
@@ -493,6 +503,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "781a5fe3-b855-4ec9-8bc6-49249c82adf7"  // Nested under "Choose Destination"
   },
   {
+      userId: "10",
       id: "1b0a5d31-5059-43f7-b94a-8b7f3b0b6e1f",
       idx: 0,
       title: "Buy Luggage",
@@ -501,6 +512,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "c3488a1e-2581-467e-b285-17797a5e0000"  // Nested under "Book Flights"
   },
   {
+      userId: "11",
       id: "aff3d66d-4d45-4a3d-a02a-df125d4314a9",
       idx: 4,
       title: "Exercise Routine",
@@ -509,6 +521,7 @@ export const TEST_TASKS: Task[] = [
       parentId: null
   },
   {
+      userId: "12",
       id: "4a6c7296-d313-4879-b5be-55b3e7b404b1",
       idx: 0,
       title: "Warm Up",
@@ -517,6 +530,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "aff3d66d-4d45-4a3d-a02a-df125d4314a9"  // Nested under "Exercise Routine"
   },
   {
+      userId: "13",
       id: "1f37b056-7329-45a1-9a6a-6b62b7880d58",
       idx: 1,
       title: "Cardio",
@@ -525,6 +539,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "4a6c7296-d313-4879-b5be-55b3e7b404b1"  // Nested under "Warm Up"
   },
   {
+      userId: "14",
       id: "46e51f5f-1bdb-438f-a378-5d2f20b5126b",
       idx: 2,
       title: "Strength Training",
@@ -533,6 +548,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "4a6c7296-d313-4879-b5be-55b3e7b404b1"  // Nested under "Warm Up"
   },
   {
+      userId: "15",
       id: "5be6a831-6e0f-4f35-b48b-dc56782057fe",
       idx: 1,
       title: "Cool Down",
@@ -541,6 +557,7 @@ export const TEST_TASKS: Task[] = [
       parentId: "aff3d66d-4d45-4a3d-a02a-df125d4314a9"  // Nested under "Exercise Routine"
   },
   {
+      userId: "16",
       id: "98e64631-1e0f-4f35-b43b-dc56782057fe",
       idx: 0,
       title: "Finish East of Eden",
@@ -796,7 +813,7 @@ export const YEAR_HABITS_DATA: HabitYearData[] = [
 /* home base */
 export const BASE_BANNER = IMG_COLLECTIONS[IMG_COLLECTION_IDX].banner
 
-export const BASE_HEADER: BaseHeaderViewOptions = {
+export const BASE_HEADER: BaseHeader = {
   showEntry: true,
   pos: "top",
   icon: {
@@ -806,7 +823,10 @@ export const BASE_HEADER: BaseHeaderViewOptions = {
   },
 }
 
-export const YEAR_THOUGHT_ENTRY: TextEntryOptions = {
+export const YEAR_THOUGHT_ENTRY: TextEntry = {
+  id: "0",
+  period: "year",
+  isoDate: "2025-01-01",
   icon: {
       type: "img",
       src: "https://i.pinimg.com/736x/c0/e3/4d/c0e34d53f0d0c134ebbdc7dbca8d2a43.jpg",
@@ -814,7 +834,7 @@ export const YEAR_THOUGHT_ENTRY: TextEntryOptions = {
   },
   truncate: true,
   styling: "has-marker",
-  entry: `<strong>Chill</strong>  noun
+  text: `<strong>Chill</strong>  noun
 Chill is the <u>calm in a storm</u> 🌊, the pause that lets us <i>breathe deeply</i>. 
 It's the <u>crisp air</u> of a morning walk, the <i>stillness of twilight</i> settling over the world 🌌. 
 To chill is to <u>embrace the quiet moments</u>, to let the rush fall away, and to find yourself in <i>peace</i> 🕊️.
@@ -822,11 +842,12 @@ It's finding comfort in solitude, turning down the noise, and letting your mind 
 `
 }
 
-export const HOME_THOUGHT_ENTRY: TextEntryOptions = {
+export const HOME_THOUGHT_ENTRY: TextEntry = {
+  id: "1",
   icon: IMG_COLLECTIONS[IMG_COLLECTION_IDX].headerTextBlockImg,
   truncate: true,
   styling: "has-marker",
-  entry: `<strong>Wonder</strong>  noun
+  text: `<strong>Wonder</strong>  noun
 Wonder is the spark of curiosity ✨, the moment that makes us <i>pause in awe</i>. 
 It's the glow of <i>starlight</i> in a vast night sky, the <u>whisper of possibility</u> in the unknown 🌌. 
 To wonder is to embrace the questions, to see magic in the mundane, and to feel alive in discovery, 🌟.
@@ -834,11 +855,14 @@ It's the art of <i>dreaming boldly</i>, seeking the extraordinary, and finding b
 `
 }
 
-export const MONTH_THOUGHT_ENTRY: TextEntryOptions = {
+export const MONTH_THOUGHT_ENTRY: TextEntry = {
+  period: "month",
+  isoDate: "2025-05-01",
+  id: "2",
   icon: IMG_COLLECTIONS[IMG_COLLECTION_IDX].overviewTextBlockImg,
   truncate: true,
   styling: "has-marker",
-  entry: `<strong>Serenity</strong>  noun
+  text: `<strong>Serenity</strong>  noun
 Serenity is the gentle stillness 🌊, the calm that <i>flows within</i>.
 It's the soft glow of <i>dawn</i> breaking over quiet waters, the <u>peace that settles</u> in solitude 🌅.
 To be serene is to find balance in chaos, to breathe deeply, and to rest in the present, 🍃.

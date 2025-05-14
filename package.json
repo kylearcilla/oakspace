@@ -12,6 +12,8 @@
     "preview": "vite preview",
     "sso": "aws sso login --sso-session=oakspace",
     "test": "vitest",
+    "generate": "drizzle-kit generate:pg",
+    "migrate": "node -r esbuild-register src/lib/server/db/migrate.ts",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
@@ -24,8 +26,9 @@
     "@types/jest": "^29.5.1",
     "@types/node": "^20.14.0",
     "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.32.0",
+    "@typescript-eslint/parser": "^8.32.0",
+    "drizzle-kit": "^0.31.1",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-svelte": "^2.46.1",
@@ -46,12 +49,14 @@
   "type": "module",
   "dependencies": {
     "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.43.1",
+    "esbuild": "^0.25.4",
     "i": "^0.3.7",
     "npm": "^9.6.4",
     "playwright": "^1.46.1",
+    "postgres": "^3.4.5",
     "sass": "^1.58.0",
     "ts-node": "^10.9.1",
     "uuid": "^10.0.0"
   }
 }
-

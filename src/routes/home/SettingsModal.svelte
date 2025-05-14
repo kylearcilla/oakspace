@@ -4,9 +4,10 @@
 
 	import { imageUpload } from "$lib/pop-ups"
     import { Icon, ModalType } from "$lib/enums"
-	import { formatDateLong } from "$lib/utils-date"
-	import { formatNumber } from "$lib/utils-general"
+	import { formatDateLong, msToHHMMSS, formatSecs } from "$lib/utils-date"
+	import { formatNumber, serverError } from "$lib/utils-general"
 	import { setDefaultFont } from "$lib/utils-appearance"
+	import { FONT_COPY, MAX_USER_NAME_LENGTH, USER_DESCRIPTIONS } from "$lib/constants"
 	import { closeModal, updateGlobalContext } from "$lib/utils-home"
 
 	import Modal from "$components/Modal.svelte"
@@ -14,21 +15,12 @@
 	import SettingsBtn from "$components/SettingsBtn.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 
+    export let user: User
     export let globalContext: GlobalContext
+
     $: light = !$themeState.isDarkTheme
 
-    const FONT_COPY = "zebra"
-    const USER_DESCRIPTIONS = [
-        "High School Student",
-        "College Student",
-        "Med Student",
-        "Artist",
-        "Entrepreneur",
-        "Human",
-        "Engineer"
-    ]
-
-    let { user, fontStyle, showStats } = globalContext
+    let { fontStyle, showStats } = globalContext
     let { name, description } = user
     
     let focused = false
@@ -42,20 +34,53 @@
 
         }
     }
-    function onInputBlur() {
-        focused = false
-        name ||= user.name
+    async function updateDescription(desc: string) {
+        if (desc === description) return
 
-        if (name !== user.name) {
-            updateGlobalContext({  user: { ...user, name } })
+        const res = await fetch(`/home/user?userId=${user.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ description: desc })
+        })
+
+        if (!res.ok) {
+            serverError(res)
         }
+        description = desc
+        user.description = desc
     }
-    function onImgUpload(src: string) {
-        if (src != user.profileImg) {
-            updateGlobalContext({ user: { ...user, profileImg: src } })
+    async function onInputBlur() {
+        if (!name.trim() || name === user.name) {
+            name = user.name
+            return
+        }
+        
+        const res = await fetch(`/home/user?userId=${user.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ name })
+        })
+        if (!res.ok) {
+            serverError(res)
+            name = user.name
+            return
+        }
+        user.name = name
+        updateGlobalContext({  user: { ...user, name } })
+    }
+    async function onImgUpload(src: string) {
+        if (src === user.profileImg) return
+        
+        const res = await fetch(`/home/user?userId=${user.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ profileImg: src })
+        })
+        if (!res.ok) {
+            serverError(res)
+            return
         }
         user.profileImg = src
+        updateGlobalContext({ user: { ...user, profileImg: src } })
     }
+
     function close() {
         closeModal(ModalType.Settings)
     }
@@ -109,7 +134,7 @@
                         </div>
                         <div class="settings__stat">
                             <span>
-                                {user.stats.focusTime} 
+                                {formatSecs(user.stats.focusTime)} 
                             </span>
                             focused
                         </div>
@@ -132,7 +157,11 @@
                             class:box-shadow-focus--light={light}
                             class:box-shadow-focus--focus={focused}
                             placeholder="type your name here..."
-                            on:blur={onInputBlur}
+                            maxlength={MAX_USER_NAME_LENGTH}
+                            on:blur={() => {
+                                focused = false
+                                onInputBlur()
+                            }}
                             on:focus={() => {
                                 focused = true
                             }}
@@ -223,12 +252,8 @@
                 listItems: USER_DESCRIPTIONS.map(desc => ({ name: desc })),
                 pickedItem: description,
                 onListItemClicked: ({ name }) => {
-                    description = name
                     descriptions = false
-
-                    updateGlobalContext({ 
-                        user: { ...user, description }
-                    })
+                    updateDescription(name)
                 },
                 onClickOutside: () => {
                     descriptions = false
@@ -251,7 +276,10 @@
                     { 
                         name: "Show Stats",
                         active: showStats,
-                        onToggle: () => showStats = !showStats
+                        onToggle: () => {
+                            showStats = !showStats
+                            updateGlobalContext({ showStats })
+                        }
                     },
                     { 
                         name: "Logout",
@@ -290,7 +318,7 @@
         width: 85vw;
         max-width: 600px;
         position: relative;
-        @include text-style(0.25, var(--fw-300-500), 1.5rem);
+        @include text-style(0.28, var(--fw-300-500), 1.5rem);
 
         --field-opacity: 0.03;
         
@@ -350,7 +378,7 @@
             justify-content: center;
 
             button {
-                @include text-style(_, _, 1.3rem);
+                @include text-style(_, 400, 1.525rem);
                 color: white;
             }
         }
@@ -368,7 +396,7 @@
             margin-bottom: 32px;
         }
         &__membership-title {
-            @include text-style(1, _, 1.4rem);
+            @include text-style(1, _, 1.45rem);
         }
         &__membership-date {
             margin: 6px 0px 14px 0px;
@@ -382,7 +410,7 @@
             font-size: 1.5rem;
 
             span {
-                @include text-style(0.5);
+                @include text-style(0.85);
                 margin-right: 2px;
             }
         }

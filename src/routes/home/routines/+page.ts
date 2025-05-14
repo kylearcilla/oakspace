@@ -2,7 +2,8 @@ import { redirect } from '@sveltejs/kit';
 
 export const ssr = false
 
-export const load = (data) => {
+export const load = async (data) => {
+	console.log("routines load")
 	const route = window.location.href
 
 	if (route === `${data.url.origin}/home/routines/daily`) {

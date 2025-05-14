@@ -9,7 +9,7 @@ const CSS_SILENCE_TEXTS = [
  * Creates a Vite plugin that silences certain CSS warnings.
  * @returns A Vite plugin that silences CSS warnings.
  */
-function createSilenceCssWarningsPlugin() {
+function makeSilenceCssWarningsPlugin() {
 	return {
 		name: 'silence-css-warnings',
 		configResolved() {
@@ -27,7 +27,7 @@ function createSilenceCssWarningsPlugin() {
 export default defineConfig({
 	plugins: [
 		sveltekit(),
-		createSilenceCssWarningsPlugin()
+		makeSilenceCssWarningsPlugin()
 	],
 	css: {
 		preprocessorOptions: {

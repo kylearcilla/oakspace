@@ -3,6 +3,7 @@
 // avoid checking, issues occur when enums are imported
 
 type User = {
+    id: string
     name: string
     profileImg: string
     email: string
@@ -13,7 +14,7 @@ type User = {
         goalsReached: number
         habitsDone: number
         sessions: number
-        focusTime: string
+        focusTime: number
         routinesMade: number
     }
 }
@@ -94,41 +95,17 @@ type TextEntryIcon = {
     size: "small" | "big"
 }
 
-type TextEntryOptions = {
-    entry: string
+type TextEntry = {
+    id: string
+    text: string
     styling: "background" | "has-marker" | "default"
     truncate: boolean
     icon: TextEntryIcon | null
+    period?: "year" | "quarter" | "month"
+    isoDate?: string
 }
 
 /* Base. */
-
-type Banner = {
-    src: string
-    center: number
-}
-
-type BaseOptions = {
-    view: "month" | "year"
-    header: "top" | "side"
-    banner: boolean
-    margin: boolean
-}
-
-type BaseHeader = {
-    icon: Icon & { show: boolean }
-    showText: boolean
-    pos: "top" | "side"
-}
-
-type BaseEventContext = "header" | "banner" | "options"
-
-type BaseEventDetail = {
-    context: BaseEventContext
-    payload: BaseHeader | Banner | BaseOptions
-}
-
-type BaseDispatcher = (type: "base", detail: BaseEventDetail, options?: DispatchOptions) => boolean
 
 type MonthDetailsView = "overview" | "goals" | "habits" | "yr-view"
 
@@ -170,27 +147,30 @@ type EditEntry = DayEntry & {
     s_context: { str: string, focusMins: number, items: Session[] } | null
 }
 
-type BaseViewOptions = {
-    banner: {
-        show: boolean
-        img: {
-            src: string
-            center: number
-        }
-    }
-    header: BaseHeaderViewOptions
-    entry: TextEntryOptions
+type BaseView = {
+    banner: BaseBanner
+    header: BaseHeader
     leftMargin: boolean
+    bulletin: BulletinOptions
 }
 
-type BaseHeaderViewOptions = {
+type BaseBanner = {
+    show: boolean
+    img: {
+        src: string
+        center: number
+    } | null
+}
+
+type BaseHeader = {
     showEntry: boolean
+    entry: TextEntry | null
     pos: "top" | "side"
     icon: {
         src: string
         type: "img" | "emoji"
         show: boolean
-    }
+    } | null
 }
 
 type BaseLeftMarginView = {
@@ -202,9 +182,16 @@ type BulletinOptions = {
     imgSrc: string
     hasNotes: boolean
     contentsOnHover: boolean
-    notes: string[]
+    notes: Note[]
     height: number
     noteIdx: number
+}
+
+type Note = {
+    id: string
+    idx: number
+    text: string
+    userId: string
 }
 
 /* Sidebars */
@@ -337,38 +324,6 @@ type TagPicker = {
     isOpen: boolean
     onClose?: () => void
     onSubmitTag: (tag: Tag) => void
-}
-
-/* øverview Calendar */
-
-type DayEntry = {
-    date: Date
-    img: string | null
-    currMonth: boolean
-    focusMins: number | null
-    sessions?: Session[] | null
-    habits: { checked: number, total: number, trueChecked: number } | null
-    goals: Goal[] | null
-}
-
-type DayEntryUpdatePayload = {
-    img?: {
-        src?: string
-        caption?: string
-    }
-    text?: string
-}
-
-type HighlightImg = {
-    src: string
-    caption: string
-}
-
-type DayThoughtEntry = {
-    width: number
-    fontStyle: "basic" | "stylish" | "fancy" | "cute"
-    title: string
-    text: string
 }
 
 /* Time */
@@ -799,16 +754,17 @@ interface DOMToastItem extends ToastItem {
     }
 }
 
-
 type Quote = {
-    text: string,
-    bgImgSrc: string,
-    artCredit: string,
+    id: string
+    text: string
+    bgImgSrc: string
+    artCredit: string
     quoteCredit: string
-    dark?: boolean
-    portrait?: boolean
+    dark: boolean | null
+    portrait: boolean | null
+    liked: boolean
+    likes: number
 }
-
 
 type HozScrollMaskedGradient = {
     styling: string,
@@ -889,14 +845,16 @@ type SessionResult = {
     resultImgUrl: string
 }
 
+type TagSymbol = {
+    color: Color,
+    emoji: string
+}
+
 type Tag = {
     id: string
     idx: number
     name: string,
-    symbol: {
-        color: Color,
-        emoji: string
-    }
+    symbol: TagSymbol
 }
 
 type ProgressVisualPart = {
@@ -912,10 +870,12 @@ type ProgressVisualPart = {
 interface Task {
     id: string,
     idx: number,
-    isChecked: boolean,
     title: string,
     description: string
+    isChecked: boolean,
     parentId: string | null
+    userId: string
+    sessionId?: string
 }
 
 /* task list */
@@ -1362,7 +1322,7 @@ type FetchCalDayEventsResponse = {
 /* Goals */
 
 type PeriodEntry = {
-    entry: TextEntryOptions | null
+    entry: TextEntry | null
     pinnedId: string | null
 
   }

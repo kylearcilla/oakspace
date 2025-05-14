@@ -14,7 +14,7 @@
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import HeatMap from "$components/HeatMap.svelte"
 	import GoalsView from "$components/GoalsView.svelte"
-	import TextEntry from "$components/TextEntry.svelte"
+	import TextEntryElem from "$components/TextEntry.svelte"
 	import ProgressBar from "$components/ProgressBar.svelte"
 	import SettingsBtn from "$components/SettingsBtn.svelte"
 	import PinnedGoals from "$components/PinnedGoals.svelte"
@@ -75,7 +75,7 @@
     let marginOptionsXPos = 0
     let closing = false
     
-    let periodEntry: TextEntryOptions | null = null
+    let periodEntry: TextEntry | null = null
     let monthOptions = false
     let optionsOpen = false
     let renderFlag = false
@@ -156,6 +156,8 @@
         
         const data = manager!.setViewPeriod({ year: currYear, period })
         periodEntry = data.entry
+
+        console.log({ periodEntry })
     }
 
     /* time periods */
@@ -252,7 +254,7 @@
                         {#key yearEntryData}
                             {#if pageView.showYearEntry && yearEntryData?.entry}
                                 <div style:margin-top="-8px">
-                                    <TextEntry 
+                                    <TextEntryElem
                                         id="yr"
                                         zIndex={50}
                                         entry={yearEntryData.entry}
@@ -645,7 +647,7 @@
                                 {#key periodEntry}
                                     {#if periodEntry && periodIdx != 16}
                                         <div style:margin-top="-8px">
-                                            <TextEntry 
+                                            <TextEntryElem
                                                 id="mo" zIndex={1} entry={periodEntry}
                                             />
                                         </div>

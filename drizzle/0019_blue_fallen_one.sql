@@ -1,0 +1,1 @@
+ALTER TABLE "general"."text_entries" RENAME COLUMN "entry" TO "text";

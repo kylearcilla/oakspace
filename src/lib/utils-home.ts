@@ -81,6 +81,7 @@ export const initAppState = async () => {
     }
 }
 
+
 export function onQuitApp() {
     // const session = get(sessionManager)
     // if (session) {
@@ -529,12 +530,12 @@ export function saveMonthView({ overviewView, goalsView, habitView, yearView }: 
 }
 
 
-export function loadBaseViewOptions(): BaseViewOptions {
+export function loadBaseView(): BaseView {
     const data = localStorage.getItem(BASE_VIEW_OPTIONS_KEY)
     return data ? JSON.parse(data) : null
 }
 
-export function saveBaseViewOptions(options: BaseViewOptions) {
+export function saveBaseView(options: BaseView) {
     const data = JSON.stringify(options)
     localStorage.setItem(BASE_VIEW_OPTIONS_KEY, data)
 }

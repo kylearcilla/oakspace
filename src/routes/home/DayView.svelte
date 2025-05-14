@@ -258,7 +258,7 @@
         {#if options.view === "cal"}
             {@const { checkbox, colors, calView } = options.routines}
             <DayViewContent
-                richColors={colors}
+                richColors={false}
                 checkbox={checkbox}
                 view={calView}
                 day={focusDate}

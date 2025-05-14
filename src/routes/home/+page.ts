@@ -2,6 +2,7 @@ import { redirect } from "@sveltejs/kit";
 import type { PageLoad } from "../$types"
 
 export const ssr = false
+
 export const load = (async ({ url }) => {
 	throw redirect(301, "/home/base")
 }) satisfies PageLoad

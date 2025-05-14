@@ -1,3 +1,4 @@
+import { DEFAUL_ERR_MESSAGE } from "./constants"
 import { APIErrorCode, LogoIcon } from "./enums"
 import type { APIError } from "./errors"
 import { TEST_TAGS } from "./mock-data-tags"
@@ -778,6 +779,37 @@ export function looseEqualTo(x: number, y: number, diff = 5) {
   return Math.abs(x - y) <= diff
 }
 
+export async function _fetch(url: string, options: RequestInit): 
+    Promise<{ response: any, error?: { code: number, message?: string } | null }> 
+{
+    try {
+        const res = await fetch(url, options)
+
+        if (!res.ok) {
+            console.error(res)
+            await serverError(res)
+            return { response: null, error: { code: res.status } }
+        }
+
+        const data = await res.json()
+        return { response: data }
+    } 
+    catch (error) {
+        console.error('Request error:', error)
+        toast("error", { message: DEFAUL_ERR_MESSAGE })
+
+        return { response: null, error: { code: 0 } }
+    }
+}
+
+export async function serverError(res: Response) {
+  const status = res.status
+  const data = await res.json()
+  console.error(`Error ${status}:`, res.statusText)
+
+  toast("error", { message: DEFAUL_ERR_MESSAGE })
+}
+
 /**
  * Error handler for working with APIs
  * @param options 
@@ -978,6 +1010,16 @@ export function getFontFromStyle(style: string) {
   }
 }
 
+/**
+ * Inserts an item into an array at a specified index.
+ * Updates the index of all items that had a higher index.
+ * Updates in place and returns the new array.
+ * 
+ * @param array - The array to insert the item into.
+ * @param item - The item to insert into the array.
+ * @param atIdx - The index to insert the item at.
+ * @returns The new array with the item inserted.
+ */
 export function insertItemArr<T extends { idx: number }>({ 
     array, 
     item, 
@@ -1015,6 +1057,7 @@ export function removeItemArr<T extends { idx: number }>({
 /**
  * Reorders an item in an array by swapping its position with the target position.
  * Updates the new index of the the source item.
+ * Updates in place and returns the new array.
  * 
  * @param array - The array to reorder.
  * @param srcIdx - The index of the source item.

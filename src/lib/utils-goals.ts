@@ -1,7 +1,7 @@
 
 import { get } from 'svelte/store'
 import { v4 as uuidv4 } from 'uuid'
-import { globalContext, goalTracker } from "./store"
+import { goalTracker } from "./store"
 
 import { formatDatetoStr, isSameDay } from "./utils-date"
 import { capitalize, findTag, getTagFromId, isVoid, reorderItemArr } from "./utils-general"
@@ -1105,7 +1105,7 @@ export function getYearProgress(year: number) {
 
 export function getPeriodData({ year, period }: { year: number, period: string }): {
     goals: Goal[]
-    entry: TextEntryOptions | null
+    entry: TextEntry | null
     pinnedGoal: Goal | null
 } {
     if (period.startsWith("q")) {
@@ -1331,9 +1331,9 @@ export function getGroupIdx({ goal, period, grouping }: {
     return orderObj[grouping]
 }
 
-function getEmptyEntry(): TextEntryOptions {
+function getEmptyEntry(): TextEntry {
     return {
-        entry: "",
+        text: "",
         styling: "has-marker",
         truncate: false,
         icon: null

@@ -5,18 +5,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile 
+      args:
+        - PUBLIC_TODOIST_CLIENT_ID=${PUBLIC_TODOIST_CLIENT_ID}
+        - PUBLIC_TODOIST_CLIENT_SECRET=${PUBLIC_TODOIST_CLIENT_SECRET}
+        - PUBLIC_YT_DATA_V3_API_KEY=${PUBLIC_YT_DATA_V3_API_KEY}
     ports:
-      - "3000:3000" 
+      - "80:3000" 
     environment:
       - NODE_ENV=production
     env_file:
       - .env 
-      - .env.prod
-      - .env.dev
-    volumes:
-      - .:/app 
     networks:
       - app-network
+    restart: on-failure:5
 
 networks:
   app-network:

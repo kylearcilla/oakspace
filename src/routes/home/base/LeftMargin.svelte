@@ -5,6 +5,7 @@
     import { BULLETIN_CONTENT } from "$lib/mock-data"
     import { getQuarter, months } from "$lib/utils-date"
 	import { capitalize, clamp } from "$lib/utils-general"
+	import { updateBulletin } from "$lib/api-bulletin"
     
 	import Bulletin from "./Bulletin.svelte"
 	import DailyHabits from "$components/DailyHabits.svelte"
@@ -13,6 +14,7 @@
 	import { loadBaseLeftMarginView, saveBaseLeftMarginView } from "$lib/utils-home"
 
     export let fullWidth = false
+    export let bulletin: BulletinOptions
 
     let options: BaseLeftMarginView = {
         habitsView: "month",
@@ -27,6 +29,7 @@
 
     let timeOptions = false
     let marginView = "month"
+    let dragging = true
 
     let initDragY = -1
     let ogDragVal = 0
@@ -46,20 +49,27 @@
     function dragDown(pe: PointerEvent) {
         if (pe.button != 0 || fullWidth) return
         const target = pe.target as HTMLElement
-        initDragY = pe.clientY
 
+        initDragY = pe.clientY
+        dragging = true
         target.setPointerCapture(pe.pointerId)
-        ogDragVal = options.bulletin.height
+        ogDragVal = bulletin.height
     }
     function onDrag(pe: PointerEvent) {
         if (initDragY < 0) return
 
         const offset = initDragY - pe.clientY
-        options.bulletin.height = clamp(200, ogDragVal + -offset, 400)
+        const newHeight = clamp(200, ogDragVal + -offset, 400)
+        bulletin.height = Math.round(newHeight)
     }
     function onDragEnd() {
         ogDragVal = 0
         initDragY = -1
+
+        if (dragging) {
+            updateBulletin({ height: bulletin.height })
+        }
+        dragging = false
     }
 
     onDestroy(() => unsubscribe())
@@ -74,13 +84,13 @@
 >
     <div 
         class="margin__bulletin" 
-        style:height={`${fullWidth ? "250" : options.bulletin.height}px`}
+        style:height={`${fullWidth ? "250" : bulletin.height}px`}
     >
         <Bulletin 
             {fullWidth}
-            options={options.bulletin} 
+            {bulletin} 
             onUpdateOptions={(updated) => {
-                options.bulletin = updated
+                bulletin = updated
                 saveBaseLeftMarginView(options)
             }}
         />

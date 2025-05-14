@@ -2,7 +2,7 @@
 FROM node:18-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 
 # Add build arguments
 ARG PUBLIC_TODOIST_CLIENT_ID
@@ -14,6 +14,7 @@ ENV PUBLIC_YT_DATA_V3_API_KEY=${PUBLIC_YT_DATA_V3_API_KEY}
 
 COPY . .
 RUN npm run build
+RUN npm prune --production
 
 # Production stage
 FROM node:18-alpine
@@ -27,7 +28,7 @@ ENV PUBLIC_TODOIST_CLIENT_ID=${PUBLIC_TODOIST_CLIENT_ID}
 ENV PUBLIC_TODOIST_CLIENT_SECRET=${PUBLIC_TODOIST_CLIENT_SECRET}
 ENV PUBLIC_YT_DATA_V3_API_KEY=${PUBLIC_YT_DATA_V3_API_KEY}
 ENV PORT=3000
-ENV HOST=0.0.0.0
+ENV NODE_ENV="production"
 
 EXPOSE 3000
-CMD ["node", "build"]
+CMD ["node", "build/index.js"]

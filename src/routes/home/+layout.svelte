@@ -50,7 +50,7 @@
   import TagPicker from "$components/TagPicker.svelte";
 	import SettingsModal from "./SettingsModal.svelte";
   
-  export let data
+  export let data: any
 
   let toggledLeftBarWithKey = false
   let totalWidth = 0
@@ -94,6 +94,7 @@
   $: if (windowSmall) {
     updateGlobalContext({ rightBarFixed: true })
   }
+  $: setData(data)
   
   globalContext.subscribe((state: GlobalContext) => {
     leftBarOpen = state.leftBarOpen
@@ -106,6 +107,14 @@
 
     updateMiddleView()
   })
+
+
+  function setData(data: any) {
+    console.log(data)
+    globalContext.update((state) => ({
+      ...state, user: data.user
+    }))
+  }
 
   function updateMiddleView() {
     if (!context) return
@@ -227,158 +236,160 @@
 />
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
-<div
-  bind:clientWidth={totalWidth}
-  on:mousemove={_onMouseMoveHandler}
-  id="home"
-  class={`home ${homeViewClasses} ${hasAmbience ? `home--ambient-${ambience?.styling}` : ""}`}
-  class:home--light={isLight}
-  class:home--right-fixed={!windowSmall && rightBarFixed}
-  class:home--left-float={!leftBarFixed}
-  class:home--stretched={stretchMiddleView}
-  class:home--ambient={hasAmbience}
-  class:home--ambient-vid={hasAmbience && ambience?.space.type === "video"}
-  class:home--ambient-img={hasAmbience && ambience?.space.type != "wallpaper"}
-  class:home--no-ambience={!hasAmbience}
-  style:--ambient-float-offset={"32px"}
-  style:--fixed-top-offset={hasAmbience ? "5px" : "17px"}
-  style:--ambient-opacity={hasAmbience ? ambience?.opacity : 0}
-  style:--left-bar-width={`${leftSideBarWidth}px`}
-  style:--ambient-blur={AMBIENT.BG_BLUR}
-  style:--ambient-bg-color={AMBIENT.BG_COLOR}
-  style:--ambient-dark-bg-color={AMBIENT.DARK_BG_COLOR}
-  style:--ambient-border={AMBIENT.BORDER}
->
-  <div class="home__main">
-    <!-- left -->
-    <nav 
-      class="home__left-bar" 
-      class:ambient-dark-blur={hasAmbience && ambience?.styling === "blur"}
-      class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
-      class:ambient-dark-clear={hasAmbience && ambience?.styling === "clear"}
-      style:width={`${leftSideBarWidth}px`}
-      style:left={`${!leftBarOpen ? `-${leftSideBarWidth}px` : ""}`}
-    >
-      <SideBarLeft />
-    </nav>
-    <!-- middle -->
-    <div
-      class="home__middle-view" 
-      style:width={middleViewWidth}
-      style:margin-left={middleViewMarginLeft}
-    >
-      <div class="home__header-container">
-        <Header/>
+ {#if data}
+  <div
+    bind:clientWidth={totalWidth}
+    on:mousemove={_onMouseMoveHandler}
+    id="home"
+    class={`home ${homeViewClasses} ${hasAmbience ? `home--ambient-${ambience?.styling}` : ""}`}
+    class:home--light={isLight}
+    class:home--right-fixed={!windowSmall && rightBarFixed}
+    class:home--left-float={!leftBarFixed}
+    class:home--stretched={stretchMiddleView}
+    class:home--ambient={hasAmbience}
+    class:home--ambient-vid={hasAmbience && ambience?.space.type === "video"}
+    class:home--ambient-img={hasAmbience && ambience?.space.type != "wallpaper"}
+    class:home--no-ambience={!hasAmbience}
+    style:--ambient-float-offset={"32px"}
+    style:--fixed-top-offset={hasAmbience ? "5px" : "17px"}
+    style:--ambient-opacity={hasAmbience ? ambience?.opacity : 0}
+    style:--left-bar-width={`${leftSideBarWidth}px`}
+    style:--ambient-blur={AMBIENT.BG_BLUR}
+    style:--ambient-bg-color={AMBIENT.BG_COLOR}
+    style:--ambient-dark-bg-color={AMBIENT.DARK_BG_COLOR}
+    style:--ambient-border={AMBIENT.BORDER}
+  >
+    <div class="home__main">
+      <!-- left -->
+      <nav 
+        class="home__left-bar" 
+        class:ambient-dark-blur={hasAmbience && ambience?.styling === "blur"}
+        class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
+        class:ambient-dark-clear={hasAmbience && ambience?.styling === "clear"}
+        style:width={`${leftSideBarWidth}px`}
+        style:left={`${!leftBarOpen ? `-${leftSideBarWidth}px` : ""}`}
+      >
+        <SideBarLeft />
+      </nav>
+      <!-- middle -->
+      <div
+        class="home__middle-view" 
+        style:width={middleViewWidth}
+        style:margin-left={middleViewMarginLeft}
+      >
+        <div class="home__header-container">
+          <Header/>
+        </div>
+          {#if route != "/home"}
+            <div class="home__slot">
+              <slot />
+            </div>
+          {/if}
       </div>
-        {#if route != "/home"}
-          <div class="home__slot">
-            <slot />
-          </div>
-        {/if}
-    </div>
-    <!-- right -->
-    <nav 
-      id="home--right-bar"
-      class="home__right-bar" 
-      class:home__right-bar--fixed={rightBarFixed}
-      class:home__right-bar--short-fixed={rightBarFixed && hasAmbience}
-      class:home__right-bar--full-border={!showHeaderImg}
-      class:ambient-dark-blur={hasAmbience && ambience?.styling === "blur"}
-      class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
-      class:ambient-dark-clear={hasAmbience && ambience?.styling === "clear"}
-      style:width={`${rightSideBarWidth}px`}
-      style:margin-right={`${rightSideBarWidth === 0 ? `-${RIGHT_BAR_WIDTH}px` : ""}`}
-      style:right={`${!rightBarOpen && rightBarFixed ? `-${rightSideBarWidth}px` : ""}`}
-    >
-      <SideBarRight 
-        fixed={rightBarFixed}
-        onHeaderImageChange={(showing) => showHeaderImg = showing}
-      /> 
+      <!-- right -->
+      <nav 
+        id="home--right-bar"
+        class="home__right-bar" 
+        class:home__right-bar--fixed={rightBarFixed}
+        class:home__right-bar--short-fixed={rightBarFixed && hasAmbience}
+        class:home__right-bar--full-border={!showHeaderImg}
+        class:ambient-dark-blur={hasAmbience && ambience?.styling === "blur"}
+        class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
+        class:ambient-dark-clear={hasAmbience && ambience?.styling === "clear"}
+        style:width={`${rightSideBarWidth}px`}
+        style:margin-right={`${rightSideBarWidth === 0 ? `-${RIGHT_BAR_WIDTH}px` : ""}`}
+        style:right={`${!rightBarOpen && rightBarFixed ? `-${rightSideBarWidth}px` : ""}`}
+      >
+        <SideBarRight 
+          fixed={rightBarFixed}
+          onHeaderImageChange={(showing) => showHeaderImg = showing}
+        /> 
 
-      {#if showHeaderImg && !hasAmbience && !isLight}
-          {#if rightBarFixed}
-            <div class="border border--top">
+        {#if showHeaderImg && !hasAmbience && !isLight}
+            {#if rightBarFixed}
+              <div class="border border--top">
+                  <svg width="231" height="35" viewBox="0 0 231 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path 
+                    d="M1.37305 34.8145V15.9111C1.37305 8.17915 7.64106 1.91113 15.373 1.91113H215.373C223.105 1.91113 229.373 8.17915 229.373 15.9111V28.7632" 
+                    stroke="white" 
+                    stroke-opacity="0.04"
+                    stroke-width="2"
+                  />
+                </svg>          
+              </div>
+              <div class="border border--bottom">
                 <svg width="231" height="35" viewBox="0 0 231 35" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path 
-                  d="M1.37305 34.8145V15.9111C1.37305 8.17915 7.64106 1.91113 15.373 1.91113H215.373C223.105 1.91113 229.373 8.17915 229.373 15.9111V28.7632" 
-                  stroke="white" 
-                  stroke-opacity="0.04"
-                  stroke-width="2"
-                />
-              </svg>          
+                    d="M229.373 0.911133L229.373 19.8145C229.373 27.5464 223.105 33.8145 215.373 33.8145L15.2715 33.8145C7.53949 33.8145 1.27148 27.5465 1.27148 19.8145L1.27148 6.96237" 
+                    stroke="white" 
+                    stroke-opacity="0.04"
+                    stroke-width="2"
+                  />
+                </svg>
+              </div>
+              <div class="border border--right"></div>
+            {/if}
+            <div 
+              class="border border--left"
+              class:border--left-full={!rightBarFixed}
+            >
             </div>
-            <div class="border border--bottom">
-              <svg width="231" height="35" viewBox="0 0 231 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path 
-                  d="M229.373 0.911133L229.373 19.8145C229.373 27.5464 223.105 33.8145 215.373 33.8145L15.2715 33.8145C7.53949 33.8145 1.27148 27.5465 1.27148 19.8145L1.27148 6.96237" 
-                  stroke="white" 
-                  stroke-opacity="0.04"
-                  stroke-width="2"
-                />
-              </svg>
-            </div>
-            <div class="border border--right"></div>
-          {/if}
-          <div 
-            class="border border--left"
-            class:border--left-full={!rightBarFixed}
-          >
-          </div>
-      {/if}
-  </nav>
-</div>
-
-  <!-- modals -->
-  {#if modalsOpen.includes(ModalType.Themes)} 
-      <Appearance />
-  {/if}
-
-  {#if $habitTracker.viewHabit}
-    {@const habit = $habitTracker.viewHabit}
-    <HabitViewModal {habit} />
-  {/if}
-
-  {#if $goalTracker.viewGoal}
-    {@const { goal, type } = $goalTracker.viewGoal}
-    <GoalViewModal {goal} {type} />
-  {/if}
-
-  <!-- modals -->
-  {#if modalsOpen.includes(ModalType.NewSession)} 
-      <SessionNewModal /> 
-  {/if}
-
-  {#if $sessionManager?.state === "done"} 
-      <SessionSummaryModal session={$sessionManager.session}/>
-  {/if}
-
-  <!-- modals -->
-  {#if modalsOpen.includes(ModalType.Quote)} 
-      <ModalQuote /> 
-  {/if}
-
-  {#if modalsOpen.includes(ModalType.Shortcuts)} 
-      <ShortcutsModal /> 
-  {/if}
-
-  {#if modalsOpen.includes(ModalType.Settings) && $globalContext} 
-      <SettingsModal globalContext={$globalContext} /> 
-  {/if}
-
-  <!-- toasts -->
-  {#if $globalContext.hasToaster}
-      <Toaster />
-  {/if}
-
-  <!-- yt player -->
-
-  <div 
-      class="ambient-player" 
-      class:ambient-player--hidden={!hasAmbience || !$ytPlayerStore?.show}
-   >
-    <div class="ambient-player__iframe" id={YoutubePlayer.IFRAME_ID}></div>
+        {/if}
+    </nav>
   </div>
-</div>
+
+    <!-- modals -->
+    {#if modalsOpen.includes(ModalType.Themes)} 
+        <Appearance />
+    {/if}
+
+    {#if $habitTracker.viewHabit}
+      {@const habit = $habitTracker.viewHabit}
+      <HabitViewModal {habit} />
+    {/if}
+
+    {#if $goalTracker.viewGoal}
+      {@const { goal, type } = $goalTracker.viewGoal}
+      <GoalViewModal {goal} {type} />
+    {/if}
+
+    <!-- modals -->
+    {#if modalsOpen.includes(ModalType.NewSession)} 
+        <SessionNewModal /> 
+    {/if}
+
+    {#if $sessionManager?.state === "done"} 
+        <SessionSummaryModal session={$sessionManager.session}/>
+    {/if}
+
+    <!-- modals -->
+    {#if modalsOpen.includes(ModalType.Quote)} 
+        <ModalQuote _quote={data.quote} /> 
+    {/if}
+
+    {#if modalsOpen.includes(ModalType.Shortcuts)} 
+        <ShortcutsModal /> 
+    {/if}
+
+    {#if modalsOpen.includes(ModalType.Settings) && $globalContext} 
+        <SettingsModal globalContext={$globalContext} user={data.user}/> 
+    {/if}
+
+    <!-- toasts -->
+    {#if $globalContext.hasToaster}
+        <Toaster />
+    {/if}
+
+    <!-- yt player -->
+
+    <div 
+        class="ambient-player" 
+        class:ambient-player--hidden={!hasAmbience || !$ytPlayerStore?.show}
+    >
+      <div class="ambient-player__iframe" id={YoutubePlayer.IFRAME_ID}></div>
+    </div>
+  </div>
+{/if}
 
 <!-- pop-ups -->
 <EmojiPicker/>

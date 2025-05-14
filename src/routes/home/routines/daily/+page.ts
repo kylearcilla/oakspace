@@ -4,6 +4,7 @@ import { SET_DAILY_ROUTINES, WEEKLY_ROUTINES } from '../../../../tests/routines/
 export const ssr = false
 
 export const load = (async () => {
+    console.log("daily load")
     const isDev = import.meta.env.MODE === "development"
 
     if (isDev) {

@@ -1,37 +1,51 @@
 <script lang="ts">
-    import quotes from "$lib/data-quotes"
-	import { ModalType } from "$lib/enums"
+    import { ModalType } from "$lib/enums"
+	import { themeState } from "$lib/store"
+	import { QUOTE_KEY } from "$lib/constants"
 	import { closeModal } from "$lib/utils-home"
 
 	import Modal from "$components/Modal.svelte"
+	import SkeletonElem from "$components/SkeletonElem.svelte"
 
-    let quote = initQuote()
-    let liked = Math.random() > 0.5
-    let likedCount = Math.floor(Math.random() * (3500 - 500 + 1)) + 500
+    export let _quote: Promise<Quote>
+        
+    const SKELETON_HEIGHT = "18px"
 
-    $: likedCount += liked ? 1 : -1
+    let loading = true
+    let quote: Quote | null = null
+    let error = false
+    
+    $: light = !$themeState.isDarkTheme
 
-    function initQuote() {
-        const quoteData = localStorage.getItem("quoteData")
-        const today = new Date()
+    _quote
+        .then(q => {
+            quote = q
+        })
+        .catch(error => {
+            error = true
+        })
+        .finally(() => {
+            loading = false
+        })
 
-        // new quote if monday or no quote is stored
+    async function toggleLike() {
+        let { liked, likes } = quote!
 
-        // if (quoteData && today.getDay() !== 1) {
-        //     const storedData = JSON.parse(quoteData)
-        //     return quotes[storedData.quoteId]
-        // }
-        // else {
-        //     const randomQuoteId = Math.floor(Math.random() * quotes.length)
-        //     localStorage.setItem("quoteData", JSON.stringify({
-        //         quoteId: randomQuoteId,
-        //         createdAt: today
-        //     }))
-        //     return quotes[randomQuoteId]
-        // }
+        liked = !liked
+        likes = liked ? likes + 1 : likes - 1
 
-        // return quotes[quotes.length - 1)]
-        return quotes[Math.floor(Math.random() * quotes.length)]
+        quote!.liked = liked
+        quote!.likes = likes
+
+        const res = await fetch(`/home/quotes/likes?quoteId=${quote!.id}`, {
+            method: "POST",
+            body: JSON.stringify({ quoteId: quote!.id })
+        })
+        if (!res.ok) {
+            error = true
+        }
+
+        localStorage.setItem(QUOTE_KEY, JSON.stringify(quote!))
     }
 </script>
 
@@ -39,30 +53,46 @@
     options={{ borderRadius: "0px", scaleUp: true }} 
     onClickOutSide={() => closeModal(ModalType.Quote)}
 >
-    {@const { artCredit, quoteCredit, text, portrait, bgImgSrc, dark } = quote}
+    {@const { artCredit, quoteCredit, text, portrait, bgImgSrc, dark, liked, likes } = quote || {}}
     <div 
         class="quote-modal" 
         class:quote-modal--portrait={portrait}
         class:quote-modal--liked={liked}
+        class:quote-modal--loading={loading}
         style={`background-image: url(${bgImgSrc})`}
         style:--opacity={dark ? 0.7 : 0.825}
     >
         <div class="quote-modal__content">
             <div class="quote-modal__content-container">
                 <div class="quote-modal__content-top">
-                    <div class="flx">
-                        <span class="quote-modal__quote">"</span>
-                        <p class="quote-modal__quote">
-                            {@html text}"
-                        </p>
-                    </div>
+                    {#if loading}
+                        <SkeletonElem 
+                            {light} 
+                            width="400px" 
+                            height={SKELETON_HEIGHT}
+                            margin="0px 0px 4px 0px"
+                        />
+                        <SkeletonElem 
+                            {light} 
+                            width="200px" 
+                            height={SKELETON_HEIGHT}
+                        />
+                    {:else}
+                        <div class="flx">
+                            <span class="quote-modal__quote">"</span>
+                            <p class="quote-modal__quote">
+                                {@html text}"
+                            </p>
+                        </div>
+                    {/if}
                 </div>
                 <div class="quote-modal__content-bottom">
                     <div class="quote-modal__content-bottom-left">
                         <div class="quote-modal__likes">
                             <button 
                                 title="Hell yeah"
-                                on:click={() => liked = !liked}
+                                disabled={loading}
+                                on:click={toggleLike}
                             >
                                 {#if liked}
                                     <i class="fa-solid fa-heart"></i>
@@ -71,18 +101,34 @@
                                 {/if}
                             </button>
                             <span>
-                                {likedCount}
+                                {loading ? "--" : likes}
                             </span>
                         </div>
                         <div class="divider divider--vertical"></div>
-                        <div class="quote-modal__artist-credit">
-                            {@html (artCredit || quoteCredit)}
-                        </div>
+                        {#if loading}
+                            <SkeletonElem 
+                                {light} 
+                                width="100px" 
+                                height={SKELETON_HEIGHT}
+                                margin="0px 0px 0px 0px"
+                            />
+                        {:else}
+                            <div class="quote-modal__artist-credit">
+                                {@html (artCredit || quoteCredit)}
+                            </div>
+                        {/if}
                     </div>
-                    {#if quoteCredit && artCredit}
+                    {#if quoteCredit && artCredit && !loading}
                         <span class="quote-modal__quote-credit">
                             - {@html quoteCredit}
                         </span>
+                    {:else}
+                        <SkeletonElem 
+                            {light} 
+                            width="100px" 
+                            height={SKELETON_HEIGHT}
+                            margin="0px 0px 0px 0px"
+                        />
                     {/if}
                 </div>
             </div>
@@ -107,6 +153,9 @@
         &--portrait {
             height: 650px;
             width: 550px;
+        }
+        &--loading {
+            background-image: none !important;
         }
 
         &__content {

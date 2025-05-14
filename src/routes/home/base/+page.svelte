@@ -2,12 +2,14 @@
 	import { themeState } from "$lib/store"
 	import { iconPicker } from "$lib/pop-ups"
 	import { clamp } from "$lib/utils-general"
-	import { loadBaseViewOptions, saveBaseViewOptions } from "$lib/utils-home"
+	import { loadBaseView, saveBaseView } from "$lib/utils-home"
 	import { BASE_BANNER, BASE_HEADER, HOME_THOUGHT_ENTRY } from "$lib/mock-data"
 
 	import Header from "./Header.svelte"
 	import MonthView from "./MonthView.svelte"
 	import LeftMargin from "./LeftMargin.svelte"
+
+    export let data
 
     const SMALL_WIDTH = 1000
     const BASE_HEADER_ICON_ID = "base-header--icon"
@@ -16,8 +18,9 @@
     let leftHt = 0
     let initDragY = -1
     let ogDragVal = 0
+    let { banner, header, leftMargin, bulletin } = data.home
     
-    let options: BaseViewOptions = {
+    let options: BaseView = {
         banner: {
             show: true,
             img: BASE_BANNER
@@ -29,12 +32,12 @@
 
     $: isLight = !$themeState.isDarkTheme
     $: showIcon = options.header.icon.show
-    $: saveBaseViewOptions(options)
+    $: saveBaseView(options)
 
     // initViewOptions()
 
     function initViewOptions() {
-        const data = loadBaseViewOptions()
+        const data = loadBaseView()
 
         if (data) options = data
     }
@@ -130,7 +133,7 @@
         <div class="base__content-flx">
             {#if options.leftMargin}
                 <div class="base__left" bind:clientHeight={leftHt}>
-                    <LeftMargin fullWidth={width <= SMALL_WIDTH} />
+                    <LeftMargin fullWidth={width <= SMALL_WIDTH} {bulletin} />
                 </div>
             {/if}
             <div class="base__right">

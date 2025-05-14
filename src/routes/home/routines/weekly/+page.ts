@@ -5,6 +5,7 @@ import type { PageLoad } from './$types';
 export const ssr = false
 
 export const load = (async () => {
+    console.log("weekly load")
     const isDev = import.meta.env.MODE === "development"
     
 

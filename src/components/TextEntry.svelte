@@ -10,7 +10,7 @@
     
 	import DropdownList from "$components/DropdownList.svelte"
 
-    export let entry: TextEntryOptions
+    export let entry: TextEntry
     export let zIndex: number
     export let id: string
     let { styling, icon, truncate } = entry
@@ -26,6 +26,7 @@
     let markerHeight = 0
     let displayHeight = 0
     let textGradient = ""
+    let loading = false
     
     let styleOpen = false
     let imgOpen = false
@@ -67,14 +68,14 @@
         placeholder: "Priorities, intentions, thoughts...",
         allowFormatting: true,
         maxLength: 1000,
-        initValue: entry.entry,
+        initValue: entry.text,
         id: INPUT_ID,
         handlers: {
             onInputHandler: (_, __, _length) => {
                 length = _length
             },
             onBlurHandler: (_, val) => {
-                entry.entry = val
+                entry.text = val
                 onEditComplete()
             },
             onFocusHandler: (_, __, _length) => {
@@ -87,7 +88,7 @@
     /* updates */
     function updateData(entry: any) {
         styling = entry.styling
-        text = entry.entry
+        text = entry.text
         icon = entry.icon
         hasIcon = icon != null
 

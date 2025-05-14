@@ -733,12 +733,12 @@ One could make running more enjoyable by choosing to run in the morning instead 
                 alt: "goal-article-img",
                 description: `"The air feels so good up here."`,
                 artist: {
-                    name: "Johannes Plenio",
-                    href: "https://unsplash.com/@jplenio"
+                    name: "Alessio Soggetti",
+                    href: "https://unsplash.com/@asoggetti"
                 },
                 source: {
                     text: "Unsplash",
-                    href: "https://unsplash.com/photos/black-sailing-boat-digital-wallpaper-DKix6Un55mw"
+                    href: "https://unsplash.com/photos/man-running-on-the-mountain-GYr9A2CPMhY"
                 }
             }
         },
@@ -850,7 +850,7 @@ If you only ever listen to your present mood, you risk recreating the same patte
         },
         {
             type: "body",   
-            content: `You are now ready. You now know how to set the right goals, how to classify them, how to wisely approach them, and how to structure the systems and the necessary mindsets to make them a reality.
+            content: `You are now ready. You now know how to set the right goals, how to classify them, how to wisely approach them, and how to structure the systems and adopt the necessary mindsets to make them a reality.
 <br>
 <br>
 You have set your aims, charted your paths, and wisely constructed a system to get you there. Now get out of here and make your ideal living a reality!

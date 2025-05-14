@@ -1,98 +1,179 @@
 <script lang="ts">
 	import { onMount } from "svelte"
+    import { v4 as uuidv4 } from 'uuid'
     import { themeState } from "$lib/store"
     import { imageUpload } from "$lib/pop-ups"
     import { TextEditorManager } from "$lib/text-editor"
+	import { MAX_NOTE_LENGTH, MAX_NOTES } from "$lib/constants"
+	import { clickOutside, removeItemArr } from "$lib/utils-general"
+	import { createNote, deleteNote, updateBulletin, updateNote } from "$lib/api-bulletin"
+
 	import DropdownList from "$components/DropdownList.svelte"
 
-    export let options: BulletinOptions
+    export let bulletin: BulletinOptions
     export let fullWidth: boolean
-    export let onUpdateOptions: (updated: BulletinOptions) => void
-
     
-    const MAX_NOTE_LENGTH = 300
     const INPUT_ID = "bulletin-input"
     
-    let { imgSrc, hasNotes, contentsOnHover, notes, noteIdx } = options
+    let { imgSrc, hasNotes, contentsOnHover, notes, noteIdx } = bulletin
     let isPointerOver = false
     let hasContextMenu = false
     
-    $: isLight = !$themeState.isDarkTheme
-    $: contentsOnHover = isLight ? true : contentsOnHover
+    $: light = !$themeState.isDarkTheme
+    $: contentsOnHover = light ? true : contentsOnHover
 
     let newNoteTxt = ""
+    let imgLoading = false
+    let adding = false
+    let edited = false
     let contextPos = { left: -1000, top: -1000 }
 
     const editor = new TextEditorManager({ 
-        initValue: notes[noteIdx],
-        placeholder: "type note here...",
+        initValue: getNote(noteIdx)?.text || "",
+        placeholder: "reminders, ideas, thoughts, affirmations, go here...",
         maxLength: MAX_NOTE_LENGTH,
         allowFormatting: false,
         id: INPUT_ID,
         handlers: {
-            onInputHandler: (_, val) => newNoteTxt = val,
+            onInputHandler: (_, val) => {
+                newNoteTxt = val
+                edited = true
+            },
             onBlurHandler: () => onEditComplete()
         }
     })
-    function onEditComplete() {
-        if (!newNoteTxt && notes.length > 0) {
-            removeNote(noteIdx)
-        }
-        else if (newNoteTxt != notes[noteIdx]) {
-            notes[noteIdx] = newNoteTxt
-        }
-        options.notes = notes
+
+    function getNote(idx: number) {
+        return notes.find(note => note.idx === idx)
+
     }
-    function removeNote(idx: number) {
-        notes.splice(idx, 1)
-        const length = notes.length
+    async function onEditComplete() {
+        const note = getNote(noteIdx)!
+        const same = newNoteTxt == note.text
+        const empty = !newNoteTxt.trim()
 
-        if (notes[idx]) {
-            editor.updateText(notes[idx])
+        // if note is empty, remove it
+        if (empty && notes.length > 0) {
+            removeNote(noteIdx, adding)
+            return
         }
-        else if (length > 0) {
-            const newIdx = idx < length ? idx : idx - 1
-            editor.updateText(notes[newIdx])
-            noteIdx = newIdx
-        }
-        else {
-            editor.updateText("")
-            noteIdx = 0
-        }
+        note.text = newNoteTxt
+        bulletin.notes = notes
 
-        options.notes = notes
-        onUpdateOptions(options)
+        // add has been completed
+        if (adding && !empty) {
+            completeAdd(note)
+        }
+        else if (!same && !empty) {
+            updateNote({ id: note.id, text: newNoteTxt })
+        }
+    }
+
+    /* note add / remove */
+    async function completeAdd(note: Note) {
+        adding = false
+        addUpdateIndices(note)
+        
+        note.id = await createNote({ idx: noteIdx, text: newNoteTxt })
     }
     function onAddNewNote() {
-        notes.splice(noteIdx + 1, 0, "")
+        if (notes.length >= MAX_NOTES) {
+            return
+        }
+        const newNote: Note = {
+            id: uuidv4(),
+            idx: noteIdx + 1,
+            text: "",
+            userId: ""
+        }
+        notes.splice(noteIdx + 1, 0, newNote)
         newNoteTxt = ""
         
         noteIdx = noteIdx + 1
         hasContextMenu = false
         
         editor.updateText("")
-        editor.focus()
+        setTimeout(() => editor.focus(), contentsOnHover ? 400 : 0) // wait for text to be visible
 
-        options.notes = notes
-        onUpdateOptions(options)
+        bulletin.notes = notes
+        adding = true
     }
-    function onPointerUp(e: PointerEvent) {
+    function removeNote(idx: number, emptyAdd?: boolean) {
+        const { id: removeId, idx: removeIdx } = getNote(idx)!
+        removeItemArr({ array: notes, itemIdx: removeIdx })
+
+        const length = notes.length
+
+        if (idx < notes.length) {
+            editor.updateText(getNote(idx)!.text)
+        }
+        else if (length > 0) {
+            const newIdx = idx < length ? idx : idx - 1
+            editor.updateText(getNote(newIdx)!.text)
+            noteIdx = newIdx
+
+            updateBulletin({ noteIdx })
+        }
+        else {
+            editor.updateText("")
+            noteIdx = 0
+
+            updateBulletin({ noteIdx })
+        }
+
+        bulletin.notes = notes
+
+        if (!emptyAdd) {
+            deleteNote({ noteId: removeId, idx: removeIdx })
+        }
+    }
+    function addUpdateIndices(note: Note) {
+        const idx = note.idx
+        for (let i = 0; i < notes.length; i++) {
+            if (notes[i].idx >= idx && notes[i].id !== note.id) {
+                notes[i].idx += 1
+            }
+        }
+    }
+
+    /* ui */
+    async function onPointerUp(e: PointerEvent) {
         const target = e.target as HTMLElement
         const width = target.clientWidth
 
-        if (e.button != 0 || target.id === INPUT_ID || !hasNotes || notes.length === 0) {
+        if (edited) {
+            edited = false
             return
         }
-        if (e.offsetX <= width / 2) {
+        else if (e.button != 0 || target.id === INPUT_ID || !hasNotes || notes.length === 0 || target.tagName === "BUTTON") {
+            return
+        }
+        else if (e.offsetX <= width / 2) {
             noteIdx = ((noteIdx - 1) + notes.length) % notes.length
         }
         else {
             noteIdx = (noteIdx + 1) % notes.length
         }
+        setNoteIdx(noteIdx)
+    }
+    function setNoteIdx(noteIdx: number) {
+        updateBulletin({ noteIdx: noteIdx })
         
-        options.noteIdx = noteIdx
-        editor.updateText(notes[noteIdx])
-        onUpdateOptions(options)
+        bulletin.noteIdx = noteIdx
+        editor.updateText(getNote(noteIdx)!.text)
+    }
+    function uploadImg(img: string) {
+        imgLoading = true
+
+        updateBulletin({ imgSrc: img })
+            .then(() => {
+                imgSrc = img
+                bulletin.imgSrc = imgSrc 
+                imgLoading = false
+            })
+            .finally(() => {
+                imgLoading = false
+            })
     }
     function onContextMenu(e: Event) {
         const pe = e as PointerEvent
@@ -106,16 +187,14 @@
 
         imageUpload.init({
             onSubmitImg: (img: string) => {
-                imgSrc = img
-                options.imgSrc = imgSrc
-                onUpdateOptions(options)
+                uploadImg(img)
             }
         })
     }
 
     onMount(() => {
         if (notes.length > 0) {
-            editor.updateText(notes[noteIdx])
+            editor.updateText(getNote(noteIdx)!.text)
         }
     })
 </script>
@@ -125,8 +204,8 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div 
         class="bulletin"
-        class:bulletin--light={isLight}
-        class:bulletin--show-on-hover={contentsOnHover}
+        class:bulletin--light={light}
+        class:bulletin--show-on-hover={contentsOnHover && !adding}
         class:bulletin--is-over={isPointerOver}
         class:bulletin--no-notes={!hasNotes}
         style:--font-size={fullWidth ? "1.35rem" : "1.2rem"}
@@ -134,6 +213,7 @@
         on:pointerup={onPointerUp}
         on:pointerover={() => isPointerOver = true}
         on:pointerleave={() => isPointerOver = false}
+        use:clickOutside on:outClick={() => edited = false}
     >
         <img src={imgSrc} alt="">
         <div class="bulletin__content" class:hidden={!hasNotes}>
@@ -146,6 +226,15 @@
             >
             </div>
         </div>
+        {#if notes.length > 0}
+            <button 
+                class="fraction"
+                on:click={() => setNoteIdx(0)}
+            >
+                <span style:margin-right="3px">#</span>
+                {noteIdx + 1}
+            </button>
+        {/if}
     </div>
     <DropdownList 
         id="base"
@@ -161,28 +250,30 @@
                 },
                 {
                     name: "Include Notes",
-                    active: options.hasNotes,
+                    active: bulletin.hasNotes,
                     onToggle: () => {
                         hasNotes = !hasNotes
-                        options.hasNotes = hasNotes
-                        onUpdateOptions(options)
+                        bulletin.hasNotes = hasNotes
+
+                        updateBulletin({ hasNotes: hasNotes })
                     }
                 },
                 {
-                    name: options.hasNotes ? "Auto Display" : "",
-                    active: options.contentsOnHover,
+                    name: bulletin.hasNotes ? "Auto Display" : "",
+                    active: bulletin.contentsOnHover,
                     divider: true,
                     onToggle: () => {
                         contentsOnHover = !contentsOnHover
-                        options.contentsOnHover = contentsOnHover
-                        onUpdateOptions(options)
+                        bulletin.contentsOnHover = contentsOnHover
+
+                        updateBulletin({ contentsOnHover: contentsOnHover })
                     }
                 },
                 {
-                    name: options.hasNotes ? "Add New Note" : "",
+                    name: bulletin.hasNotes && notes.length < MAX_NOTES ? "Add New Note" : "",
                 },
                 {
-                    name: options.hasNotes ? "Remove Note" : ""
+                    name: bulletin.hasNotes ? "Remove Note" : ""
                 },
             ],
             styling: {
@@ -210,7 +301,7 @@
                 hasContextMenu = false
             }
         }}
-/>
+    />
 </div>
 
 <style lang="scss">
@@ -241,6 +332,9 @@
         &--no-notes &__content {
             background: transparent;
         }
+        &:hover .fraction {
+            opacity: 0.3;
+        }
 
         img {
             height: 100%;
@@ -253,7 +347,7 @@
             color: rgba(white, var(--text-opacity));
             font-family: "Geist Mono";
             font-size: var(--font-size);
-            width: 75%;
+            width: 80%;
             overflow: visible;
             height: auto;
         }
@@ -268,6 +362,17 @@
             @include abs-top-left;
             @include center;
         }   
+        .fraction {
+            @include abs-bottom-left(10px, 10px);
+            opacity: 0;
+            transition: opacity 0.1s ease-in-out 0.2s;
+            color: rgba(white, 1);
+            z-index: 1000;
+
+            &:hover {
+                opacity: 0.8;
+            }
+        }
     }
 
     div[contenteditable]:empty:before {

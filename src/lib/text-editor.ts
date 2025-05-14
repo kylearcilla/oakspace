@@ -269,7 +269,7 @@ export class TextEditorManager {
             return
         }
         if (!shiftKey && key === "Enter") {
-            this.onBlurHandler(null, true)
+            // this.onBlurHandler(null, true)
             return
         }
     }
@@ -330,9 +330,18 @@ export class TextEditorManager {
         selection?.addRange(range)
     }
 
+    /**
+     * Initializes the input element with event listeners and other properties.
+     * @returns The set input element.
+     */
     initElem() {
         const elem = getElemById(this.id)
-        if (!elem) return null
+        if (!elem) {
+            return null
+        }
+        if (this.elemInit) {
+            return this.inputElem
+        }
 
         this.inputElem = elem
         this.inputElem.addEventListener("keydown", (ke) => this.keydownHandler(ke))

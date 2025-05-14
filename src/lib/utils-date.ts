@@ -540,6 +540,22 @@ export function msToHHMMSS(ms: number) {
 	return formattedTime
 }
 
+export function formatSecs(secs: number): string {
+	const hours = Math.floor(secs / 3600)
+	const minutes = Math.floor((secs % 3600) / 60)
+
+	let formattedTime = ''
+
+	if (hours > 0) {
+		formattedTime += `${hours}h `
+	}
+
+	if (minutes > 0 || hours > 0) {
+		formattedTime += `${minutes}m`
+	}
+
+	return formattedTime.trim()
+}
 /**
  * Converts the given number of minutes from the beginning of the day to the "hh:mm" format.
  * @param    minutes - The number of minutes from the beginning of the day.

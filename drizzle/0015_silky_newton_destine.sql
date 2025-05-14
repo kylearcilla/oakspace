@@ -1,0 +1,1 @@
+ALTER TABLE "general"."quote_likes" DROP COLUMN "liked";

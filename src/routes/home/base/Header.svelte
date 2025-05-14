@@ -5,9 +5,9 @@
 	import SettingsBtn from "$components/SettingsBtn.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 
-    export let options: BaseViewOptions
+    export let options: BaseView
     export let showIcon: boolean
-    export let onOptionUpdate: (options: BaseViewOptions) => void
+    export let onOptionUpdate: (options: BaseView) => void
 
     let settingsOpen = false
 

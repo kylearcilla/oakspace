@@ -1,32 +1,7 @@
 import { db } from "./drizzle"
 import { eq, and } from "drizzle-orm"
-import { homeView, notes, textEntries, todos } from "./general-schema"
+import { uiOptions, homeView, notes, textEntries, todos } from "./general-schema"
 import { getNotes } from "./bulletin"
-
-type HomeViewDB = {
-  id: string
-  headerView: string
-  leftMargin: boolean
-  bannerSrc: string | null
-  bannerCenter: number | null
-  iconSrc: string | null
-  iconType: string | null
-  showBanner: boolean
-  showEntry: boolean
-  showIcon: boolean
-  bulletinImgSrc: string | null
-  bulletinHeight: number
-  bulletinHasNotes: boolean
-  bulletinContentsOnHover: boolean
-  bulletinNoteIdx: number
-  userId: string
-}
-
-type TextEntryDB = Omit<TextEntry, "icon"> & {
-  iconType: string | null
-  iconSrc: string | null
-  iconSize: string | null
-}
 
 /* home view data */
 
@@ -46,15 +21,37 @@ export async function getHomeViewData(userId: string): Promise<{ homeView: HomeV
   return { homeView: result[0], notes }
 }
 
-export async function updateHomeViewData(userId: string, data: Partial<HomeViewDB>): Promise<void> {
+export async function updateHomeViewData(userId: string, data: Partial<HomeViewDB>): Promise<boolean> {
   await db
     .update(homeView)
     .set(data)
     .where(eq(homeView.userId, userId))
     .execute()
+
+  return true
 }
 
-/* appearance data */
+/* ui options data */
+
+export async function getUiOptions(userId: string): Promise<UiOptionsDB | undefined> {
+  const result = await db
+    .select()
+    .from(uiOptions)
+    .where(eq(uiOptions.userId, userId))
+    .execute()
+
+  return result[0] as UiOptionsDB
+}
+
+export async function updateUiOptions(userId: string, data: Partial<UiOptionsDB>): Promise<boolean> {
+  await db
+    .update(uiOptions)
+    .set(data)
+    .where(eq(uiOptions.userId, userId))
+    .execute()
+
+  return true
+}
 
 /* bulletin notes data */
 

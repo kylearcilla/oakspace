@@ -3,7 +3,7 @@
     
 	import { Icon } from "$lib/enums"
     import { imageUpload } from "$lib/pop-ups"
-	import { HEADER_IMG } from "$lib/mock-data"
+	import { updateUiOptions } from "$lib/api-general"
     import { clamp, clickOutside } from "$lib/utils-general"
     import { globalContext, themeState, timer } from "$lib/store"    
     import { loadDayViewOptions, saveDayViewOptions, setHotkeyFocus } from "$lib/utils-home"
@@ -15,29 +15,28 @@
     const MAX_DIST_BOTTOM_IMG_CONTAINER = 70
     const DRAG_OFFSET_THRESHOLD = 5
 
-    export let onHeaderImageChange: (img: string) => void
+    export let data: RightBar
+    export let onSetHeaderImg: (img: string) => void
     export let fixed: boolean
 
     $: isLight = !$themeState.isDarkTheme
     $: ambience = $globalContext.ambience
     $: hasAmbience = ambience?.active ?? false
 
-    let options: DayViewOptions = {
-        view: "cal",
+    let header = data.header
+    let colors = data.routineColors
+    let boxes = data.routineBoxes
+
+    let dayViewOptions: DayViewOptions = {
+        view: data.view,
         calView: "routines",
+        header,
         googleCal: {
-            colors: true
+            colors: colors
         },
         routines: {
-            checkbox: false,
-            colors: true
-        },
-        header: {
-            img: {
-                src: HEADER_IMG,
-                top: 0
-            },
-            show: true
+            checkbox: boxes,
+            colors: colors
         }
     }
 
@@ -51,17 +50,17 @@
     let opacity = 0
     let ogTopOffset = 0
     let initDragY = 0
-    let isDragging = false
-
+    let dragging = false
     let bgImgRef: HTMLImageElement
 
-    $: headerImg = options.header?.img
-    $: showHeaderImg = options.header.show
+    $: headerImg = header.img
+    $: headerTop = header.top
+    $: showHeaderImg = header.show
 
     $: transparent = hasAmbience && ambience?.styling != "solid"
     $: empty = transparent || !headerImg || !showHeaderImg || isLight
 
-    $: onHeaderImageChange(headerImg?.src ?? "")
+    $: onSetHeaderImg(headerImg ?? "")
 
     // initOptions()
 
@@ -72,11 +71,17 @@
         
         if (data) options = data
     }
-    function onImgUpload(src: string) {
-        options.header.img = {
-            src,
-            top: 0
-        }
+
+    /* header ui img */
+    async function onSubmitImg(src: string) {
+        await updateUiOptions({
+            barBanner: src,
+            barBannerTop: 0
+        })
+
+        header.img = src
+        header.top = 0
+
         saveDayViewOptions(options)
     }
     function onPointerDown(pe: PointerEvent) {
@@ -95,26 +100,29 @@
         const target = pe.target as HTMLElement
         const MAX = bgImgRef.clientHeight - MAX_DIST_BOTTOM_IMG_CONTAINER
 
-        if (Math.abs(offset) >= DRAG_OFFSET_THRESHOLD && !isDragging) {
+        if (Math.abs(offset) >= DRAG_OFFSET_THRESHOLD && !dragging) {
             target.setPointerCapture(pe.pointerId)
 
-            ogTopOffset = headerImg!.top ?? 0
-            isDragging = true
+            ogTopOffset = headerTop ?? 0
+            dragging = true
         }
-        if (isDragging) {
-            headerImg!.top = clamp(-(MAX), (ogTopOffset + -offset), 0)
+        if (dragging) {
+            const pos = clamp(-(MAX), (ogTopOffset + -offset), 0)
+            headerTop = Math.round(pos)
+            header.top = headerTop
         }
     }
     function onPointerUp(pe: PointerEvent) {
         const target = pe.target as HTMLElement
 
-        if (isDragging) {
+        if (dragging) {
             saveDayViewOptions(options)
+            updateUiOptions({ barBannerTop: headerTop })
         }
 
         ogTopOffset = 0
         initDragY = -1
-        isDragging = false
+        dragging = false
 
         target.removeEventListener("pointermove", onDrag)
         target.removeEventListener("pointerup", onPointerUp)
@@ -153,7 +161,7 @@
     {#if !empty && headerImg}
         <div 
             class="bar__header"
-            style:cursor={isDragging ? "ns-resize" : "default"}
+            style:cursor={dragging ? "ns-resize" : "default"}
             on:pointerdown={onPointerDown}
         > 
             <div class="bar__header-img-wrapper">
@@ -161,10 +169,10 @@
                     <img
                         bind:this={bgImgRef}
                         class="bar__header-img"
-                        style:top={`${headerImg.top}px`}
+                        style:top={`${headerTop}px`}
                         style:left="0px"
-                        src={headerImg.src ?? ""} 
-                        alt=""
+                        src={headerImg ?? ""} 
+                        alt="header"
                     >
                 </div>
             </div>
@@ -213,16 +221,14 @@
 
     <div class="bar__overview">
         <DayView 
-            {options}
+            options={dayViewOptions}
             onHeaderOptions={optn => {
                 if (optn == "show") {
-                    options.header.show = !options.header.show
-                    saveDayViewOptions(options)
+                    header.show = !header.show
+                    updateUiOptions({ barBannerShow: header.show })
                 }
                 else {
-                    imageUpload.init({
-                        onSubmitImg: (src) => onImgUpload(src)
-                    })
+                    imageUpload.init({ onSubmitImg })
                 }
             }}
         />

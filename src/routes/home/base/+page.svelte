@@ -8,17 +8,21 @@
 	import Header from "./Header.svelte"
 	import MonthView from "./MonthView.svelte"
 	import LeftMargin from "./LeftMargin.svelte"
+	import { updateHome } from "$lib/api-general";
 
-    export let data
+    export let data: InitialDataLoad
 
     const SMALL_WIDTH = 1000
     const BASE_HEADER_ICON_ID = "base-header--icon"
+    
+    let home = data.home
+    let { banner, header, leftMargin, bulletin } = home
 
     let width = 0
     let leftHt = 0
     let initDragY = -1
     let ogDragVal = 0
-    let { banner, header, leftMargin, bulletin } = data.home
+    let dragging = false
     
     let options: BaseView = {
         banner: {
@@ -31,7 +35,7 @@
     }
 
     $: isLight = !$themeState.isDarkTheme
-    $: showIcon = options.header.icon.show
+    $: showIcon = header.icon?.show ?? false
     $: saveBaseView(options)
 
     // initViewOptions()
@@ -44,9 +48,15 @@
     function initIconPicker() {
         iconPicker.init({
             id: BASE_HEADER_ICON_ID,
-            onSubmitIcon: (icon) => {
-                options.header.icon = { ...options.header.icon, ...icon }
-            }
+            onSubmitIcon: async (icon: SmallIconSrc) => {
+                await updateHome({
+                    iconSrc: icon.src,
+                    iconType: icon.type,
+                    showIcon: true
+                })
+
+                header.icon = { ...icon, show: true }
+            } 
         })
     }
 
@@ -59,7 +69,8 @@
         initDragY = pe.clientY
 
         target.setPointerCapture(pe.pointerId)
-        ogDragVal = options.banner.img.center
+        ogDragVal = banner!.img!.center
+        dragging = true
     }
     function onDrag(pe: PointerEvent) {
         if (initDragY < 0) {
@@ -69,30 +80,43 @@
         const target = pe.target as HTMLImageElement
         const naturalHeight = target.naturalHeight 
         const percOffset = ((offset / naturalHeight) * 100) * 2.5
+        const center = clamp(0, ogDragVal + percOffset, 100)
 
-        options.banner.img.center = clamp(0, ogDragVal + percOffset, 100)
-        options.banner.img = options.banner.img
+        banner!.img!.center = Math.round(center)
+        banner!.img = banner!.img
     }
     function onDragEnd() {
         ogDragVal = 0
         initDragY = -1
+
+        if (dragging) {
+            updateHome({  bannerCenter: banner!.img!.center })
+        }
+    }
+    function onUpdateOptions(updated: Partial<BaseView>) {
+        home = { ...home, ...updated }
+
+        banner = home.banner
+        header = home.header
+        leftMargin = home.leftMargin
+        bulletin = home.bulletin
     }
 </script>
 
 <div 
     bind:clientWidth={width}
     class="base"
-    class:base--no-margin={!options.leftMargin}
-    class:base--no-banner={!options.banner.show}
-    class:base--emoji-icon={options.header.icon?.type === "emoji"}
+    class:base--no-margin={!leftMargin}
+    class:base--no-banner={!banner?.show}
+    class:base--emoji-icon={header.icon?.type === "emoji"}
     class:base--light={isLight}
     class:base--small={width <= SMALL_WIDTH}
     style:--month-img-ht="261px"
     style:--left-ht={`${leftHt}px`}
     style:cursor={initDragY >= 0 ? "ns-resize" : "default"}
 >   
-    {#if options.banner.show}
-        {@const { src, center } = options.banner.img}
+    {#if banner && banner?.show}
+        {@const { src, center } = banner.img}
         <div 
             class="base__banner"
             on:pointerdown={dragDown}
@@ -107,8 +131,8 @@
         </div>
     {/if}
     <div class="base__content">
-        {#if showIcon}
-            {@const { type, src } = options.header.icon}
+        {#if header.icon && showIcon}
+            {@const { type, src } = header.icon}
             <button
                 id={BASE_HEADER_ICON_ID}
                 class="base__icon"
@@ -121,28 +145,32 @@
                 {/if}
             </button>
         {/if}
-        {#if options.header.pos === "top"}
+        {#if header.pos === "top"}
             <div class="base__top-header">
                 <Header 
                     {showIcon}
-                    {options} 
-                    onOptionUpdate={(updated) => options = updated}
+                    options={home}
+                    onOptionUpdate={(updated) => onUpdateOptions(updated)}
                 />
             </div>
         {/if}
         <div class="base__content-flx">
-            {#if options.leftMargin}
+            {#if leftMargin}
                 <div class="base__left" bind:clientHeight={leftHt}>
-                    <LeftMargin fullWidth={width <= SMALL_WIDTH} {bulletin} />
+                    <LeftMargin 
+                        {bulletin}
+                        marginView={home.leftMarginView}
+                        fullWidth={width <= SMALL_WIDTH}
+                    />
                 </div>
             {/if}
             <div class="base__right">
-                {#if options.header.pos === "side"}
+                {#if header.pos === "side"}
                     <div class="base__overview-header">
                         <Header 
                             {showIcon}
-                            {options} 
-                            onOptionUpdate={(updated) => options = updated}
+                            options={home}
+                            onOptionUpdate={(updated) => onUpdateOptions(updated)}
                         />
                     </div>
                 {/if}
@@ -240,6 +268,7 @@
             height: 95px;
             width: 95px;
             position: relative;
+            transition-property: transform;
             
             img {
                 @include square(100px);

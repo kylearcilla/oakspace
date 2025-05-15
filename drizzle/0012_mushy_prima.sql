@@ -1,1 +1,0 @@
-ALTER TABLE "general"."quote_likes" ADD COLUMN "liked" boolean;

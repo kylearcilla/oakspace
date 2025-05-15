@@ -36,38 +36,43 @@ export const tags = schema.table('tags', {
   userId: fk({ name: 'user_id', refs: users.id }),
 })
 
-/* appearance */
 
-export const appearance = schema.table('appearance', {
+/* ui */
+
+export const uiOptions = schema.table('ui_options', {
   id: id(),
-  theme: str({ name: 'theme', val: 'dark', req: false }),
+  theme: str({ name: 'theme', val: 'dark' }),
   fontStyle: str({ name: 'font_style', val: "system" }),
 
-  barBanner: str({ name: 'bar_banner', req: false }),
-  barBannerCenter: int({ name: 'bar_banner_center', req: false }),
-  barBannerShow: bool({ name: 'bar_banner_show', req: false }),
+  barBanner: text({ name: 'bar_banner', req: false }),
+  barBannerTop: int({ name: 'bar_banner_top', req: false }),
+  barBannerShow: bool({ name: 'bar_banner_show' }),
+  barView: str({ name: 'bar_view', val: "cal" }), // cal | tasks
 
-  userId: fk({ name: 'user_id', refs: users.id }),
+  routineColors: bool({ name: 'routine_colors', val: true }),
+  routineBoxes: bool({ name: 'routine_boxes', val: true }),
+
+  userId: fk({ name: 'user_id', refs: users.id })
 })
 
 export const homeView = schema.table('home_view', {
   id: id(),
 
-  headerView: str({ name: 'header_view' }), // top | side
-  leftMargin: bool({ name: 'left_margin' }),
+  headerView: str({ name: 'header_view', val: "top" }), // top | side
+  leftMargin: bool({ name: 'left_margin', val: true }),
+  leftMarginView: str({ name: 'left_margin_view', val: "month" }), // month | today
   
-  bannerSrc: str({ name: 'banner_src', req: false }),
+  bannerSrc: text({ name: 'banner_src', req: false }),
   bannerCenter: int({ name: 'banner_center', req: false }),
 
-  iconSrc: str({ name: 'icon_src', req: false }),
+  iconSrc: text({ name: 'icon_src', req: false }),
   iconType: str({ name: 'icon_type', req: false }),
 
   showBanner: bool({ name: 'show_banner' }),
   showEntry: bool({ name: 'show_entry' }),
   showIcon: bool({ name: 'show_icon', req: false }),
   
-  
-  bulletinImgSrc: str({ name: 'bulletin_img_src', req: false }),
+  bulletinImgSrc: text({ name: 'bulletin_img_src', req: false }),
   bulletinHeight: int({ name: 'bulletin_height', req: false }),
   bulletinHasNotes: bool({ name: 'bulletin_has_notes', req: false }),
   bulletinContentsOnHover: bool({ name: 'bulletin_contents_on_hover', req: false }),
@@ -178,7 +183,7 @@ export const lastLoginsRelations = relations(lastLogins, ({ one }) => ({
 
 export const usersRelations = relations(users, ({ many }) => ({
   tags: many(tags),
-  appearance: many(appearance),
+  uiOptions: many(uiOptions),
   notes: many(notes),
   textEntries: many(textEntries),
   lastLogins: many(lastLogins)
@@ -198,9 +203,9 @@ export const todosRelations = relations(todos, ({ one }) => ({
   })
 }))
 
-export const appearanceRelations = relations(appearance, ({ one }) => ({
+export const uiOptionsRelations = relations(uiOptions, ({ one }) => ({
   user: one(users, {
-    fields: [appearance.userId],
+    fields: [uiOptions.userId],
     references: [users.id]
   })
 }))

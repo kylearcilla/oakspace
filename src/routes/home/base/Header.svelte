@@ -1,5 +1,9 @@
 <script lang="ts">
     import { imageUpload } from "$lib/pop-ups"
+	import { updateHome } from "$lib/api-general"
+	import { DEFAUL_EMOJIS } from "$lib/constants"
+	import { HOME_THOUGHT_ENTRY } from "$lib/mock-data"
+	import { randomArrayElem } from "$lib/utils-general"
 
 	import TextEntry from "$components/TextEntry.svelte"
 	import SettingsBtn from "$components/SettingsBtn.svelte"
@@ -7,33 +11,82 @@
 
     export let options: BaseView
     export let showIcon: boolean
-    export let onOptionUpdate: (options: BaseView) => void
+    export let onOptionUpdate: (options: Partial<BaseView>) => void
 
     let settingsOpen = false
+    let entry = HOME_THOUGHT_ENTRY
+
 
     function onViewOptions(optn: string) {
-        if (optn === "banner") {
-            options.banner.show = !options.banner.show
+        const { banner, header, leftMargin } = options
+        const { icon, showEntry, pos } = header
+
+        if (optn === "banner" && banner) {
+            const show = !banner.show
+            onOptionUpdate({ 
+                banner: { ...banner, show }
+            })
+            updateHome({ showBanner: show })
+        }
+        else if (optn === "icon" && !icon) {
+            const newIcon: SmallIcon = {
+                show: true,
+                type: "emoji",
+                src: randomArrayElem(DEFAUL_EMOJIS)
+            }
+            onOptionUpdate({ 
+                header: { ...header, icon: newIcon }
+            })
+            updateHome({ 
+                showIcon: true,
+                iconSrc: newIcon.src,
+                iconType: newIcon.type
+            })
         }
         else if (optn === "icon") {
-            options.header.icon.show = !options.header.icon.show
+            const show = !icon!.show
+            
+            onOptionUpdate({ 
+                header: { ...header, icon: { ...icon!, show } }
+            })
+            updateHome({ showIcon: show })
+        }
+        else if (optn === "delete banner") {
+            onOptionUpdate({ banner: null })
+            updateHome({ bannerSrc: null, showBanner: false })
         }
         else if (optn === "entry") {
-            options.header.showEntry = !options.header.showEntry
+            const show = !showEntry
+            onOptionUpdate({
+                header: { ...header, showEntry: show }
+            })
+            updateHome({ showEntry: show })
         }
         else if (optn === "header") {
-            options.header.pos = options.header.pos === "top" ? "side" : "top"
+            const headerPos = pos === "top" ? "side" : "top"
+            onOptionUpdate({
+                header: { ...header, pos: headerPos }
+            })
+            updateHome({ headerView: headerPos })
         }
         else if (optn === "left margin") {
-            options.leftMargin = !options.leftMargin
+            const flag = !leftMargin
+            onOptionUpdate({ leftMargin: flag })
+            updateHome({ leftMargin: flag })
         }
-        onOptionUpdate(options)
     }
     function openBannerImg() {
         imageUpload.init({
-            onSubmitImg: (src: string) => {
-                options.banner.img = { src, center: 50 }
-                onOptionUpdate(options)
+            onSubmitImg: async (src: string) => {
+                const banner = { img: { src, center: 50 }, show: true }
+
+                await updateHome({ 
+                    bannerSrc: src,
+                    bannerCenter: 50,
+                    showBanner: true
+                })
+
+                onOptionUpdate({ banner })
             }
         })
         settingsOpen = false
@@ -42,7 +95,7 @@
 
 <div 
     class="base-header"
-    class:base-header--no-banner={!options.banner.show}
+    class:base-header--no-banner={!options.banner?.show}
     class:base-header--has-icon={showIcon}
     class:base-header--pos-side={options.header.pos === "side"}
 >
@@ -69,12 +122,16 @@
                             sectionName: "Banner",
                         },
                         {
-                            name: "Show",
-                            active: options.banner.show,
+                            name: options.banner ? "Show" : "",
+                            active: options.banner?.show ?? false,
                             onToggle: () => onViewOptions("banner")
                         },
                         {
-                            name: "Replace",
+                            name: options.banner ? (options.banner.show ? "Replace" : "") : "Add Background",
+                            divider: !options.banner
+                        },
+                        {
+                            name: options.banner ? "Delete" : "",
                             divider: true
                         },
                         {
@@ -87,7 +144,7 @@
                         },
                         {
                             name: "Icon",
-                            active: options.header.icon.show,
+                            active: options.header.icon?.show ?? false,
 
                             onToggle: () => onViewOptions("icon"),
                         },
@@ -116,8 +173,11 @@
                         top: "28px", right: "0px" 
                     },
                     onListItemClicked: ({ name }) => {
-                        if (name === "Replace") {
+                        if (name === "Replace" || name === "Add Background") {
                             openBannerImg()
+                        }
+                        else if (name === "Delete") {
+                            onViewOptions("delete banner")
                         }
                     },
                     onClickOutside: () => {
@@ -127,12 +187,12 @@
             />
         </div>
         {#if options.header.showEntry}
-            {#key options.entry}
+            {#key entry}
                 <div style:width="100%" style:margin="0px 0px 0px 0px">
                     <TextEntry 
                         id="header"
                         zIndex={100}
-                        entry={options.entry}
+                        entry={entry}
                     />
                 </div>
             {/key}

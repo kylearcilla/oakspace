@@ -1,5 +1,7 @@
-import { QUOTE_DATE_KEY, QUOTE_KEY } from "$lib/constants"
 import { isQuoteExpired } from "$lib/utils"
+import { TEST_USER } from "$lib/mock-data-goals"
+import { getUiOptions, getUser } from "$lib/api-general"
+import { QUOTE_DATE_KEY, QUOTE_KEY } from "$lib/constants"
 
 export const ssr = false
 
@@ -13,7 +15,7 @@ let fetch: typeof globalThis.fetch
 //  * @param param0 '
 //  * @returns 
 //  */
-export async function load({ fetch: _fetch }) {
+export async function load({ fetch: _fetch }): Promise<InitialDataLoad> {
     fetch = _fetch
     // get user data
 
@@ -25,13 +27,14 @@ export async function load({ fetch: _fetch }) {
 
     const user = await getUserData()
     const home = await getHomeData()
-
-    console.log(home)
+    const { appearance, bar } = await getUiOptions()
 
     return {
         quote: getQuoteData(),
         home,
-        user
+        user,
+        appearance,
+        bar
     }
 }
 
@@ -39,8 +42,7 @@ export async function load({ fetch: _fetch }) {
 /* general data */
 
 async function getUserData(): Promise<User> {
-    const userRes = await fetch('/home/user')
-    const user = await userRes.json()
+    const user = await getUser(TEST_USER.id)
 
     return {
         ...user,
@@ -52,14 +54,6 @@ async function getUserData(): Promise<User> {
             routinesMade: user.routinesMade
         }
     }
-}
-
-async function getAppearanceData() {
-
-}
-
-async function getTodosData() {
-
 }
 
 /* home data */
@@ -81,7 +75,7 @@ async function getQuoteData(): Promise<Quote> {
         setQuote(quoteData!.quote)
     }
 
-    const likesRes = await fetch(`/home/quotes/likes?quoteId=${quoteData!.quote.id}`)
+    const likesRes = await fetch(`/home/quotes/likes/${quoteData!.quote.id}`)
     const res = await new Promise(resolve => setTimeout(resolve, 1500))
     const likes = await likesRes.json()
 
@@ -100,7 +94,7 @@ function didInitQuote() {
     if (date && quote) {
         return { 
             date: new Date(date), 
-            quote: JSON.parse(quote)
+            quote: JSON.parse(quote) as Quote
         }
     }
     else {

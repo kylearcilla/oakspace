@@ -50,7 +50,7 @@
   import TagPicker from "$components/TagPicker.svelte";
 	import SettingsModal from "./SettingsModal.svelte";
   
-  export let data: any
+  export let data: InitialDataLoad
 
   let toggledLeftBarWithKey = false
   let totalWidth = 0
@@ -281,9 +281,7 @@
           <Header/>
         </div>
           {#if route != "/home"}
-            <div class="home__slot">
-              <slot />
-            </div>
+            <div class="home__slot"><slot /></div>
           {/if}
       </div>
       <!-- right -->
@@ -301,8 +299,9 @@
         style:right={`${!rightBarOpen && rightBarFixed ? `-${rightSideBarWidth}px` : ""}`}
       >
         <SideBarRight 
-          fixed={rightBarFixed}
-          onHeaderImageChange={(showing) => showHeaderImg = showing}
+            data={data.bar}
+            fixed={rightBarFixed}
+            onSetHeaderImg={(showing) => showHeaderImg = showing}
         /> 
 
         {#if showHeaderImg && !hasAmbience && !isLight}
@@ -340,7 +339,7 @@
 
     <!-- modals -->
     {#if modalsOpen.includes(ModalType.Themes)} 
-        <Appearance />
+        <Appearance theme={data.appearance.theme} />
     {/if}
 
     {#if $habitTracker.viewHabit}

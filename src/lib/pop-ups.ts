@@ -37,7 +37,7 @@ function ImageUpload() {
     const state: Writable<ImageUpload> = writable({ 
         isOpen: false,
         position: { top: -1000, left: -1000 },
-        onSubmitImg: () => {}
+        onSubmitImg: async () => {}
     })
 
     function init({ onSubmitImg, exclude, maxSizeMb, dims }: ImgUploadOptions)  {
@@ -87,11 +87,11 @@ function EmojiPicker() {
         position: { top: -1000, left: -1000 },
         dmenuId: "",
         isOpen: false,
-        onSubmitEmoji: () => {},
+        onSubmitEmoji: async () => {}
     })
 
     function init({ onSubmitEmoji, onClose, dmenuId = "emoji-picker" }: { 
-        onSubmitEmoji: (emoji: Emoji) => void,
+        onSubmitEmoji: (emoji: Emoji) => Promise<void>,
         onClose?: () => void
         dmenuId?: string
     }) {
@@ -124,13 +124,13 @@ function EmojiPicker() {
 }
 
 function IconPicker() {
-    let onPickIcon: (icon: Icon | null) => void = () => {}
+    let onPickIcon: (icon: SmallIconSrc) => Promise<void> = async () => {}
     let imgUploadOptions: ImgUploadOptions | undefined = undefined
 
     function onChooseType(type: IconType) {
         if (type === "emoji") {
             emojiPicker.init({ 
-                onSubmitEmoji: (emoji) => {
+                onSubmitEmoji: async (emoji) => {
                     onPickIcon({ type: "emoji", src: emoji.native })
                 }
             })
@@ -138,7 +138,7 @@ function IconPicker() {
         else {
             imageUpload.init({ 
                 ...imgUploadOptions!, 
-                onSubmitImg: (src) => {
+                onSubmitImg: async (src) => {
                     onPickIcon({ type: "img", src })
                 }
             })
@@ -147,10 +147,10 @@ function IconPicker() {
     }
 
     function init({ onSubmitIcon, imgOptions, id = "icon-picker", onClose = () => {} }: { 
-        onSubmitIcon: (icon: Icon | null) => void
+        onSubmitIcon: (icon: SmallIconSrc) => Promise<void>
+        onClose?: () => void
         imgOptions?: ImgUploadOptions
         id?: string
-        onClose?: () => void
     }) {
         onPickIcon = onSubmitIcon
         imgUploadOptions = imgOptions

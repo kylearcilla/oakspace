@@ -10,8 +10,9 @@
 	import ThemeItem from "./ThemeItem.svelte"
 	import Modal from "$components/Modal.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
+	import { updateUiOptions } from "$lib/api-general"
+	import ConfirmBtns from "$components/ConfirmBtns.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
-	import ConfirmBtns from "$components/ConfirmBtns.svelte";
 
     $: hasAmbience = $globalContext.ambience?.active ?? false
     $: isDark = $themeState.isDarkTheme
@@ -41,6 +42,8 @@
 
         localStorage.setItem("theme-name", theme.name)
         window.location.reload()
+
+        updateUiOptions({ theme: theme.name })
     }
     function onFlavorSelected(name: string) {
         clickedFlavor = name

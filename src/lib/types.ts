@@ -2,6 +2,48 @@
 
 // avoid checking, issues occur when enums are imported
 
+
+type Subset<T, U extends T> = U
+
+type InitialDataLoad = {
+    user: User
+    quote: Promise<Quote>
+    home: BaseView
+    appearance: Appearance
+    bar: RightBar
+}
+
+type UiOptions = {
+    bar: RightBar
+    appearance: Appearance
+}
+
+type RightBar = {
+    header: RightBarHeader
+    view: "cal" | "tasks"
+    routineColors: boolean
+    routineBoxes: boolean
+}
+
+type RightBarHeader = {
+    img: string | null
+    top: number | null
+    show: boolean
+}
+
+type BarRoutineOptions = {
+    id: string | null
+    checkbox: boolean
+    colors: boolean
+}
+
+type Appearance = {
+    theme: ThemeName
+    fontStyle: "system" | "mono"
+}
+
+type AppearanceTheme = "dark" | "light" | "sand" | "terracotta" | "academia" | "gotham"
+
 type User = {
     id: string
     name: string
@@ -148,9 +190,10 @@ type EditEntry = DayEntry & {
 }
 
 type BaseView = {
-    banner: BaseBanner
+    banner: BaseBanner | null
     header: BaseHeader
     leftMargin: boolean
+    leftMarginView: "month" | "today"
     bulletin: BulletinOptions
 }
 
@@ -159,18 +202,25 @@ type BaseBanner = {
     img: {
         src: string
         center: number
-    } | null
+    }
+}
+
+type IconType = "img" | "emoji"
+
+type SmallIconSrc ={
+    src: string
+    type: IconType
+}
+
+type SmallIcon = SmallIconSrc & {
+    show: boolean
 }
 
 type BaseHeader = {
     showEntry: boolean
     entry: TextEntry | null
     pos: "top" | "side"
-    icon: {
-        src: string
-        type: "img" | "emoji"
-        show: boolean
-    } | null
+    icon: SmallIcon | null
 }
 
 type BaseLeftMarginView = {
@@ -199,19 +249,13 @@ type Note = {
 type DayViewOptions = {
     view: "cal" | "tasks"
     calView: "g-cal" | "routines"
+    header: RightBarHeader
     googleCal: {
         colors: boolean
     }
     routines: {
         checkbox: boolean
         colors: boolean
-    }
-    header: {
-        img: {
-            src: string
-            top: number
-        } | null
-        show: boolean
     }
 }
 
@@ -221,16 +265,9 @@ type IconPicker = {
     id: string
     isOpen: boolean
     position: OffsetPoint
-    onSubmitIcon: (icon: Icon) => void
+    onSubmitIcon: (icon: SmallIconSrc) => void
     imgOptions?: ImgUploadOptions
 }
-
-type Icon = {
-    src: string
-    type: IconType
-}
-
-type IconType = "emoji" | "img"
 
 /* emojis */
 
@@ -238,7 +275,7 @@ type EmojiPicker = {
     position: OffsetPoint
     isOpen: boolean
     dmenuId: string
-    onSubmitEmoji: (emoji: Emoji) => void
+    onSubmitEmoji: (emoji: Emoji) => Promise<void>
     onClose?: () => void
 }
 
@@ -273,11 +310,11 @@ type ImageUpload = {
     exclude?: Array<'jpeg' | 'png' | 'gif' | 'webp' | 'svg'>
     isOpen: boolean
     position: OffsetPoint
-    onSubmitImg: (src: string) => void
+    onSubmitImg: (src: string) => Promise<void>
 }
 
 type ImgUploadOptions = {
-    onSubmitImg: (src: string) => void
+    onSubmitImg: (src: string) => Promise<void>
     maxSizeMb?: number
     exclude?: string[]
     dims?: DimConstraints
@@ -1554,7 +1591,7 @@ type ThemePreview = {
 }
 
 type Theme = {
-    name: string
+    name: ThemeName
     styling: ThemeStyling
 }
 

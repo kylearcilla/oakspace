@@ -17,7 +17,7 @@
 
     export let checkbox: boolean
     export let richColors: boolean
-    export let view: "routine" | "g-cal"
+    export let view: "routines" | "g-cal"
     export let googleCals: GoogleCalendar[]
     export let googleEvents: GoogleCalendarEvent[]
     export let day: Date
@@ -145,7 +145,7 @@
     style:--HOUR_BLOCK_HEIGHT={`${GoogleCalendarManager.HOUR_BLOCK_HEIGHT}px`}
 >
     <div class="day-view__header" bind:clientHeight={headerHeight}>
-        {#if view === "routine"}
+        {#if view === "routines"}
             <span class="day-view__routine-name">
                 {routine?.name ?? "Routine"}
             </span>

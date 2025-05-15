@@ -30,7 +30,6 @@
 
     const editor = new TextEditorManager({ 
         initValue: getNote(noteIdx)?.text || "",
-        placeholder: "reminders, ideas, thoughts, affirmations, go here...",
         maxLength: MAX_NOTE_LENGTH,
         allowFormatting: false,
         id: INPUT_ID,
@@ -156,10 +155,11 @@
         }
         setNoteIdx(noteIdx)
     }
-    function setNoteIdx(noteIdx: number) {
-        updateBulletin({ noteIdx: noteIdx })
-        
-        bulletin.noteIdx = noteIdx
+    function setNoteIdx(idx: number) {
+        noteIdx = idx
+
+        updateBulletin({ noteIdx })
+        bulletin.noteIdx = idx
         editor.updateText(getNote(noteIdx)!.text)
     }
     function uploadImg(img: string) {
@@ -220,7 +220,7 @@
             <div 
                 id={INPUT_ID}
                 class="text-editor"
-                data-placeholder={editor.placeholder}
+                data-placeholder={notes.length === 0 ? "reminders, ideas, thoughts, affirmations, go here..." : "type here..."}
                 contenteditable
                 spellcheck="false"
             >

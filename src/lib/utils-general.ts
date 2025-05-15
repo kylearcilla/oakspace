@@ -1,6 +1,6 @@
 import { DEFAUL_ERR_MESSAGE } from "./constants"
-import { APIErrorCode, LogoIcon } from "./enums"
 import type { APIError } from "./errors"
+import { APIErrorCode, LogoIcon } from "./enums"
 import { TEST_TAGS } from "./mock-data-tags"
 import { toast } from "./utils-toast"
 
@@ -779,6 +779,12 @@ export function looseEqualTo(x: number, y: number, diff = 5) {
   return Math.abs(x - y) <= diff
 }
 
+/**
+ * Fetch api wrapper than handles errors and returns response / error.
+ * @param url      - The url to fetch.
+ * @param options  - Request options.
+ * @returns        - Response and error (if any)
+ */
 export async function _fetch(url: string, options: RequestInit): 
     Promise<{ response: any, error?: { code: number, message?: string } | null }> 
 {

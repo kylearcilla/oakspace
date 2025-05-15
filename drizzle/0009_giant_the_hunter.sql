@@ -1,1 +1,0 @@
-ALTER TABLE "general"."quotes" ALTER COLUMN "text" SET DATA TYPE text;

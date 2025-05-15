@@ -2,6 +2,10 @@
 
 export const DAY_IDX_QUOTE_REFRESH = 1 // on mondays
 
+export const DEFAUL_EMOJIS = [
+    "🌱", "🌷", "🌞", "🌙", "👏", "🔖", "🏕️", "⛰️", "💵"
+]
+
 /* notes */
 
 export const MAX_NOTE_LENGTH = 300
@@ -9,7 +13,7 @@ export const MAX_NOTES = 30
 
 /* error */
 
-export const DEFAUL_ERR_MESSAGE = "There was an error. Try again later."
+export const DEFAUL_ERR_MESSAGE = "There was an error. Some changes may not be saved."
 
 /* settings */
 

@@ -26,6 +26,7 @@
 	import DayViewContent from "./DayViewContent.svelte"
 	import BounceFade from "$components/BounceFade.svelte"
 	import SettingsBtn from "$components/SettingsBtn.svelte"
+	import { updateUiOptions } from "$lib/api-general";
 
     const OVERVIEW_SIDE_MARGINS = 4
     const DAY_VIEW_SIDE_MARGINS = 14
@@ -59,7 +60,7 @@
     $: ambience = $globalContext.ambience
     $: saveDayViewOptions(options)
     
-    /* google calendar */
+    /* google cal */
     let googleCal: GoogleCalendarManager | null = initGoogleCal()
     let g_Day = new Date()
     let g_lastSyncTime: Date | null = null
@@ -79,6 +80,7 @@
     $: g_tokenExpired = $gCalState?.tokenExpired
     $: gCalSignedIn = $gCalState?.signedIn
 
+    // if on todoist or google cal views
     $: onAPI = (options.view === "tasks" && onTodoist) || (options.view === "cal" && options.calView === "g-cal" && gCalSignedIn)
     
     $: if (googleCal) {
@@ -104,13 +106,18 @@
         saveDayViewOptions(options)
     }
     function onToggleOption(optn: string) {
+        const routines = options.routines
+        const { checkbox, colors } = routines
+
         if (optn === "checkbox") {
-            options.routines.checkbox = !options.routines.checkbox
+            options.routines.checkbox = !checkbox
             updateOptions({ routines: options.routines })
+            updateUiOptions({ routineBoxes: !checkbox })
         }
         else if (optn === "colors") {
-            options.routines.colors = !options.routines.colors
+            options.routines.colors = !colors
             updateOptions({ routines: options.routines })
+            updateUiOptions({ routineColors: !colors })
         }
     }
     function onDayUpdate(date: Date) {
@@ -252,15 +259,18 @@
                 />
             </button>
         </div>
-        <SettingsBtn id="day-view" onClick={() => settings = !settings} />
+        <SettingsBtn 
+            id="day-view"
+            onClick={() => settings = !settings} 
+        />
     </div>
     <div class="day-view__main-content">
         {#if options.view === "cal"}
-            {@const { checkbox, colors, calView } = options.routines}
+            {@const { checkbox, colors } = options.routines}
             <DayViewContent
-                richColors={false}
+                richColors={colors}
                 checkbox={checkbox}
-                view={calView}
+                view={options.calView}
                 day={focusDate}
                 googleCals={googleCalendars}
                 googleEvents={googleEvents}
@@ -325,14 +335,14 @@
         isHidden={!calsMenu}
         position={{ top: "20px", right: "12px" }}
         zIndex={200}
-        onClickOutside={() => calsMenu = false}
+        dmenuId="day-view"
+        onClickOutside={() => {
+            calsMenu = false
+        }}
     >
         {#if $gCalState}
             {@const { loading, tokenExpired } = $gCalState}
-            <div 
-                class="google-cals" 
-                data-dmenu-id="day-view"
-            >
+            <div class="google-cals">
                 <div class="google-cals__header">
                     <span>
                         Your Calendars
@@ -366,6 +376,7 @@
 
     <!-- settings -->
     <BounceFade 
+        dmenuId="day-view"
         isHidden={!settings}
         zIndex={200}
         position={{ top: "20px", right: "12px" }}
@@ -376,7 +387,6 @@
             class="dmenu"
             class:dmenu--light={isLight}
             style:--font-size="1.32rem"
-            data-dmenu-id="day-view"
         >
             <!-- view -->
             <li class="dmenu__section">
@@ -387,6 +397,7 @@
                         class:dmenu__box--selected={view === "cal"}
                         on:click={() => {
                             updateOptions({ view: "cal" })
+                            updateUiOptions({ barView: "cal" })
                             settings = false
                         }}
                     >
@@ -400,6 +411,7 @@
                         class:dmenu__box--selected={view === "tasks"}
                         on:click={() => {
                             updateOptions({ view: "tasks" })
+                            updateUiOptions({ barView: "tasks" })
                             settings = false
                         }}
                     >

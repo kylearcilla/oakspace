@@ -2,33 +2,27 @@
     import { onDestroy } from "svelte"
 	import { habitTracker, themeState, timer } from "$lib/store"
 
-    import { BULLETIN_CONTENT } from "$lib/mock-data"
+	import { updateHome } from "$lib/api-general"
+	import { updateBulletin } from "$lib/api-bulletin"
     import { getQuarter, months } from "$lib/utils-date"
 	import { capitalize, clamp } from "$lib/utils-general"
-	import { updateBulletin } from "$lib/api-bulletin"
+	import { loadBaseLeftMarginView } from "$lib/utils-home"
     
 	import Bulletin from "./Bulletin.svelte"
 	import DailyHabits from "$components/DailyHabits.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
 	import HabitCalendar from "$components/HabitCalendar.svelte"
-	import { loadBaseLeftMarginView, saveBaseLeftMarginView } from "$lib/utils-home"
 
     export let fullWidth = false
+    export let marginView: "month" | "today"
     export let bulletin: BulletinOptions
-
-    let options: BaseLeftMarginView = {
-        habitsView: "month",
-        bulletin: BULLETIN_CONTENT
-    }
     
     $: metrics = $habitTracker.monthMetrics
     $: activeStreak = $habitTracker.activeStreak
     $: habits = $habitTracker.habits
     $: isLight = !$themeState.isDarkTheme
-    $: saveBaseLeftMarginView(options)
 
     let timeOptions = false
-    let marginView = "month"
     let dragging = true
 
     let initDragY = -1
@@ -72,6 +66,15 @@
         dragging = false
     }
 
+    function updateHabitsView(optn: string) {
+        marginView = optn.toLowerCase()
+        timeOptions = false 
+
+        updateHome({ 
+            leftMarginView: marginView as "month" | "today"
+        })
+    }
+
     onDestroy(() => unsubscribe())
 </script>
 
@@ -87,12 +90,7 @@
         style:height={`${fullWidth ? "250" : bulletin.height}px`}
     >
         <Bulletin 
-            {fullWidth}
-            {bulletin} 
-            onUpdateOptions={(updated) => {
-                bulletin = updated
-                saveBaseLeftMarginView(options)
-            }}
+            {fullWidth} {bulletin} 
         />
     </div>
     <div class="margin__content">
@@ -164,8 +162,7 @@
                     timeOptions = false 
                 },
                 onListItemClicked: ({ name }) => {
-                    marginView = name.toLowerCase()
-                    timeOptions = false 
+                    updateHabitsView(name)
                 }
             }}
         />

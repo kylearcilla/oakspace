@@ -14,6 +14,7 @@
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import SettingsBtn from "$components/SettingsBtn.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
+	import { updateUiOptions, updateUser } from "$lib/api-general";
 
     export let user: User
     export let globalContext: GlobalContext
@@ -26,6 +27,7 @@
     let focused = false
     let options = false
     let descriptions = false
+    let loading = false
 
     function optnClicked(optn: string) {
         if (optn === "Logout") {
@@ -37,14 +39,8 @@
     async function updateDescription(desc: string) {
         if (desc === description) return
 
-        const res = await fetch(`/home/user?userId=${user.id}`, {
-            method: "PUT",
-            body: JSON.stringify({ description: desc })
-        })
+        updateUser({ description: desc })
 
-        if (!res.ok) {
-            serverError(res)
-        }
         description = desc
         user.description = desc
     }
@@ -54,31 +50,30 @@
             return
         }
         
-        const res = await fetch(`/home/user?userId=${user.id}`, {
-            method: "PUT",
-            body: JSON.stringify({ name })
-        })
-        if (!res.ok) {
-            serverError(res)
-            name = user.name
-            return
-        }
+        updateUser({ name })
+
         user.name = name
         updateGlobalContext({  user: { ...user, name } })
     }
-    async function onImgUpload(src: string) {
+    async function onSubmitImg(src: string) {
         if (src === user.profileImg) return
-        
-        const res = await fetch(`/home/user?userId=${user.id}`, {
-            method: "PUT",
-            body: JSON.stringify({ profileImg: src })
-        })
-        if (!res.ok) {
-            serverError(res)
-            return
-        }
-        user.profileImg = src
-        updateGlobalContext({ user: { ...user, profileImg: src } })
+        loading = true
+
+        updateUser({ profileImg: src })
+            .then(() => {
+                user.profileImg = src
+                updateGlobalContext({ user: { ...user, profileImg: src } })
+            })
+            .finally(() => {
+                loading = false
+            })
+    }
+    function setFontStyle(style: "system" | "mono") {
+        fontStyle = style
+        updateGlobalContext({ fontStyle })
+        setDefaultFont(style)
+
+        updateUiOptions({ fontStyle: style })
     }
 
     function close() {
@@ -99,14 +94,9 @@
                 <div class="settings__profile-img-container">
                     <img src={user.profileImg} alt="profile img" />
                     <div class="settings__img-overlay">
-                        <button class="hov-underline"
-                            on:click={() => {
-                                imageUpload.init({
-                                    onSubmitImg: (src) => {
-                                        onImgUpload(src)
-                                    }
-                                })
-                            }}
+                        <button 
+                            class="hov-underline"
+                            on:click={() => imageUpload.init({ onSubmitImg })}
                         >
                             Replace
                         </button>
@@ -206,11 +196,7 @@
                         class:font-chosen={fontStyle === "system"}
                     >
                         <button 
-                            on:click={() => {
-                                fontStyle = "system"
-                                updateGlobalContext({ fontStyle })
-                                setDefaultFont(fontStyle)
-                            }}
+                            on:click={() => setFontStyle("system")}
                             class:font-chosen={fontStyle === "system"}
                         >
                             {FONT_COPY}
@@ -222,11 +208,7 @@
                         class:font-chosen={fontStyle === "mono"}
                     >
                         <button 
-                            on:click={() => {
-                                fontStyle = "mono"
-                                updateGlobalContext({ fontStyle })
-                                setDefaultFont(fontStyle)
-                            }}
+                            on:click={() => setFontStyle("mono")}
                             class:font-chosen={fontStyle === "mono"}
                         >
                             {FONT_COPY}
@@ -378,7 +360,7 @@
             justify-content: center;
 
             button {
-                @include text-style(_, 400, 1.525rem);
+                @include text-style(_, 400, 1.3rem);
                 color: white;
             }
         }

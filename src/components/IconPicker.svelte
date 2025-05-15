@@ -1,5 +1,5 @@
 <script lang="ts">
-import { themeState } from "$lib/store"
+    import { themeState } from "$lib/store"
 	import { randomArrayElem } from "$lib/utils-general"
 
     export let onChooseType: (type: IconType) => void = () => {}

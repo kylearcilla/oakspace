@@ -9,13 +9,10 @@ type BulletinData = {
     noteIdx: number
 }
 
-type BulletinDataDB = {
-    bulletinImgSrc: string | null
-    bulletinHeight: number
-    bulletinHasNotes: boolean
-    bulletinContentsOnHover: boolean
-    bulletinNoteIdx: number
-}
+type BulletinDataDB = Pick<
+    HomeViewDB, 
+    "bulletinImgSrc" | "bulletinHeight" | "bulletinHasNotes" | "bulletinContentsOnHover" | "bulletinNoteIdx"
+>
 
 export async function createNote({ idx, text }: { idx: number, text: string }) {
     const userId = TEST_USER.id

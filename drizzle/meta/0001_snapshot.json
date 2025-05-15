@@ -1,11 +1,11 @@
 {
-  "id": "7ade8bb9-707f-4d6a-b2c3-ec7034ae2963",
-  "prevId": "11a187bd-d153-4f8c-a13c-1f55090d6182",
+  "id": "06abbf0d-2d24-40e9-a7f6-84d9be929cb0",
+  "prevId": "a5291d5c-9adb-4653-afc8-e033909b1f64",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "general.appearance": {
-      "name": "appearance",
+    "general.current_quotes": {
+      "name": "current_quotes",
       "schema": "general",
       "columns": {
         "id": {
@@ -15,37 +15,18 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "theme": {
-          "name": "theme",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'dark'"
-        },
-        "font_style": {
-          "name": "font_style",
-          "type": "varchar(100)",
+        "date": {
+          "name": "date",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
-          "default": "'system'"
+          "default": "now()"
         },
-        "bar_banner": {
-          "name": "bar_banner",
-          "type": "varchar(100)",
+        "quote_id": {
+          "name": "quote_id",
+          "type": "uuid",
           "primaryKey": false,
-          "notNull": false
-        },
-        "bar_banner_center": {
-          "name": "bar_banner_center",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bar_banner_show": {
-          "name": "bar_banner_show",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "user_id": {
           "name": "user_id",
@@ -56,9 +37,23 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "appearance_user_id_users_id_fk": {
-          "name": "appearance_user_id_users_id_fk",
-          "tableFrom": "appearance",
+        "current_quotes_quote_id_quotes_id_fk": {
+          "name": "current_quotes_quote_id_quotes_id_fk",
+          "tableFrom": "current_quotes",
+          "tableTo": "quotes",
+          "schemaTo": "general",
+          "columnsFrom": [
+            "quote_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "current_quotes_user_id_users_id_fk": {
+          "name": "current_quotes_user_id_users_id_fk",
+          "tableFrom": "current_quotes",
           "tableTo": "users",
           "schemaTo": "general",
           "columnsFrom": [
@@ -77,8 +72,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "general.home_view_options": {
-      "name": "home_view_options",
+    "general.home_view": {
+      "name": "home_view",
       "schema": "general",
       "columns": {
         "id": {
@@ -88,27 +83,72 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "home_view": {
-          "name": "home_view",
+        "header_view": {
+          "name": "header_view",
           "type": "varchar(100)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'top'"
         },
-        "home_banner_src": {
-          "name": "home_banner_src",
+        "left_margin": {
+          "name": "left_margin",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "left_margin_view": {
+          "name": "left_margin_view",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'month'"
+        },
+        "banner_src": {
+          "name": "banner_src",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "banner_center": {
+          "name": "banner_center",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon_src": {
+          "name": "icon_src",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon_type": {
+          "name": "icon_type",
           "type": "varchar(100)",
           "primaryKey": false,
           "notNull": false
         },
-        "home_banner_center": {
-          "name": "home_banner_center",
-          "type": "integer",
+        "show_banner": {
+          "name": "show_banner",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "show_entry": {
+          "name": "show_entry",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "show_icon": {
+          "name": "show_icon",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": false
         },
         "bulletin_img_src": {
           "name": "bulletin_img_src",
-          "type": "varchar(100)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -135,18 +175,87 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "home_view_user_id_users_id_fk": {
+          "name": "home_view_user_id_users_id_fk",
+          "tableFrom": "home_view",
+          "tableTo": "users",
+          "schemaTo": "general",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "general.note": {
-      "name": "note",
+    "general.last_logins": {
+      "name": "last_logins",
+      "schema": "general",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "last_logins_user_id_users_id_fk": {
+          "name": "last_logins_user_id_users_id_fk",
+          "tableFrom": "last_logins",
+          "tableTo": "users",
+          "schemaTo": "general",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "general.notes": {
+      "name": "notes",
       "schema": "general",
       "columns": {
         "id": {
@@ -177,9 +286,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "note_user_id_users_id_fk": {
-          "name": "note_user_id_users_id_fk",
-          "tableFrom": "note",
+        "notes_user_id_users_id_fk": {
+          "name": "notes_user_id_users_id_fk",
+          "tableFrom": "notes",
           "tableTo": "users",
           "schemaTo": "general",
           "columnsFrom": [
@@ -192,6 +301,130 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "general.quote_likes": {
+      "name": "quote_likes",
+      "schema": "general",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "quote_id": {
+          "name": "quote_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "quote_likes_quote_id_quotes_id_fk": {
+          "name": "quote_likes_quote_id_quotes_id_fk",
+          "tableFrom": "quote_likes",
+          "tableTo": "quotes",
+          "schemaTo": "general",
+          "columnsFrom": [
+            "quote_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "quote_likes_user_id_users_id_fk": {
+          "name": "quote_likes_user_id_users_id_fk",
+          "tableFrom": "quote_likes",
+          "tableTo": "users",
+          "schemaTo": "general",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "general.quotes": {
+      "name": "quotes",
+      "schema": "general",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bg_img_src": {
+          "name": "bg_img_src",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "art_credit": {
+          "name": "art_credit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quote_credit": {
+          "name": "quote_credit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "portrait": {
+          "name": "portrait",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dark": {
+          "name": "dark",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -286,10 +519,31 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "sessions_user_id_users_id_fk": {
+          "name": "sessions_user_id_users_id_fk",
+          "tableFrom": "sessions",
+          "tableTo": "users",
+          "schemaTo": "general",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -428,8 +682,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "entry": {
-          "name": "entry",
+        "text": {
+          "name": "text",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -471,6 +725,18 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "period": {
+          "name": "period",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "iso_date": {
+          "name": "iso_date",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -574,6 +840,100 @@
           "schemaTo": "general",
           "columnsFrom": [
             "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "general.ui_options": {
+      "name": "ui_options",
+      "schema": "general",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "theme": {
+          "name": "theme",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'dark'"
+        },
+        "font_style": {
+          "name": "font_style",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'system'"
+        },
+        "bar_banner": {
+          "name": "bar_banner",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bar_banner_top": {
+          "name": "bar_banner_top",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bar_banner_show": {
+          "name": "bar_banner_show",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bar_view": {
+          "name": "bar_view",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'cal'"
+        },
+        "routine_colors": {
+          "name": "routine_colors",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "routine_boxes": {
+          "name": "routine_boxes",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ui_options_user_id_users_id_fk": {
+          "name": "ui_options_user_id_users_id_fk",
+          "tableFrom": "ui_options",
+          "tableTo": "users",
+          "schemaTo": "general",
+          "columnsFrom": [
+            "user_id"
           ],
           "columnsTo": [
             "id"

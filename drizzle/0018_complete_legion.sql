@@ -1,1 +1,0 @@
-ALTER TABLE "general"."current_quotes" ADD COLUMN "date" timestamp DEFAULT now() NOT NULL;

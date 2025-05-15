@@ -3,8 +3,7 @@ import { err } from "$lib/server/utils"
 import { deleteNote, updateNote } from "$lib/server/db/bulletin"
 
 // DELETE /api/notes/:id - Delete a note
-export async function DELETE({ params, request }) {
-    const noteId = params.slug
+export async function DELETE({ params: { slug: noteId }, request }) {
     const { idx, userId } = await request.json()
 
     if (!noteId) {
@@ -22,9 +21,7 @@ export async function DELETE({ params, request }) {
 }
 
 // PUT /api/notes/:id - Update a note
-export async function PUT({ params, request }) {
-    const noteId = params.slug
-
+export async function PUT({ params: { slug: noteId }, request }) {
     if (!noteId) {
         return err({ status: 400 })
     }

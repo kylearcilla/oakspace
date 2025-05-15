@@ -3,6 +3,7 @@
 	import { themeState } from "$lib/store"
 	import { QUOTE_KEY } from "$lib/constants"
 	import { closeModal } from "$lib/utils-home"
+	import { toggleLike } from "$lib/api-general"
 
 	import Modal from "$components/Modal.svelte"
 	import SkeletonElem from "$components/SkeletonElem.svelte"
@@ -14,6 +15,7 @@
     let loading = true
     let quote: Quote | null = null
     let error = false
+
     
     $: light = !$themeState.isDarkTheme
 
@@ -28,8 +30,10 @@
             loading = false
         })
 
-    async function toggleLike() {
+    async function likeBtnClicked() {
         let { liked, likes } = quote!
+        let _like = liked
+        let _likes = likes
 
         liked = !liked
         likes = liked ? likes + 1 : likes - 1
@@ -37,15 +41,14 @@
         quote!.liked = liked
         quote!.likes = likes
 
-        const res = await fetch(`/home/quotes/likes?quoteId=${quote!.id}`, {
-            method: "POST",
-            body: JSON.stringify({ quoteId: quote!.id })
-        })
-        if (!res.ok) {
-            error = true
-        }
-
-        localStorage.setItem(QUOTE_KEY, JSON.stringify(quote!))
+        toggleLike(quote!.id)
+            .then(() => {
+                localStorage.setItem(QUOTE_KEY, JSON.stringify(quote!))
+            })
+            .catch(() => {
+                quote!.liked = _like
+                quote!.likes = _likes
+            })
     }
 </script>
 
@@ -92,7 +95,7 @@
                             <button 
                                 title="Hell yeah"
                                 disabled={loading}
-                                on:click={toggleLike}
+                                on:click={likeBtnClicked}
                             >
                                 {#if liked}
                                     <i class="fa-solid fa-heart"></i>

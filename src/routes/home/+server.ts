@@ -22,28 +22,37 @@ export async function GET({ locals }) {
     const { showBanner, bannerSrc, bannerCenter } = homeView
     const { showEntry, headerView, iconSrc, iconType, showIcon } = homeView
     const { bulletinImgSrc, bulletinHeight, bulletinHasNotes, bulletinContentsOnHover, bulletinNoteIdx } = homeView
+    const { leftMargin, leftMarginView } = homeView
+
+    const home: BaseView = {
+        banner: bannerSrc ? {
+            show: showBanner,
+            img: { src: bannerSrc, center: bannerCenter ?? 50 }
+        } : null,
+        header: {
+            showEntry,
+            entry: null,
+            pos: headerView as "top" | "side",
+            icon: iconSrc ? 
+                { 
+                    src: iconSrc, 
+                    type: iconType as IconType,
+                    show: showIcon
+                } : null
+        },
+        leftMargin: leftMargin,
+        leftMarginView: leftMarginView,
+        bulletin: {
+            imgSrc: bulletinImgSrc ?? "",
+            hasNotes: bulletinHasNotes,
+            contentsOnHover: bulletinContentsOnHover,
+            noteIdx: bulletinNoteIdx,
+            notes,
+            height: bulletinHeight
+        }
+    }
   
-    return json({ 
-      banner: {
-        show: showBanner,
-        img: bannerSrc ? { src: bannerSrc, center: bannerCenter ?? 0 } : null
-      },
-      header: {
-        showEntry,
-        entry: null,
-        pos: headerView as "top" | "side",
-        icon: iconSrc ? { src: iconSrc, type: iconType as "img" | "emoji", show: showIcon } : null
-      },
-      leftMargin: homeView.leftMargin,
-      bulletin: {
-        imgSrc: bulletinImgSrc ?? "",
-        hasNotes: bulletinHasNotes,
-        contentsOnHover: bulletinContentsOnHover,
-        height: bulletinHeight,
-        noteIdx: bulletinNoteIdx,
-        notes
-      }
-    })
+    return json(home)
   } 
   catch (error) {
     console.error(error)

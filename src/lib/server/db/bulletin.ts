@@ -36,7 +36,6 @@ export async function createNote({ idx, text, userId }: { idx: number, text: str
 }
 
 export async function deleteNote({ noteId, idx, userId }: { noteId: string, idx: number, userId: string }) {
-    console.log(idx)
     await db.transaction(async (trx) => {
         await trx
             .delete(notes)

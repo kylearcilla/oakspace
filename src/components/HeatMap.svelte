@@ -28,10 +28,10 @@
 
 	const CELL_DIMS = {
 		"small": {
-			size: 17, borderRadius: 5.5
+			size: 14, borderRadius: 5.5
 		},
 		"default": {
-			size: 18, borderRadius: 6
+			size: 15, borderRadius: 5.5
 		}
 	}
 	const OPACITY_AHEAD = {
@@ -350,7 +350,7 @@
 		}
 
 		&__month {
-			@include text-style(0.3, var(--fw-400-500), 1.25rem, "Geist Mono");
+			@include text-style(0.3, var(--fw-400-500), 1.2rem, "Geist Mono");
 			position: absolute;
 			top: 0px;
 			transition: 0.1s ease-in-out;
@@ -375,21 +375,21 @@
 			width: 85%;
 			height: 85%;
 			position: relative;
-			border-radius: 7px;
+			border-radius: 5.5px;
 			pointer-events: none;
 			@include center;
 
 			&--goal &-content {
 				background-color: rgba(var(--goal-fill-color), var(--goal-fill));
-				@include circle(4px);
-				@include text-style(_, 200, 3.5rem);
+				@include circle(2.5px);
+				@include text-style(_, 200, 2rem);
 			}
 			&--goal#{&}--today {
 				box-shadow: none;
 				background-color: rgba(var(--textColor1), var(--goal-today-opacity));
 			}
 			&--emoji &-content {
-				font-size: 1.7rem;
+				font-size: 1.5rem;
 				color: white;
 			}
 			&--has-goal &-content {
@@ -410,7 +410,7 @@
 				width: 100%;
 				height: 100%;
 				@include abs-top-left;
-				border-radius: var(--cell-border-radius);
+			border-radius: var(--cell-border-radius);
 				background-color: var(--color);
 				z-index: 0;
 				transition: 0.2s ease-in-out;
@@ -436,7 +436,7 @@
 	.tool-tip {
 		position: fixed;
 		@include abs-top-left(20px, 20px);
-		@include text-style(1, var(--fw-400-500), 1.25rem);
+		@include text-style(1, var(--fw-400-500), 1.1rem);
 		@include center;
 		height: 20px;
 		width: 10px;

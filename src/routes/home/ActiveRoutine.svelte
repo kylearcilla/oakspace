@@ -451,7 +451,7 @@
             padding: 16px 0px 7px 0px;
         }
         &__empty-subtitle {
-            @include text-style(0.8, var(--fw-400-500), 1.45rem, "DM Sans");
+            @include text-style(0.8, var(--fw-400-500), 1.45rem);
             margin-bottom: 12px;
 
             strong {

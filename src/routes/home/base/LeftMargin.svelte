@@ -15,7 +15,7 @@
 
     export let fullWidth = false
     export let marginView: "month" | "today"
-    export let bulletin: BulletinOptions
+    export let bulletin: Bulletin
     
     $: metrics = $habitTracker.monthMetrics
     $: activeStreak = $habitTracker.activeStreak
@@ -184,24 +184,24 @@
 
         .divider {
             border-top: var(--divider-border);
-            padding: 3px 0px 5px 0px;
+            padding: 3px 0px 2px 0px;
             cursor: ns-resize;
         }
         &__content {
-            margin: 6px 0px 0px 0px;
+            margin: 5px 0px 0px 0px;
             position: relative;
             background-color: transparent;
-            padding: 3px 0px 4px 0px;
+            padding: 2px 0px 4px 0px;
         }
         &__header-title {
-            @include text-style(1, var(--fw-400-500), 1.55rem);
+            @include text-style(1, var(--fw-400-500), 1.35rem);
             padding: 5px 12px 6px 11px;
             margin-left: -13px;
             border-radius: 12px;
 
         }
         &__optn-btn {
-            @include text-style(1, var(--fw-400-500), 1.45em);
+            @include text-style(1, var(--fw-400-500), 1.3rem);
             margin-right: -10px;
             padding: 6px 10px 7px 9px;
             opacity: 0.35;
@@ -219,7 +219,7 @@
 
         &__details {
             margin: 6px 0px 10px 0px;
-            padding: 0px 0px 12px 0px;
+            padding: 0px 0px 8px 0px;
             border-bottom: var(--divider-border);
         }
         &__stat {
@@ -227,7 +227,7 @@
             margin-bottom: 8px;
         }
         span {
-            @include text-style(0.35, var(--fw-400-500), 1.4rem);
+            @include text-style(0.35, var(--fw-400-500), 1.3rem);
         }
         span:last-child {
             @include text-style(0.65);

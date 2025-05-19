@@ -3,7 +3,8 @@ import { err } from "$lib/server/utils"
 import { TEST_USER } from "$lib/mock-data-goals"
 import { getUiOptions, updateUiOptions } from "$lib/server/db/general"
 
-export async function GET({ params: { slug: userId } }) {
+export async function GET() {
+    const userId = TEST_USER.id
     if (!userId) {
         return err({ status: 401 })
     }
@@ -40,18 +41,19 @@ export async function GET({ params: { slug: userId } }) {
     }
 }
 
-export async function PUT({ params: { slug: userId }, request }) {
-  if (!userId) {
-    return err({ status: 401 })
-  }
-  try {
-    const data = await request.json()
-    const uiOptions = await updateUiOptions(userId, data)
+export async function PUT({ request }) {
+    const userId = TEST_USER.id
+    if (!userId) {
+        return err({ status: 401 })
+    }
+    try {
+        const data = await request.json()
+        const uiOptions = await updateUiOptions(userId, data)
 
-    return json(uiOptions)
-  }
-  catch (error) {
-    console.error(error)
-    return err({ status: 500 })
-  }
+        return json(uiOptions)
+    }
+    catch (error) {
+        console.error(error)
+        return err({ status: 500 })
+    }
 }

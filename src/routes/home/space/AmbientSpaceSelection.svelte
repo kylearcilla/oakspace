@@ -663,7 +663,7 @@
         }
 
         h1 {
-            @include text-style(1, 500, 1.7rem);
+            @include text-style(1, 500, 1.6rem);
             margin-top: -10px
         }
         &__header {
@@ -677,12 +677,12 @@
             height: calc(100% - 25px - 18px);
         }
         &__left {
-            width: 240px;
+            width: 220px;
             margin-right: 8px;
             height: 100%;
         }
         &__right {
-            width: calc(100% - 240px - 8px);
+            width: calc(100% - 220px - 8px);
             padding-right: 0px;
             height: 100%;
             position: relative;
@@ -696,7 +696,7 @@
             padding: 0px 13px 0px 11px;
             height: 30px;
             background-color: rgba(var(--textColor1), 0.05);
-            @include text-style(1, 400, 1.3rem);
+            @include text-style(1, 400, 1.25rem);
             align-items: center;
 
             img {
@@ -746,7 +746,7 @@
                 @include divider(0.1, 15px, 1px);
             }
             button {
-                font-size: 1.35rem;
+                font-size: 1.25rem;
             }
             i {
                 font-size: 1.1rem;
@@ -776,12 +776,12 @@
             position: relative;
             color: rgb(white, 1);
             height: 100%;
-            padding: 9.5px 10px 10px 10px;
-            border-radius: 16.5px;
+            padding: 7px 7px 7px 7px;
+            border-radius: 17px;
             overflow: hidden;
             
             .img-bg, .blur-bg, .imag-bg-gradient {
-                border-radius: 16.5px;
+                border-radius: 17px;
             }
             .img-bg {
                 width: 96%;
@@ -839,7 +839,7 @@
                 @include truncate-lines(3);
             }
             &-subtitle {
-                margin-top: 8px;
+                margin-top: 14px;
                 font-size: 1.35rem;
                 font-weight: 300;
                 color: rgb(white, 0.3);
@@ -861,11 +861,11 @@
             @include flex(center, space-between);
 
             h4 {
-                @include text-style(0.4, 400, 1.32rem);
+                @include text-style(0.4, 400, 1.25rem);
             }
         }
         &__type-btn {
-            @include text-style(1, 400, 1.4rem);
+            @include text-style(1, 400, 1.25rem);
             margin: 0px 12px 0px 0px;
             opacity: 0.2;
 
@@ -917,7 +917,7 @@
                 background-color: rgba(var(--textColor1), 0.02);
             }
             &--vid {
-                width: 150px;
+                width: 140px;
                 margin-right: 16px;
             }
             &--playlist {
@@ -934,11 +934,11 @@
                 @include text-style(1, 400, 1.4rem);
             }
             &--playlist &-subtitle {
-                font-size: 1.3em;
+                font-size: 1.2rem;
                 opacity: 0.6;
             }
             &--playlist &-img {
-                width: 150px;
+                width: 140px;
                 min-width: 150px;
             }
             &--playlist &-details {
@@ -998,11 +998,11 @@
         }
         &__content-item-description {
             @include truncate-lines(2);
-            @include text-style(0.5, 400, 1.3rem);
+            @include text-style(0.5, 400, 1.25rem);
         }
         &__choose-btn {
             @include abs-bottom-right(18px, 18px);
-            @include text-style(1, 400, 1.3rem);
+            @include text-style(1, 400, 1.25rem);
             background: var(--lightColor2);
             padding: 6px 20px 7px 20px;
             border-radius: 15px;

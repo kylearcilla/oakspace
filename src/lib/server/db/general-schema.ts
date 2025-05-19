@@ -1,6 +1,6 @@
 import { pgSchema } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
-import { id, str, int, date, bool, text, fk } from './utils'
+import { id, str, int, date, bool, text, fk, timeStamp } from './utils'
 
 export const schema = pgSchema('general')
 
@@ -10,7 +10,7 @@ export const users = schema.table('users', {
   profileImg: str({ name: "profile_img" }),
   email: str({ name: "email" }),
   description: text({ name: "description" }),
-  created: date({ name: "created", defaultNow: true }),
+  created: timeStamp({ name: "created", defaultNow: true }),
   pro: bool({ name: "pro" }),
   
   // stats
@@ -24,7 +24,7 @@ export const users = schema.table('users', {
 export const lastLogins = schema.table('last_logins', {
   id: id(),
   userId: fk({ name: 'user_id', refs: users.id }),
-  date: date({ name: 'date', defaultNow: true }),
+  date: timeStamp({ name: 'date', defaultNow: true }),
 })
 
 export const tags = schema.table('tags', {
@@ -36,6 +36,20 @@ export const tags = schema.table('tags', {
   userId: fk({ name: 'user_id', refs: users.id }),
 })
 
+/* text data (year, quarter, month) */
+
+export const textEntries = schema.table('text_entries', {
+  id: id(),
+  text: text({ name: "text" }),
+  styling: str({ name: "styling", val: "default" }),
+  truncate: bool({ name: "truncate", val: false }),
+  iconType: str({ name: "icon_type", req: false }),
+  iconSrc: str({ name: "icon_src", req: false }),
+  iconSize: str({ name: "icon_size" , req: false }),
+  userId: fk({ name: 'user_id', refs: users.id }),
+  period: str({ name: "period", req: false }), // year, quarter, month
+  isoDate: date({ name: "iso_date", req: false }) // 2025-01-01
+})
 
 /* ui */
 
@@ -71,13 +85,15 @@ export const homeView = schema.table('home_view', {
   showBanner: bool({ name: 'show_banner' }),
   showEntry: bool({ name: 'show_entry' }),
   showIcon: bool({ name: 'show_icon', req: false }),
+
   
   bulletinImgSrc: text({ name: 'bulletin_img_src', req: false }),
   bulletinHeight: int({ name: 'bulletin_height', req: false }),
   bulletinHasNotes: bool({ name: 'bulletin_has_notes', req: false }),
   bulletinContentsOnHover: bool({ name: 'bulletin_contents_on_hover', req: false }),
   bulletinNoteIdx: int({ name: 'bulletin_note_idx', req: false }),
-
+  
+  entryId: fk({ name: 'entry_id', refs: textEntries.id, req: false }),
   userId: fk({ name: 'user_id', refs: users.id }),
 })
 
@@ -87,21 +103,6 @@ export const notes = schema.table('notes', {
   text: text({ name: 'text' }),
 
   userId: fk({ name: 'user_id', refs: users.id })
-})
-
-/* text data (year, quarter, month) */
-
-export const textEntries = schema.table('text_entries', {
-  id: id(),
-  text: text({ name: "text" }),
-  styling: str({ name: "styling", val: "default" }),
-  truncate: bool({ name: "truncate", val: false }),
-  iconType: str({ name: "icon_type", req: false }),
-  iconSrc: str({ name: "icon_src", req: false }),
-  iconSize: str({ name: "icon_size" , req: false }),
-  userId: fk({ name: 'user_id', refs: users.id }),
-  period: str({ name: "period", req: false }), // year, quarter, month
-  isoDate: str({ name: "iso_date", req: false }) // 2025-01-01
 })
 
 /* misc */
@@ -122,8 +123,8 @@ export const sessions = schema.table('sessions', {
   mode: str({ name: 'mode' }),
   focusTime: int({ name: 'focus_time' }),
   breakTime: int({ name: 'break_time' }),
-  startTime: date({ name: 'start_time' }),
-  endTime: date({ name: 'end_time' }),
+  startTime: timeStamp({ name: 'start_time' }),
+  endTime: timeStamp({ name: 'end_time' }),
   focusCount: int({ name: 'focus_count' }),
   breakCount: int({ name: 'break_count' }),
   pauseCount: int({ name: 'pause_count' }),
@@ -143,7 +144,10 @@ export const todos = schema.table('todos', {
   isChecked: bool({ name: 'is_checked', val: false }),
   parentId: str({ name: 'parent_id', req: false }),
   userId: fk({ name: 'user_id', refs: users.id }),
-  sessionId: fk({ name: 'session_id', refs: sessions.id, req: false })
+  
+  sessionId: fk({ name: 'session_id', refs: sessions.id, req: false }),
+  // goalId: fk({ name: 'goal_id', refs: goals.id, req: false }),
+  // routineId: fk({ name: 'routine_id', refs: routines.id, req: false }),
 })
 
 /* quotes */
@@ -160,14 +164,14 @@ export const quotes = schema.table('quotes', {
 
 export const quoteLikes = schema.table('quote_likes', {
   id: id(),
-  created: date({ name: 'created', defaultNow: true }),
+  created: timeStamp({ name: 'created', defaultNow: true }),
   quoteId: fk({ name: 'quote_id', refs: quotes.id }),
   userId: fk({ name: 'user_id', refs: users.id }),
 })
 
 export const currentQuotes = schema.table('current_quotes', {
   id: id(),
-  date: date({ name: 'date', defaultNow: true }),
+  date: timeStamp({ name: 'date', defaultNow: true }),
   quoteId: fk({ name: 'quote_id', refs: quotes.id }),
   userId: fk({ name: 'user_id', refs: users.id })
 })

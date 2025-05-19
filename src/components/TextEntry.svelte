@@ -1,9 +1,10 @@
-
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount, onDestroy } from "svelte";
 
 	import { themeState } from "$lib/store"
 	import { iconPicker } from "$lib/pop-ups"
+	import { BIG_MAX_SIZE, SMALL_MAX_SIZE, TEXT_SAVE_DELAY_MS } from "$lib/constants"
+	import { updateTextEntry } from "$lib/utils-entries"
 	import { TextEditorManager } from "$lib/text-editor"
 	import { formatPlural, getElemPadding } from "$lib/utils-general"
 	import { clickOutside, findElemVertSpace, getMaskedGradientStyle } from "$lib/utils-general"
@@ -12,8 +13,7 @@
 
     export let entry: TextEntry
     export let zIndex: number
-    export let id: string
-    let { styling, icon, truncate } = entry
+    let { styling, icon, truncate, id, period } = entry
 
     // when style changes, apple when unfocused
     let toStyle = styling 
@@ -39,8 +39,11 @@
 
     let textEntryElem: HTMLElement
     let textEditorElem: HTMLElement
+    let debounceTimeout: number | null = null
 
     const INPUT_ID = `${id}--thought-entry`
+    const IMG_ID = `${id}--entry-img`
+    const SETTINGS_ID = `${id}--entry-settings`
 
     // upon focusing, its height before will still be present
     $: isLight = !$themeState.isDarkTheme
@@ -71,8 +74,9 @@
         initValue: entry.text,
         id: INPUT_ID,
         handlers: {
-            onInputHandler: (_, __, _length) => {
+            onInputHandler: (_, val, _length) => {
                 length = _length
+                onTextUpdate(val)
             },
             onBlurHandler: (_, val) => {
                 entry.text = val
@@ -85,8 +89,7 @@
         }
     })
 
-    /* updates */
-    function updateData(entry: any) {
+    function initData(entry: any) {
         styling = entry.styling
         text = entry.text
         icon = entry.icon
@@ -94,9 +97,36 @@
 
         editor.updateText(text)
     }
+
+    /* updates */
     function onEditComplete() {
+        const same = styling === toStyle
         styling = toStyle
         entry.styling = toStyle
+
+        if (!same) {
+            update({ styling })
+        }
+    }
+    function onTextUpdate(text: string) {
+        if (debounceTimeout) {
+            clearTimeout(debounceTimeout)
+            debounceTimeout = null
+        }
+        debounceTimeout = setTimeout(() => {
+            update({ text })
+
+            clearTimeout(debounceTimeout!)
+            debounceTimeout = null
+        }, TEXT_SAVE_DELAY_MS) as unknown as number
+    }
+    function update(data: TextEntryUpdates) {
+        updateTextEntry({
+            entryId: entry.id,
+            isoDate: entry.isoDate,
+            period,
+            data
+        })
     }
 
     /* ui */
@@ -218,35 +248,48 @@
             toStyle = toStyle === "has-marker" ? "default" : "has-marker"
         }
     }
-    function initImagePopUp() {
-        iconPicker.init({
-            id,
-            onSubmitIcon: (newIcon) => {
-                icon = { ...icon, ...newIcon } as TextEntryIcon
-                entry.icon = icon
-                requestAnimationFrame(() => {
-                    displayHeight = getTextEditorHeight()
-                    textGradient = ""
-                    setMarkerHeight()
-                    handleEditorStyle(textEditorElem)
-                })
-            }
+    async function onSubmitIcon(newIcon: SmallIconSrc) {
+        const { src, type } = newIcon
+        const same = icon?.src === src
+        if (same) return
+
+        icon = { ...icon, ...newIcon } as TextEntryIcon
+        entry.icon = icon
+
+        requestAnimationFrame(() => {
+            displayHeight = getTextEditorHeight()
+            textGradient = ""
+            setMarkerHeight()
+            handleEditorStyle(textEditorElem)
         })
+
+        update({ iconSrc: src, iconType: type })
+    }
+    function initImagePopUp() {
+        iconPicker.init({ id, onSubmitIcon })
     }
     onMount(() => {
         handleEditorStyle(textEditorElem)
-        updateData(entry)
+        initData(entry)
         containerHeight = getTextEditorHeight()
     })
 </script>
+
+
+<svelte:window on:beforeunload={(e) => {
+    if (debounceTimeout) {
+        e.preventDefault()
+        e.returnValue = ""
+    }
+}} />
 
 <div 
     style:height={`${containerHeight}px`}
     style:position="relative"
     style:has-marker-top="-1.5px"
     style:--z-index={zIndex}
-    style:--img-size={icon?.size === "big" ? "100px" : "50px"}
-    style:--marker-height={`${markerHeight - 0}px`}
+    style:--img-size={icon?.size === "big" ? "100px" : "45px"}
+    style:--marker-height={`${markerHeight}px`}
     style:--margin={margin}
     style:--padding={padding}
     style:--txt-bottom-padding={txtBottomPadding}
@@ -292,7 +335,7 @@
                 class="text-editor"
                 contenteditable
                 spellcheck="false"
-                style={`${textGradient}; max-height: ${icon?.size === "big" ? "110px" : "90px"}; overflow: ${focused ? "auto" : "hidden"}`}
+                style={`${textGradient}; max-height: ${icon?.size === "big" ? BIG_MAX_SIZE : SMALL_MAX_SIZE}px; overflow: ${focused ? "auto" : "hidden"}`}
                 bind:this={textEditorElem}
                 on:scroll={() => {
                     handleEditorStyle(textEditorElem)
@@ -303,14 +346,14 @@
         <div class="thought-entry__details" class:hidden={!focused}>
             {#if icon}
                 <button 
-                    id={`${id}--img-dbtn`}
+                    data-dmenu-id={IMG_ID}
                     on:click={() => imgOpen = !imgOpen}
                 >
                     Image
                 </button>
             {:else}
                 <button 
-                    id={`${id}--img-dbtn`}
+                    data-dmenu-id={IMG_ID}
                     on:click={() => initImagePopUp()}
                 >
                     Add Icon
@@ -320,7 +363,7 @@
                 {formatPlural("character", length)}
             </div>
             <button     
-                id={`${id}--style-dbtn`}
+                data-dmenu-id={SETTINGS_ID}
                 on:click={() => styleOpen = !styleOpen}
             >
                 Appearance
@@ -329,7 +372,7 @@
 
         <!-- styling options -->
         <DropdownList 
-            id={`${id}--style-dmenu`}
+            id={SETTINGS_ID}
             isHidden={!styleOpen}
             options={{
                 listItems: [
@@ -353,6 +396,7 @@
                         onToggle: () => {
                             truncate = !truncate
                             entry.truncate = truncate
+                            update({ truncate })
                         }
                     },
                 ],
@@ -371,7 +415,7 @@
         />
 
         <DropdownList
-            id={`${id}--img-dmenu`}
+            id={IMG_ID}
             isHidden={!imgOpen}
             options={{
                 styling: { 
@@ -391,8 +435,10 @@
                         active: icon?.size === "big",
                         onToggle: () => {
                             imgSizeOpen = !imgSizeOpen
+
                             if (icon?.type === "img") {
                                 icon.size = icon.size === "small" ? "big" : "small"
+                                update({ iconSize: icon.size })
                             }
                         },
                         divider: true
@@ -409,6 +455,7 @@
                     else if (name === "Remove") {
                         icon = null
                         imgOpen = false
+                        update({ iconSrc: null })
                     }
                 },
                 onClickOutside: () => {
@@ -436,7 +483,7 @@
         position: absolute;
         height: auto;
         z-index: var(--z-index);
-        border: 1.5px dashed transparent;
+        border: 1px dashed transparent;
         width: 100%;
         margin: var(--margin);
         padding: var(--padding);
@@ -546,9 +593,8 @@
     }
     .thought-entry .text-editor {
         cursor: text !important;
-        @include text-style(var(--txt-opacity), var(--fw-300-400), 1.5rem);
+        @include text-style(var(--txt-opacity), var(--fw-300-400), 1.35rem);
         line-height: 1.185;
-        max-height: var(--max-height);
         height: fit-content;
         width: 100%;
         word-break: break-word;

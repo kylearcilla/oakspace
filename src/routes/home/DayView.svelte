@@ -8,6 +8,7 @@
 	import { getElapsedTime } from "$lib/utils-date"
 	import { globalContext, timer } from "$lib/store"
 	import { formatDatetoStr } from "$lib/utils-date"
+	import { updateUiOptions } from "$lib/api-general"
 	import { saveDayViewOptions } from "$lib/utils-home"
 	import { findClosestColorSwatch } from "$lib/utils-colors"
     
@@ -26,10 +27,9 @@
 	import DayViewContent from "./DayViewContent.svelte"
 	import BounceFade from "$components/BounceFade.svelte"
 	import SettingsBtn from "$components/SettingsBtn.svelte"
-	import { updateUiOptions } from "$lib/api-general";
 
     const OVERVIEW_SIDE_MARGINS = 4
-    const DAY_VIEW_SIDE_MARGINS = 14
+    const DAY_VIEW_SIDE_MARGINS = 11
     const NOW_TIME_THRESHOLD_SECS = 5
 
     export let options: DayViewOptions
@@ -229,7 +229,7 @@
     style:--DAY_VIEW_SIDE_MARGINS={`${DAY_VIEW_SIDE_MARGINS}px`}
     style:--api-offset-top={onAPI ? "42px" : "0px"}
 >
-    <div class="day-view__calendar-container" bind:clientHeight={calendarHt}>
+    <div class="day-view__cal-container" bind:clientHeight={calendarHt}>
         <Calendar 
             {calendar} 
             {focusDate}
@@ -239,7 +239,7 @@
         />
     </div>
     <div class="day-view__day" style:height={`calc(100% - ${calendarHt}px)`}>
-    <div class="flx-sb" style:padding="0px 12px 5px 0px">
+    <div class="flx-sb" style:padding="0px 12px 0px 0px">
         <div class="flx-center">
             <div class="day-view__day-header">
                 {#if options.view === "cal"}
@@ -386,7 +386,7 @@
         <div 
             class="dmenu"
             class:dmenu--light={isLight}
-            style:--font-size="1.32rem"
+            style:--font-size="1.17rem"
         >
             <!-- view -->
             <li class="dmenu__section">
@@ -691,17 +691,17 @@
     $hour-block-height: 45px;
 
     .day-view {
-        margin-top: -5px;
+        margin-top: -2px;
         height: 100%;
         overflow: hidden;
 
         &--light &__day-header  {
             @include text-style(0.85);
         }
-        &__calendar-container {
+        &__cal-container {
             margin: 0px 0px 0px 0px;
             padding: 0px var(--OVERVIEW_SIDE_MARGINS);
-            height: 220px;
+            height: 205px;
         }
         &__day {
             width: 100%;
@@ -712,7 +712,7 @@
             @include flex(center, space-between);
             position: relative;
             padding-left: var(--DAY_VIEW_SIDE_MARGINS);
-            @include text-style(0.35, var(--fw-400-500), 1.25rem, "Geist Mono");
+            @include text-style(0.35, var(--fw-400-500), 1.1rem);
         }
         &__add-btn {
             @include center;
@@ -730,7 +730,7 @@
         }
         &__api {
             @include flex(center, space-between);
-            @include text-style(0.35, var(--fw-400-500), 1.32rem);
+            @include text-style(0.35, var(--fw-400-500), 1.25rem);
             @include abs-bottom-left(7px, 1px);
             width: 100%;
             padding: 0px 0px 13px 7px;

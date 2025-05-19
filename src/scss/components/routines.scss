@@ -354,7 +354,7 @@
         cursor: pointer;
     }
     &__title {
-        @include text-style(_, var(--fw-400-500), 1.25rem);
+        @include text-style(_, var(--fw-400-500), 1.15rem);
         margin-bottom: 3px;
         color: rgb(var(--block-color-1));
     }
@@ -363,7 +363,7 @@
         color: rgba(var(--block-color-3), 1);
 
         span {
-            @include text-style(_, var(--fw-400-500), 1.16rem);
+            @include text-style(_, var(--fw-400-500), 1.1rem);
         }
     }
     &__spine {

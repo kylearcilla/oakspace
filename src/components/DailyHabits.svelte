@@ -69,13 +69,13 @@
             --box-opacity: 0.04;
         }
         &--overview &__habit-box {
-            @include square(15px);
+            @include square(13px);
         }
         &--overview &__habit-name {
-            font-size: 1.35rem;
+            font-size: 1.2rem;
         }
         &--overview &__habit-symbol {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             margin-right: 9px;
         }
         &--light {
@@ -90,10 +90,10 @@
             padding: 0px 0px 0px 1px;
             white-space: nowrap;
             position: relative;
-            margin-bottom: 13px;
+            margin-bottom: 12px;
         }
         &__habit-name {
-            @include text-style(1, var(--fw-400-500), 1.5rem);
+            @include text-style(1, var(--fw-400-500), 1.3rem);
             @include elipses-overflow;
             @include flex(center, space-between);
 
@@ -102,16 +102,16 @@
             }
         }
         &__habit-symbol {
-            margin-right: 10px;
+            margin-right: 9px;
             font-size: 1.4rem;
         }
         &__habit-box {
-            @include square(18px);
+            @include square(15px);
             @include center;
             background-color: rgba(var(--textColor1), var(--box-opacity));
             border-radius: 0px;
             position: relative;
-            margin: 0px 13px 0px 1px;
+            margin: 0px 11px 0px 0px;
             font-size: 1rem;
             transition-property: transform;
             

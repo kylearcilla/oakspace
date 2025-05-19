@@ -11,6 +11,7 @@ type InitialDataLoad = {
     home: BaseView
     appearance: Appearance
     bar: RightBar
+    entries: TextEntry[]
 }
 
 type UiOptions = {
@@ -145,27 +146,22 @@ type TextEntry = {
     icon: TextEntryIcon | null
     period?: "year" | "quarter" | "month"
     isoDate?: string
+    userId: string
 }
+
+type TextEntryUpdates = Partial<Omit<TextEntryDB, "id" | "userId">>
 
 /* Base. */
 
 type MonthDetailsView = "overview" | "goals" | "habits" | "yr-view"
 
-type ThoughtEntry = {
-    icon: {
-        type: string,
-        src: string
-    } | null,
-    styling: "styled" | "default" | "block"
-    date: Date
-}
-
 type Bulletin = {
-    img: string
+    imgSrc: string
     hasNotes: boolean
     contentsOnHover: boolean
-    notes: string[]
+    notes: Note[]
     noteIdx: number
+    height: number
 }
 
 type OverviewOptions = {
@@ -183,6 +179,20 @@ type YearViewOptions = {
     pinnedGoals: boolean
 }
 
+type DayEntry = {
+    date: Date
+    currMonth: boolean
+    img: string | null
+    focusMins: number | null
+    habits: {
+        checked: number
+        total: number
+        trueChecked: number
+    } | null
+    goals: Goal[] | null
+    sessions: Session[] | null
+}
+
 type EditEntry = DayEntry & {
     g_context: { str: string, checked: number, total: number, items: Goal[] }
     h_context: { str: string, checked: number, total: number } | null
@@ -192,9 +202,10 @@ type EditEntry = DayEntry & {
 type BaseView = {
     banner: BaseBanner | null
     header: BaseHeader
+    entry?: TextEntry | null
     leftMargin: boolean
     leftMarginView: "month" | "today"
-    bulletin: BulletinOptions
+    bulletin: Bulletin
 }
 
 type BaseBanner = {
@@ -225,16 +236,7 @@ type BaseHeader = {
 
 type BaseLeftMarginView = {
     habitsView: "month" | "today"
-    bulletin: BulletinOptions
-}
-
-type BulletinOptions = {
-    imgSrc: string
-    hasNotes: boolean
-    contentsOnHover: boolean
-    notes: Note[]
-    height: number
-    noteIdx: number
+    bulletin: Bulletin
 }
 
 type Note = {
@@ -1516,7 +1518,7 @@ type Goal = {
   tag: Tag | null
   creationDate: Date
   status: GoalStatus
-  tasks: GoalActionItem[]
+  tasks: GoalTask[]
   img: {
     src: string
     type: "header" | "float-left" | "float-right"
@@ -1555,12 +1557,20 @@ type GoalUpdateData = {
     dueType: DateType
     big: boolean
     completedDate?: Date | null
-    tasks: GoalActionItem[]
+    tasks: GoalTask[]
     pinned: boolean
 }
 
-interface GoalActionItem extends Task {
+interface GoalTask extends Task {
     goalId: string
+}
+
+interface RoutineTask extends Task {
+    routineId: string
+}
+
+interface SessionTask extends Task {
+    sessionId: string
 }
 
 type YearHeatMapData = {

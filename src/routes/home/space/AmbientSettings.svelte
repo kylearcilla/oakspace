@@ -56,7 +56,7 @@
     dmenuId="ambient-header"
     isHidden={!open}
     zIndex={9999}
-    position={{ left: "10px", top: "34px" }}
+    position={{ left: "10px", top: "30px" }}
     {onClickOutside}
 >
     <div class="ambient">
@@ -74,7 +74,7 @@
                         styles: { 
                             backgroundColor: "rgba(255, 255, 255, 0.025)",
                             minWidth: "64px",
-                            borderRadius: "10px"
+                            borderRadius: "7px"
                         },
                         onClick: () => {
                             stylingOpen = !stylingOpen
@@ -142,7 +142,7 @@
                         styles: { 
                             backgroundColor: "rgba(255, 255, 255, 0.025)",
                             minWidth: "64px",
-                            borderRadius: "10px",
+                            borderRadius: "7px",
                         },
                         onClick: () => {
                             timeStyleOpen = !timeStyleOpen
@@ -262,13 +262,13 @@
     .ambient {
         background: var(--bg-2);
         padding: 10px 14px 6px 14px;
-        border-radius: 9px;
+        border-radius: 12px;
         min-width: 220px;
         position: relative;
 
         &__divider {
             padding-bottom: 7px;
-            border-bottom: 1px solid rgba(var(--textColor1), 0.08);
+            border-bottom: 0.5px solid rgba(var(--textColor1), 0.08);
         }
         &__setting {
             @include flex(center);
@@ -303,8 +303,8 @@
         &__controls {
             background: rgba(var(--textColor1), 0.04);
             border-radius: 10px;
-            padding: 7px 10px;
-            margin: 0px 0px 6px -2px;
+            padding: 4px 10px;
+            margin: 16px 0px 6px -2px;
             width: calc(100% + 2px);
             @include flex(center, space-between);
             color: white;

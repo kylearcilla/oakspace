@@ -1,0 +1,2 @@
+ALTER TABLE "general"."home_view" ADD COLUMN "entry_id" uuid;--> statement-breakpoint
+ALTER TABLE "general"."home_view" ADD CONSTRAINT "home_view_entry_id_text_entries_id_fk" FOREIGN KEY ("entry_id") REFERENCES "general"."text_entries"("id") ON DELETE cascade ON UPDATE no action;

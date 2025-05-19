@@ -154,7 +154,7 @@
                             <div>
                                 <SvgIcon 
                                     icon={Icon.Add} 
-                                    options={{ scale: 1.125, strokeWidth: 1.4, opacity: 0.4 }}
+                                    options={{ scale: 1, strokeWidth: 1.4, opacity: 0.4 }}
                                 />
                             </div>
                             <span>New Goal</span>
@@ -211,8 +211,8 @@
         }
 
         &__col {
-            min-width: 220px;
-            max-width: 220px;
+            min-width: 200px;
+            max-width: 200px;
             margin-right: 15px;
             background-color: rgba(var(--textColor1), var(--bg-opacity));
             // padding: 8px 10px 10px 9px;
@@ -232,7 +232,7 @@
             color: white !important;
         }
         &__col-name-container {
-            @include text-style(_, var(--fw-400-500), 1.3rem);
+            @include text-style(_, var(--fw-400-500), 1.2rem);
             display: flex;
             padding: 4px 13px 6px 9px !important;
             border-radius: 5px;
@@ -257,7 +257,7 @@
             }
         }
         &__col-count {
-            @include text-style(0.35, var(--fw-400-500), 1.3rem);
+            @include text-style(0.35, var(--fw-400-500), 1.2rem);
         }
         &__list {
             position: relative;
@@ -285,7 +285,7 @@
         }
         &__new-btn {
             @include flex(center);
-            @include text-style(0.35, var(--fw-400-500), 1.4rem);
+            @include text-style(0.35, var(--fw-400-500), 1.2rem);
             width: calc(100% - 36px);
             background-color: rgba(var(--textColor1), 0.02);
             opacity: 0.4;

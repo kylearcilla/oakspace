@@ -116,7 +116,6 @@
         const target = pe.target as HTMLElement
 
         if (dragging) {
-            saveDayViewOptions(options)
             updateUiOptions({ barBannerTop: headerTop })
         }
 
@@ -148,8 +147,8 @@
     class:bar--dark-theme={!isLight}
     class:bar--empty={empty}
     class:bar--transparent={transparent}
-    style:--margin-top={isLight ? "12px" : showHeaderImg && headerImg && !transparent ? "55px" : "15px"}
-    style:--main-top-offset={ambience?.active ? "2px" : "-20px"}
+    style:--margin-top={isLight ? "12px" : showHeaderImg && headerImg && !transparent ? "46px" : "10px"}
+    style:--main-top-offset={ambience?.active ? "2px" : "-10px"}
     style:--fixed-offset={fixed ? "42px" : "0px"}
     on:mousedown={() => {
         setHotkeyFocus("side-bar")
@@ -313,15 +312,15 @@
                 width: fit-content;
             }
             &-date {
-                @include text-style(0.5, 400, 1.1rem);
+                @include text-style(0.5, 400, 1rem);
                 margin-bottom: 3px;
             }
             &-date-time {
-                @include text-style(0.5, 400, 1.1rem);
+                @include text-style(0.5, 400, 1rem);
                 margin-left: 4px;
             }
             &-time h1 {
-                @include text-style(1, 400, 1.7rem);
+                @include text-style(1, 400, 1.5rem);
                 margin-right: 7px;
                 white-space: nowrap;
             }

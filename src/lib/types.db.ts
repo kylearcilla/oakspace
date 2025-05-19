@@ -15,13 +15,14 @@ type HomeViewDB = {
     bulletinHasNotes: boolean
     bulletinContentsOnHover: boolean
     bulletinNoteIdx: number
+    entryId: string | null
     userId: string
   }
   
   type TextEntryDB = Omit<TextEntry, "icon"> & {
-    iconType: string | null
+    iconType: "img" | "emoji" | null
     iconSrc: string | null
-    iconSize: string | null
+    iconSize: "small" | "big" | null
   }
 
   type AppearanceDB = {
@@ -43,4 +44,8 @@ type HomeViewDB = {
     routineBoxes: boolean
     userId: string
   }
-  
+
+  type BulletinDataDB = Pick<
+    HomeViewDB, 
+    "bulletinImgSrc" | "bulletinHeight" | "bulletinHasNotes" | "bulletinContentsOnHover" | "bulletinNoteIdx"
+>

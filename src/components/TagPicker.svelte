@@ -522,7 +522,7 @@
             width: 100%;
 
             // @include contrast-bg("bg-2");
-            background-color: #141414;
+            background-color: #171615;
             border: none;
         }
         &__dmenu {

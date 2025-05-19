@@ -186,7 +186,7 @@
         
         &__focus-header {
             @include flex(center, space-between);
-            padding: 0px 4px 0px 8px;
+            padding: 0px 4px 2px 8px;
         }
         &__btns-container {
             @include flex(center);
@@ -223,7 +223,7 @@
             }
         }
         &__month-title {
-            @include text-style(0.4, var(--fw-400-500), 1.35rem);
+            @include text-style(0.4, var(--fw-400-500), 1.3rem);
             margin-left: 1px;
 
             strong {
@@ -238,7 +238,7 @@
             width: 100%;
         }
         &__days-of-week * {
-            @include text-style(0.4, var(--fw-400-500), 1.2rem, "Geist Mono");
+            @include text-style(0.4, var(--fw-400-500), 1.1rem, "Geist Mono");
             @include center;
         }
         &__month {
@@ -253,8 +253,8 @@
         }
         &__month-day {
             @include center;
-            @include text-style(0.85, var(--fw-400-500), 1.19rem);
-            @include circle(25px);
+            @include text-style(0.85, var(--fw-400-500), 1.15rem);
+            @include circle(20px);
             user-select: none;
             position: relative;
             opacity: 0.95;
@@ -272,7 +272,7 @@
 
             &-container {
                 @include center;
-                height: 28px;
+                height: 26px;
             }
             &--today {
                 color: rgba(var(--textColor1), 1) !important;

@@ -78,7 +78,7 @@
     rightBarOpen: false
   }
 
-  const RIGHT_BAR_WIDTH = 230
+  const RIGHT_BAR_WIDTH = 210
 
   $: context = $globalContext
   $: ambience = context.ambience
@@ -460,7 +460,7 @@
       }
       &--ambient &__right-bar {
         right: 10px;
-        border-radius: 20px;
+        border-radius: 14px;
         border: 1.5px solid rgba(255, 255, 255, 0.05);
         top: var(--fixed-top-offset);
         height: calc(100% - var(--fixed-top-offset) * 2) !important;
@@ -478,10 +478,9 @@
       }
       &--ambient &__left-bar {
         // height: calc(100% - (200px * 2));
-        height: 560px;
         top: 90px;
         left: 8px;
-        border-radius: 20px;
+        border-radius: 18px;
       }
       &--no-ambience {
         background-image: none !important;
@@ -501,7 +500,7 @@
 
       &__header-container {
         width: calc(100%);
-        height: 28px;
+        height: 26px;
       }
       &__left-bar {
         height: 100%;

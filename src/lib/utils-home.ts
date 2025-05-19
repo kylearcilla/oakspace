@@ -12,17 +12,15 @@ import { loadTheme, setDefaultFont, setNewTheme } from "./utils-appearance"
 import { continueFocusSession, didInitSession, initSessions } from "./utils-session"
 import { getElemById, isTargetTextEditor, randomArrayElem } from "./utils-general"
 import { initYoutubePlayer, didInitYtPlayer, handleChooseItem, initYtUserData } from "./utils-youtube"
+import { MAX_FUTURE_YEAR, MAX_PAST_YEAR } from "./constants"
 
 /* constants */
 export const SMALL_WIDTH = 740
 export const X_SMALL_WIDTH = 650
 
 export const LEFT_BAR_MIN_WIDTH = 60
-export const LEFT_BAR_FLOAT_WIDTH = 160
+export const LEFT_BAR_FLOAT_WIDTH = 155
 export const LEFT_BAR_FULL_WIDTH = 175
-
-const MAX_PAST_YEARS = 3
-const MAX_FUTURE_YEARS = 3
 
 const LEFT_BAR_LEFT_BOUND = 20
 const RIGHT_BAR_RIGHT_BOUND = 20
@@ -562,8 +560,9 @@ export function saveDayViewOptions(options: DayViewOptions) {
 
 export function getYearBounds() {
     const user = get(globalContext).user
-    const createdYear = new Date(user.createdAt).getFullYear()
-    const minDate = new Date(createdYear - MAX_PAST_YEARS, 0, 1)
-    const maxDate = new Date(createdYear + MAX_FUTURE_YEARS, 11, 31)
-    return { minDate, maxDate }
+    const createdYear = new Date(user.created).getFullYear()
+    const maxYear = new Date().getFullYear() + MAX_FUTURE_YEAR
+    const minYear = createdYear - MAX_PAST_YEAR
+
+    return { minYear, maxYear }
 }

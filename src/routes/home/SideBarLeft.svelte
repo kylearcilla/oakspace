@@ -153,7 +153,7 @@
                     </div>
                 {/if}
                 {#if name === "Workspace"}
-                    <div class="bar__tab-section" style:margin="10px 0px 6px 7px">
+                    <div class="bar__tab-section" style:margin="12px 0px 6px 7px">
                         Appearance
                     </div>
                 {/if}
@@ -207,7 +207,7 @@
             <div class="bar__divider"></div>
             <div class="bar__app-container">
                 <div class="bar__app-name">
-                    <div style:font-size={"1.25rem"} style:margin-left="4px">
+                    <div style:font-size="1.2rem" style:margin-left="4px">
                         🔖
                     </div>
                     
@@ -369,13 +369,13 @@
             width: 100%;
         }
         &__profile-name {
-            @include text-style(0.9, var(--fw-400-500), 1.3rem);
+            @include text-style(0.9, var(--fw-400-500), 1.2rem);
             @include elipses-overflow;
             max-width: 80%;
         }
         &__tab-section {
             @include text-style(0.15, var(--fw-400-500), 1.1rem);
-            margin: 0px 0px 2px 7px;
+            margin: 0px 0px 7px 7px;
         }
         &__tabs {
             margin: 5px 0px 0px 0px;
@@ -420,7 +420,7 @@
             span {
                 opacity: 0.45;
                 margin-left: 14px;
-                @include text-style(0.8, var(--fw-400-500), 1.35rem);
+                @include text-style(0.8, var(--fw-400-500), 1.2rem);
             }
         }
         &__section-title {
@@ -445,7 +445,7 @@
         }
         &__app-name {
             @include flex(center);
-            @include text-style(1, var(--fw-400-500), 1.35rem, "Geist Mono");
+            @include text-style(1, var(--fw-400-500), 1.2rem, "Geist Mono");
             margin-top: -2px;
 
             a {

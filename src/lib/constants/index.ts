@@ -6,6 +6,36 @@ export const DEFAUL_EMOJIS = [
     "🌱", "🌷", "🌞", "🌙", "👏", "🔖", "🏕️", "⛰️", "💵"
 ]
 
+export const MAX_FUTURE_YEAR = 1
+export const MAX_PAST_YEAR = 2
+
+/* text entries  */
+export const TEXT_SAVE_DELAY_MS = 800
+export const ENTRY_MAX_LENGTH = 2000
+export const BIG_MAX_SIZE = 110
+export const SMALL_MAX_SIZE = 80
+
+// initial period request, get +-3 periods from current
+export const INITIAL_PERIOD_REACH_ENTRY = 3
+
+// moving between periods, next period will be empty so requeset for the next x periods
+export const NEXT_PERIOD_REACH_ENTRY = 3
+
+
+/* overview */
+export const GOALS_LIST_MAX = 3
+export const PHOTO_OFFSETS = [
+    { x: -8, y: -4, tilt: 4  },
+    { x: -5, y: -15, tilt: 4  },
+    { x: -10, y: -12, tilt: -5  },
+    { x: -6, y: -14, tilt: 3  },
+    { x: -7, y: -9, tilt: -2  },
+    { x: -9, y: -13, tilt: 5  },
+    { x: -5, y: -12, tilt: -3  },
+    { x: -12, y: -8, tilt: -6  }
+]
+
+
 /* notes */
 
 export const MAX_NOTE_LENGTH = 300

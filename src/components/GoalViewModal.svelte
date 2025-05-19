@@ -148,7 +148,7 @@
         options = false
     }
     function onTaskChange(_tasks: Task[]) {
-        tasks = _tasks as GoalActionItem[]
+        tasks = _tasks as GoalTask[]
     }
     function toggleTagPicker() {
         tagsOpen = !tagsOpen
@@ -531,7 +531,7 @@
                                             toggleDatePicker("due-date")
                                         },
                                         styles: { 
-                                            fontSize: "1.285rem", 
+                                            fontSize: "1.2rem", 
                                             padding: "7px 10px 8px 11px" 
                                         }
                                     }} 
@@ -570,7 +570,7 @@
                                         statusOpen = !statusOpen
                                     },
                                     styles: { 
-                                        fontSize: "1.285rem", 
+                                        fontSize: "1.2rem", 
                                         padding: "7px 10px 8px 11px" 
                                     }
                                 }} 
@@ -678,7 +678,7 @@
                             },
                             ui: { 
                                 sidePadding: "20px",
-                                fontSize: "1.45rem",
+                                fontSize: "1.3rem",
                                 padding: "9px 0px 7px 0px",
                                 hasTaskDivider: true
                             },
@@ -721,7 +721,7 @@
         min-height: 400px;
         max-height: 85vh;
         position: relative;
-        max-width: 600px;
+        max-width: 550px;
         width: 90vw;
         padding-bottom: 12px;
          
@@ -749,18 +749,18 @@
         /* no img */
         &--no-tasks#{&}--no-img {
             min-height: 500px;
-            max-width: 520px;
+            max-width: 550px;
         }
         &--no-img {
             max-width: 600px;
         }
         /* header img */
         &--header-img#{&}--no-tasks {
-            max-width: 580px;
-            min-height: 570px;
+            max-width: 520px;
+            min-height: 650px;
         }
         &--header-img {
-            max-width: 650px;
+            max-width: 550px;
             --description-max-height: 140px;
         }
         &--header-img &__top {
@@ -772,17 +772,17 @@
             max-width: 640px;
         }
         &--float-img {
-            max-width: 700px;
+            max-width: 650px;
         }
         &--float-img &__header-container {
-            width: calc(100% - 220px);
+            width: calc(100% - 200px);
         }
         &--float-img &__info {
             margin-bottom: 5px;
         }
         &--float-img &__img {
-            min-width: 200px;
-            width: 200px;
+            min-width: 180px;
+            width: 180px;
             height: auto;
             max-height: 350px;
             margin: 14px 0px 15px 0px;
@@ -803,7 +803,7 @@
             flex-wrap: wrap;
         }
         &__title {
-            @include text-style(1, var(--fw-400-500), 1.7rem);
+            @include text-style(1, var(--fw-400-500), 1.4rem);
             width: 100%;
             position: relative;
             margin-right: 20px;
@@ -845,7 +845,7 @@
         }
         &__header {
             position: relative;
-            padding: 10px 0px 12px 0px;
+            padding: 10px 0px 5px 0px;
             @include flex(flex-start, space-between);
         }
         &__img {
@@ -874,7 +874,7 @@
             }
         }
         &__info-title {
-            @include text-style(0.25, var(--fw-400-500), 1.45rem);
+            @include text-style(0.25, var(--fw-400-500), 1.3rem);
             margin-right: 10px;
         }
         &__info-content {
@@ -882,7 +882,7 @@
             margin-top: 4px;
         }
         &__description {
-            @include text-style(0.85, var(--fw-400-500), 1.45rem);
+            @include text-style(0.85, var(--fw-400-500), 1.3rem);
             overflow: unset;
             overflow-y: scroll;
             margin: 10px 0px 18px 2px;
@@ -895,7 +895,7 @@
         }
         &__list-header {
             width: 100%;
-            padding: 9px 20px 1px 20px;
+            padding: 9px 20px 0px 20px;
             @include flex(center, space-between);
         }
         &__list-body {
@@ -907,7 +907,7 @@
             margin: 2px 0px 10px 0px;
         }
         .fraction {
-            @include text-style(0.35, var(--fw-400-500), 1.4rem);
+            @include text-style(0.35, var(--fw-400-500), 1.3rem);
 
             &__slash { 
                 font-size: 1.15rem !important;
@@ -916,8 +916,8 @@
             }
         }
         &__list-empty {
-            margin: 1px 0px 0px 20px;
-            @include text-style(0.085, var(--fw-400-500), 1.4rem);
+            margin: 0px 0px 0px 20px;
+            @include text-style(0.085, var(--fw-400-500), 1.3rem);
         }
         &__add-btn {
             @include center;

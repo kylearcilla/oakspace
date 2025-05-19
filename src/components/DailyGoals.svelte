@@ -41,7 +41,7 @@
 
 <style lang="scss">
     .dg {
-        padding: 4px 10px 0px 0px;
+        padding: 6px 10px 0px 0px;
         position: relative;
         min-height: 32px;
 
@@ -73,7 +73,7 @@
             }
         }
         &__goal-name {
-            @include text-style(0.95, var(--fw-400-500), 1.35rem);
+            @include text-style(0.95, var(--fw-400-500), 1.25rem);
             max-width: 200px;
             @include elipses-overflow;
 

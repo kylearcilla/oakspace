@@ -12,7 +12,7 @@
       opacity = 1, 
       width = 15, 
       height = 18,
-      strokeWidth = 1, 
+      strokeWidth = icon === Icon.Add ? 1.5 : 1, 
       scale = 1, 
       fullOnHover = false,
       id = "",

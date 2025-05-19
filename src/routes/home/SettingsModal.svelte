@@ -4,9 +4,9 @@
 
 	import { imageUpload } from "$lib/pop-ups"
     import { Icon, ModalType } from "$lib/enums"
-	import { formatDateLong, msToHHMMSS, formatSecs } from "$lib/utils-date"
-	import { formatNumber, serverError } from "$lib/utils-general"
+	import { formatNumber } from "$lib/utils-general"
 	import { setDefaultFont } from "$lib/utils-appearance"
+	import { formatDateLong, formatSecs } from "$lib/utils-date"
 	import { FONT_COPY, MAX_USER_NAME_LENGTH, USER_DESCRIPTIONS } from "$lib/constants"
 	import { closeModal, updateGlobalContext } from "$lib/utils-home"
 
@@ -83,7 +83,7 @@
 </script>
 
 <Modal 
-    options={{ borderRadius: "22px", scaleUp: true }} 
+    options={{ borderRadius: "20px", scaleUp: true }} 
     onClickOutSide={close}
 >
     <div class="settings" class:settings--light={light}>
@@ -298,9 +298,9 @@
     .settings {
         padding: 20px 20px 20px 22px;
         width: 85vw;
-        max-width: 600px;
+        max-width: 570px;
         position: relative;
-        @include text-style(0.28, var(--fw-300-500), 1.5rem);
+        @include text-style(0.28, var(--fw-300-500), 1.25rem);
 
         --field-opacity: 0.03;
         
@@ -326,7 +326,7 @@
             display: flex;
         }
         &__left {
-            width: 250px;
+            width: 220px;
             margin-right: 25px;
             height: 100%;
         }
@@ -343,7 +343,8 @@
         &__profile-img-container {
             position: relative;
             width: 100%;
-            max-height: 240px;
+            height: 210px;
+            max-height: 210px;
             margin-bottom: 14px;
         }
         &__img-overlay {
@@ -351,7 +352,7 @@
             background-color: rgba(0, 0, 0, 0.6);
             width: 100%;
             height: 100%;
-            border-radius: 14px;
+            border-radius: 10px;
             z-index: 1;
             opacity: 0;
             transition: opacity 0.2s ease;
@@ -360,7 +361,7 @@
             justify-content: center;
 
             button {
-                @include text-style(_, 400, 1.3rem);
+                @include text-style(_, 400, 1.25rem);
                 color: white;
             }
         }
@@ -370,15 +371,15 @@
         img {
             width: 100%;
             object-fit: cover;
-            max-height: 240px;
-            border-radius: 14px;
+            max-height: 210px;
+            border-radius: 10px;
             position: relative;
         }
         &__membership {
             margin-bottom: 32px;
         }
         &__membership-title {
-            @include text-style(1, _, 1.45rem);
+            @include text-style(1, _, 1.25rem);
         }
         &__membership-date {
             margin: 6px 0px 14px 0px;
@@ -389,7 +390,7 @@
         }
         &__stat {
             margin-bottom: 14px;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
 
             span {
                 @include text-style(0.85);
@@ -408,7 +409,7 @@
             margin-bottom: 8px;
         }
         &__field-val {
-            @include text-style(1, var(--fw-300-400), 1.5rem);
+            @include text-style(1, var(--fw-300-400), 1.3rem);
             background-color: rgba(var(--textColor1), var(--field-opacity));
             width: 100%;
             padding: 8px 12px 10px 12px;
@@ -444,15 +445,16 @@
             @include center;
         }
         &__font-option span {
-            @include text-style(1, var(--fw-400-500), 1.35rem);
+            @include text-style(1, var(--fw-400-500), 1.2rem);
             opacity: 0.4;
             margin-top: 3px;
         }
         &__font-option button {
             background-color: rgba(var(--textColor1), var(--field-opacity));
+            transition: background-color 0.2s ease;
             height: 80px;
             padding-bottom: 4px;
-            width: 110px;
+            width: 100px;
             border-radius: 15px;
             @include center;
             @include text-style(1, var(--fw-300-400), 1.7rem, "system");

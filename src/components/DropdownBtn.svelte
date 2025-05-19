@@ -19,7 +19,7 @@
     } = options
 
     const {
-        fontSize = "1.32rem",
+        fontSize = "1.25rem",
         fontFamily = "inherit"
     } = styles ?? {}
 

@@ -257,7 +257,7 @@
     class:habits--ring-only={!options.progress.numbers}
     class:habits--monthly={timeFrame === "monthly"}
     class:habits--dotted={options.checkboxStyle === "minimal"}
-    style:--day-col-size={timeFrame === "weekly" ? "1.34rem" : "1.15rem"}
+    style:--day-col-size={timeFrame === "weekly" ? "1.24rem" : "1.05rem"}
     style:border-top={!options.stats ? "none" : "var(--divider-border)"}
     bind:clientWidth={width}
 >
@@ -657,7 +657,7 @@
         }
         &__table-header {
             display: flex;
-            @include text-style(0.35, var(--fw-400-500), 1.4rem);
+            @include text-style(0.35, var(--fw-400-500), 1.3rem);
             position: relative;
             border-bottom: var(--divider-border);
             height: 30px;
@@ -666,7 +666,7 @@
             border-top: var(--divider-border) !important;
         }
         &__tod-header {
-            @include text-style(0.35, var(--fw-400-500), 1.35rem);
+            @include text-style(0.35, var(--fw-400-500), 1.25rem);
             @include flex(center, space-between);
             margin: 8px 0px 9px 0px;
         }
@@ -682,7 +682,7 @@
             }
         }
         &__count-cell {
-            @include text-style(0.145, var(--fw-400-500), 1.25rem);
+            @include text-style(0.145, var(--fw-400-500), 1.15rem);
             position: relative;
             height: 25px;
 
@@ -719,7 +719,7 @@
             align-items: center;
         }
         &__symbol {
-            font-size: 1.35rem;
+            font-size: 1.25rem;
             margin-right: 12px;
             text-decoration: none;
             font-style: normal;
@@ -729,7 +729,7 @@
             @include flex(center, space-between);
             
             button {
-                @include text-style(1, var(--fw-400-500), 1.425rem);
+                @include text-style(1, var(--fw-400-500), 1.25rem);
 
                 &:hover {
                     text-decoration: underline;
@@ -737,13 +737,13 @@
             }
         }
         &__caption {
-            @include text-style(0.16, var(--fw-400-500), 1.25rem);
+            @include text-style(0.16, var(--fw-400-500), 1.15rem);
             transition: 0.1s ease-in-out;
             text-align: right;
-            padding-right: 15px;
+            padding-right: 12px;
         }
         &__streak {
-            @include text-style(0.6, var(--fw-500-600), 1.3rem);
+            @include text-style(0.6, var(--fw-400-500), 1.2rem);
         }
         &__streak-times {
             font-size: 1.6rem;
@@ -766,7 +766,7 @@
         }
         &__box {
             background-color: var(--lightColor2);
-            @include square(18px);
+            @include square(16px);
             border-radius: 0px;
             position: relative;
             font-size: 1.1rem;
@@ -825,7 +825,7 @@
         }
     }
     .header-col {
-        font-size: 1.34rem;
+        font-size: 1.25rem;
         padding: 4px 0px 0px 0px !important;
     }
     .one-col {
@@ -846,7 +846,7 @@
         overflow: auto;
         width: 50%;
         min-width: 240px;
-        max-width: 420px;
+        max-width: 350px;
 
         font-size: var(--day-col-size);
     }

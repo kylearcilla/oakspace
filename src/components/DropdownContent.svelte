@@ -30,7 +30,7 @@
         maxHeight = "auto",
         overflow = "visible",
         fontFamily = "inherit",
-        fontSize = "1.3rem"
+        fontSize = "1.2rem"
     } = options.styling ?? {}
 
     $: isDark = $themeState.isDarkTheme

@@ -1,13 +1,14 @@
 <script lang="ts">
+    import { Icon } from "$lib/enums"
     import { themeState } from "../lib/store"
     import { getColorTrio } from "$lib/utils-colors"
+	import { formatDateLong } from "$lib/utils-date"
 	import { kebabToNormal } from "$lib/utils-general"
     import { getDueDateDistStr, setViewGoal } from "$lib/utils-goals"
-	import SvgIcon from "./SVGIcon.svelte";
-	import { Icon } from "$lib/enums";
-	import AccomplishedIcon from "./AccomplishedIcon.svelte";
-	import { formatDateLong } from "$lib/utils-date";
-	import ProgressBar from "./ProgressBar.svelte";
+
+	import SvgIcon from "./SVGIcon.svelte"
+	import ProgressBar from "./ProgressBar.svelte"
+	import AccomplishedIcon from "./AccomplishedIcon.svelte"
 
     export let goal: Goal
     export let pinned: boolean = false
@@ -124,7 +125,7 @@
                         style:--tag-color-3={tagColor[2]}
                         title={tag.name}
                     >
-                        <div class="tag__title" style:font-size="1.225rem">
+                        <div class="tag__title" style:font-size="1.15rem">
                             {tag?.name}
                         </div>
                     </div>
@@ -235,14 +236,14 @@
             }
         }
         &__due {
-            @include text-style(0.5, var(--fw-400-500), 1.3rem);
+            @include text-style(0.5, var(--fw-400-500), 1.15rem);
             white-space: nowrap;
             background-color: rgba(var(--textColor1), 0.02);
             padding: 4px 9px;
             border-radius: 6px;
         }
         &__title {
-            @include text-style(1, var(--fw-400-500), 1.4rem);
+            @include text-style(1, var(--fw-400-500), 1.25rem);
             @include truncate-lines(8);
             width: fit-content;
             margin-right: 7px;
@@ -252,7 +253,7 @@
             }
         }
         &__description {
-            @include text-style(0.35, 400, 1.325rem);
+            @include text-style(0.35, 400, 1.25rem);
             @include truncate-lines(3);
             margin: 6px 0px 8px 0px;
             cursor: text;

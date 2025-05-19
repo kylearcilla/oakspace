@@ -459,7 +459,7 @@
             padding: 2px 0px 7px 0px;
             
             span {
-                @include text-style(0.14, var(--fw-400-500), 1.265rem);
+                @include text-style(0.14, var(--fw-400-500), 1.1rem);
                 white-space: nowrap;
             }
         }
@@ -469,7 +469,7 @@
         }
         &__all-day {
             max-width: 100%;
-            font-size: 1.15rem !important;
+            font-size: 1rem !important;
             margin-top: 2px;
             @include text-style(_, _, _, "system");
         }
@@ -551,8 +551,8 @@
     }
 
     .routine-block {
-        left: 65px;
-        width: 135px;
+        left: 62px;
+        width: 120px;
 
         &::after, &::before {
             cursor: pointer !important;

@@ -20,7 +20,7 @@
                     isActive = !isActive
                 },
                 styles: {
-                    fontSize: "1.25rem",
+                    fontSize: "1.15rem",
                 }
             }}
         />

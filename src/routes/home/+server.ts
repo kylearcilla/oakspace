@@ -18,7 +18,7 @@ export async function GET({ locals }) {
         return err({ status: 404 })
     }
 
-    const { homeView, notes } = res
+    const { homeView, notes, entry } = res
     const { showBanner, bannerSrc, bannerCenter } = homeView
     const { showEntry, headerView, iconSrc, iconType, showIcon } = homeView
     const { bulletinImgSrc, bulletinHeight, bulletinHasNotes, bulletinContentsOnHover, bulletinNoteIdx } = homeView
@@ -40,6 +40,13 @@ export async function GET({ locals }) {
                     show: showIcon
                 } : null
         },
+        entry: entry ? {
+            id: entry.id,
+            text: entry.text,
+            styling: entry.styling,
+            truncate: entry.truncate,
+            icon: entry.icon?.src ? entry.icon : null
+        } : null,
         leftMargin: leftMargin,
         leftMarginView: leftMarginView,
         bulletin: {

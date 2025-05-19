@@ -1,24 +1,45 @@
 import { db } from "./drizzle"
-import { eq, and } from "drizzle-orm"
+import { eq, and, gte, lte, or, SQL, not } from "drizzle-orm"
 import { uiOptions, homeView, notes, textEntries, todos } from "./general-schema"
 import { getNotes } from "./bulletin"
 
 /* home view data */
 
-export async function getHomeViewData(userId: string): Promise<{ homeView: HomeViewDB, notes: Note[] } | undefined> {
-  const result = await db
+export async function getHomeViewData(userId: string): Promise<{ homeView: HomeViewDB, entry: TextEntry | null, notes: Note[] } | undefined> {
+    // main
+    const homeDataRes = await db
+      .select()
+      .from(homeView)
+      .where(eq(homeView.userId, userId))
+      .execute()
+
+    if (!homeDataRes) {
+      return undefined
+    }
+
+    const homeData = homeDataRes[0] as HomeViewDB
+    const entry = await getHomeEntry(homeData.entryId)
+    const notes = await getNotes(userId) || []
+
+    return { homeView: homeData, entry, notes }
+}
+
+async function getHomeEntry(entryId: string | null): Promise<TextEntry | null> {
+  if (!entryId) return null
+
+  const entryRes = await db
     .select()
-    .from(homeView)
-    .where(eq(homeView.userId, userId))
-    .execute() as HomeViewDB[]
+    .from(textEntries)
+    .where(eq(textEntries.id, entryId))
+    .execute()
 
-  const notes = await getNotes(userId)
+  if (!entryRes.length) return null
 
-  if (!result.length || !result[0] || !notes) {
-    return undefined
+  const { iconType, iconSrc, iconSize, ...rest } = entryRes[0] as TextEntryDB
+
+  return {
+    ...rest, icon: iconSrc ? { type: iconType!, src: iconSrc!, size: iconSize! } : null
   }
-
-  return { homeView: result[0], notes }
 }
 
 export async function updateHomeViewData(userId: string, data: Partial<HomeViewDB>): Promise<boolean> {
@@ -77,30 +98,82 @@ export async function getTextEntryById(entryId: string): Promise<TextEntryDB> {
     return result[0] as TextEntryDB
 }
 
-export async function getTextEntries({ 
+/**
+ * Fetch text entries from a given range.
+ * By default it will fetch the quarters and months of the range, including the corresponding parent years.
+ * 
+ * Can also fetch strictly by period only inside a range.
+ * 
+ * @param userId - user id
+ * @param start - start date
+ * @param end - end date
+ * @param period - 
+ * @param catchAll - 
+ * @param getYear - * if all entries, then that range's parent year is also returned
+ * 
+ * @returns Existing entries within that range.
+ */
+export async function fetchTextEntries({ 
   userId, 
-  period, 
-  isoDate 
+  start, 
+  end,
+  period,
+  catchAll = true,
+  getYear = true
 }: { 
-  userId: string, 
-  period?: string, 
-  isoDate?: string 
+  userId: string, start: string, end: string, period: PeriodType, catchAll?: boolean, getYear?: boolean
 }): Promise<TextEntryDB[]> {
-  let conditions = eq(textEntries.userId, userId)
-  
-  if (period) {
-    conditions = and(conditions, eq(textEntries.period, period))
+
+  const { isoDate, period: periodCol, userId: userIdCol } = textEntries
+  const startYear = `${start.split('-')[0]}-01-01`
+  const endYear = `${end.split('-')[0]}-01-01`
+
+  const conditions = [eq(userIdCol, userId)]
+
+  if (period === "month" && catchAll && getYear) {
+      conditions.push(
+        or(
+          and(gte(isoDate, start), lte(isoDate, end)),
+          and(
+            or(
+              and(eq(periodCol!, "year"), eq(isoDate!, startYear)),
+              and(eq(periodCol!, "year"), eq(isoDate!, endYear))
+            )
+          )
+        )!
+      )
   }
-  
-  if (isoDate) {
-    conditions = and(conditions, eq(textEntries.isoDate, isoDate))
+  else if (period === "month" && catchAll) {
+    conditions.push(gte(isoDate, start), lte(isoDate, end))
   }
-  
+  else {
+    conditions.push(eq(periodCol!, period), gte(isoDate, start), lte(isoDate, end))
+  }
+
   const result = await db
     .select()
     .from(textEntries)
-    .where(conditions)
+    .where(and(...conditions))
     .execute()
   
   return result as TextEntryDB[]
+}
+
+export async function updateTextEntry(entryId: string, data: Partial<TextEntryDB>): Promise<boolean> {
+  await db
+    .update(textEntries)
+    .set(data)
+    .where(eq(textEntries.id, entryId))
+    .execute()
+
+  return true
+}
+
+export async function createTextEntry(entry: TextEntry) {
+    await db
+      .insert(textEntries)
+      .values(entry)
+      .execute()
+
+    return true
 }

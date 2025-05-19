@@ -33,7 +33,7 @@
         {@const streak = zero ? "--" : activeStreak.count}
 
         <div class="stats" class:stats--light={light}>
-            <div class="stat" style:margin-right="32px">
+            <div class="stat" style:margin-right="25px">
                 <div class="stat__bottom">
                     <div class="flx">
                         <span class="stat__value">
@@ -46,7 +46,7 @@
                     <span class="stat__label">Active Streak</span>
                 </div>     
             </div>
-            <div class="stat" style:margin-right="35px">
+            <div class="stat" style:margin-right="28px">
                 <div class="stat__bottom">
                     <div class="flx">
                         <span class="stat__value">
@@ -60,7 +60,7 @@
                 </div>                    
             </div>
             {#if longestStreak}
-                <div class="stat" style:margin-right="35px">
+                <div class="stat" style:margin-right="30px">
                     <div class="stat__bottom">
                         <div class="flx">
                             <span class="stat__value">
@@ -74,7 +74,7 @@
                     </div>                    
                 </div>
             {/if}
-            <div class="stat">
+            <div class="stat" style:margin-right="35px">
                 <div class="stat__bottom">
                     <div class="flx">
                         <span class="stat__value">

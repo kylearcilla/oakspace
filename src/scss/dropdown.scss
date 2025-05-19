@@ -7,7 +7,7 @@
     color: rgba(var(--textColor1), 0.75);
     transition: 0.1s cubic-bezier(.4,0,.2,1);
     border-radius: 8px;
-    padding: 4px 5px 6px 11px;
+    padding: 4px 8px 6px 11px;
     width: fit-content;
     cursor: pointer;
     @include flex(center);
@@ -150,14 +150,13 @@
         display: none;
     }
     &__section-name {
-        @include text-style(0.25, var(--fw-400-500), 1.15rem);
-        padding: 3px $side-padding 2px $side-padding;
-        margin-bottom: 2px;
+        @include text-style(0.25, var(--fw-400-500), 1.05rem);
         @include elipses-overflow;
         max-width: 140px;
+        padding: 4px $side-padding 3px $side-padding;
     }
     &__section-name--mono {
-        @include text-style(_, var(--fw-400-500), 1.15rem, "Geist Mono");
+        @include text-style(_, var(--fw-400-500), 1rem, "Geist Mono");
     }
     &__section-divider {
         width: calc(100% - calc(2 * $divider-side-padding));
@@ -264,7 +263,7 @@
     }
     &__option-btn {
         @include flex(center, space-between);
-        padding: 6px $side-padding 7px $side-padding;
+        padding: 4px $side-padding 5px $side-padding;
         width: 100%;
         opacity: var(--inactive-opacity);
         transition: background-color 0.04s ease-in-out;
@@ -322,7 +321,7 @@
             @include text-style(0.15, _, 1.5rem);
         }
         span {
-            @include text-style(1, var(--fw-400-500), 1.225rem);
+            @include text-style(1, var(--fw-400-500), 1.1rem);
             opacity: 0.65;
         }
     }

@@ -13,7 +13,7 @@
         [key in FontStyle]: { topOffset: string }
     }
 
-    const FONT_SIZE = 16
+    const FONT_SIZE = 14
     const FAM_OFFSETS: FontOffsetMap = {
         "default": { topOffset: "-40px" },
         "stylish": { topOffset: "-47px" },

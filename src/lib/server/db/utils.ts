@@ -1,5 +1,5 @@
-import { integer, uuid, varchar, text as pgText, timestamp, boolean, jsonb } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
+import { integer, uuid, varchar, text as pgText, timestamp, boolean, date as pgDate } from 'drizzle-orm/pg-core'
 
 type IdOptions = {
   name?: string
@@ -20,11 +20,6 @@ type TextColumnOptions = ColumnOptions & {
 type TimestampOptions = {
   name: string
   defaultNow?: boolean
-  req?: boolean
-}
-
-type JsonOptions<T> = {
-  name: string
   req?: boolean
 }
 
@@ -126,17 +121,25 @@ function text({
   return col
 }
 
-/**
- * Creates a timestamp column
- * @param options Configuration options
- * @returns Timestamp column definition
- */
-function date({ 
+function timeStamp({ 
   name, 
   defaultNow = false, 
   req = true 
 }: TimestampOptions) {
   const column = timestamp(name)
+
+  if (defaultNow) column.defaultNow()
+  if (req) column.notNull()
+
+  return column
+}
+
+function date({ 
+  name, 
+  defaultNow = false, 
+  req = true 
+}: TimestampOptions) {
+  const column = pgDate(name)
 
   if (defaultNow) column.defaultNow()
   if (req) column.notNull()
@@ -187,6 +190,7 @@ export {
   int,
   str,
   text,
+  timeStamp,
   date,
   bool,
   coalesce,

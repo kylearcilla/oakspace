@@ -1,19 +1,6 @@
 import { _fetch } from './utils-general'
 import { TEST_USER } from './mock-data-goals'
 
-type BulletinData = {
-    imgSrc: string | null
-    height: number
-    hasNotes: boolean
-    contentsOnHover: boolean
-    noteIdx: number
-}
-
-type BulletinDataDB = Pick<
-    HomeViewDB, 
-    "bulletinImgSrc" | "bulletinHeight" | "bulletinHasNotes" | "bulletinContentsOnHover" | "bulletinNoteIdx"
->
-
 export async function createNote({ idx, text }: { idx: number, text: string }) {
     const userId = TEST_USER.id
     const { response, error } =  await _fetch('/home/bulletin', {
@@ -54,7 +41,7 @@ export async function updateNote(note: { id: string, text: string }) {
     return response
 }
 
-export async function updateBulletin(data: Partial<BulletinData>) {
+export async function updateBulletin(data: Partial<Omit<Bulletin, "notes">>) {
     const dbData: Partial<BulletinDataDB> = {
         bulletinImgSrc: data.imgSrc,
         bulletinHeight: data.height,

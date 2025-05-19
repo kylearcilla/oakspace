@@ -12,6 +12,8 @@ import {
         initTodoistAPI, syncTodoistUserItems, updateTodoistTask, 
         updateTodoistTaskCompletion 
 } from "./api-todoist"
+import { updateTodo, getTodos, deleteTodo, addTodo } from "./api-todos"
+import { TEST_USER } from "./mock-data-goals"
 
 type TaskRemoveContext = {
     tasks: Task[]
@@ -61,6 +63,10 @@ export class TodosManager {
     private AUTO_REFRESH_INTERVAL_MINS = 5
 
     constructor() {
+       this.init()
+    }
+    async init() {
+        // this.inboxTasks = await getTodos()
         this.inboxTasks = TEST_TASKS
         this.store = writable(this)
 
@@ -426,6 +432,9 @@ export class TodosManager {
                     // }
                     this.todoistTasks = tasks
                 }
+                else {
+                    await updateTodo(task.id, { isChecked: complete! })
+                }
                 if (complete && removeOnComplete) {
                     this.initActionToast({ 
                         action: "completion", 
@@ -440,11 +449,19 @@ export class TodosManager {
                     accessToken: this.todoistAccessToken,
                     taskId: task.id,
                     action,
+                    // each action has a separate endpoint in the Todoist API
                     ...(action === "name" && { name }),
                     ...(action === "description" && { description }),
                     ...(action === "reorder" && { idx, parentId: task.parentId })
                 })
             }
+            else {
+                // await updateTodo(task.id, { 
+                //     ...(action === "name" && { title: name }),
+                //     ...(action === "description" && { description }),
+                //     ...(action === "reorder" && { idx, parentId: task.parentId })
+                // })
+            }   
 
             if (!todoist) {
                 this.inboxTasks = tasks
@@ -472,6 +489,7 @@ export class TodosManager {
             }
             else {
                 this.inboxTasks = tasks
+                id = (await addTodo({ ...task, userId: TEST_USER.id })).id
             }
 
             this.currTasks = tasks
@@ -506,7 +524,9 @@ export class TodosManager {
             }
             else {
                 this.inboxTasks = tasks
+                await deleteTodo(task!.id)
             }
+
             this.initActionToast({
                 action, 
                 name: task?.title,

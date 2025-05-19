@@ -2,7 +2,7 @@ import { json } from "@sveltejs/kit"
 import { err } from "$lib/server/utils"
 import { deleteNote, updateNote } from "$lib/server/db/bulletin"
 
-// DELETE /api/notes/:id - Delete a note
+// DELETE /api/notes/:noteId - Delete a note
 export async function DELETE({ params: { slug: noteId }, request }) {
     const { idx, userId } = await request.json()
 
@@ -20,7 +20,7 @@ export async function DELETE({ params: { slug: noteId }, request }) {
     }
 }
 
-// PUT /api/notes/:id - Update a note
+// PUT /api/notes/:noteId - Update a note
 export async function PUT({ params: { slug: noteId }, request }) {
     if (!noteId) {
         return err({ status: 400 })

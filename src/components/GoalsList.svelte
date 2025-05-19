@@ -139,7 +139,7 @@
                             >
                                 <SvgIcon 
                                     icon={Icon.Add} 
-                                    options={{ scale: 1.15, strokeWidth: 1.4, opacity: 0.7 }}
+                                    options={{ scale: 1, strokeWidth: 1.4, opacity: 0.4 }}
                                 />
                             </button>
                         </div>
@@ -238,7 +238,7 @@
                                                         style:--tag-color-2={tagColor[1]}
                                                         style:--tag-color-3={tagColor[2]}
                                                     >
-                                                        <div class="tag__symbol" style:font-size={"1.1rem"}>
+                                                        <div class="tag__symbol" style:font-size="1.1rem">
                                                             {tag.symbol.emoji}
                                                         </div>
                                                         <div class="tag__title">
@@ -294,7 +294,7 @@
                                 <div>
                                     <SvgIcon 
                                         icon={Icon.Add} 
-                                        options={{ scale: 1.15, strokeWidth: 1.4, opacity: 0.55 }}
+                                        options={{ scale: 1, strokeWidth: 1.4, opacity: 0.4 }}
                                     />
                                 </div>
                             </button>
@@ -390,13 +390,13 @@
         }
         &__section-name {
             margin: 0px 0px 0px 12px;
-            @include text-style(0.5, var(--fw-400-500), 1.3rem);
+            @include text-style(0.5, var(--fw-400-500), 1.2rem);
             @include elipses-overflow;
             max-width: 300px;
         }
         &__section-count {
-            @include text-style(0.15, var(--fw-400-500), _);
-            margin: 0px 0px 6px 12px;
+            @include text-style(0.15, var(--fw-400-500), 1.2rem);
+            margin: 0px 0px 0px 10px;
         }
         &__section-divider {
             margin: 0px 0px 4px 12px;
@@ -423,8 +423,8 @@
                 opacity: 1;
             }
             span {
-                @include text-style(0.4, var(--fw-400-500), 1.45rem);
-                margin-right: 12px;
+                @include text-style(0.4, var(--fw-400-500), 1.25rem);
+                margin-right: 10px;
             }
         }
         &__goal {
@@ -468,7 +468,7 @@
         }
         &__goal-checkbox {
             background-color: rgba(var(--textColor1), 0.065);
-            @include square(17.5px);
+            @include square(15px);
             color: var(--elemTextColor);
             border-radius: 0px;
             transition: 0.1s ease-in-out;
@@ -487,7 +487,7 @@
             }
         }
         &__goal-name {
-            @include text-style(1, var(--fw-400-500), 1.45rem);
+            @include text-style(1, var(--fw-400-500), 1.25rem);
             @include truncate-lines(2);
             user-select: text;
             cursor: pointer;
@@ -497,7 +497,7 @@
             }
         }
         &__goal-description {
-            @include text-style(0.35, 400, 1.4rem);
+            @include text-style(0.35, 400, 1.25rem);
             @include truncate-lines;
             width: 80%;
             cursor: text;

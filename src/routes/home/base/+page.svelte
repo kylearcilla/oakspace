@@ -2,13 +2,13 @@
 	import { themeState } from "$lib/store"
 	import { iconPicker } from "$lib/pop-ups"
 	import { clamp } from "$lib/utils-general"
+	import { updateHome } from "$lib/api-general"
 	import { loadBaseView, saveBaseView } from "$lib/utils-home"
 	import { BASE_BANNER, BASE_HEADER, HOME_THOUGHT_ENTRY } from "$lib/mock-data"
 
 	import Header from "./Header.svelte"
 	import MonthView from "./MonthView.svelte"
 	import LeftMargin from "./LeftMargin.svelte"
-	import { updateHome } from "$lib/api-general";
 
     export let data: InitialDataLoad
 
@@ -265,13 +265,13 @@
         &__icon {
             margin: var(--icon-top-offset) 0px 0px 0px;
             font-size: 6rem;
-            height: 95px;
-            width: 95px;
+            height: 80px;
+            width: 80px;
             position: relative;
             transition-property: transform;
             
             img {
-                @include square(100px);
+                @include square(80px);
                 border-radius: 4px;
                 object-fit: cover;
             }
@@ -287,11 +287,11 @@
             margin-top: 16px;
         }
         &__left {
-            width: 260px;
-            padding: 5px 40px 0px 0px;
+            width: 235px;
+            padding: 5px 26px 0px 0px;
         }
         &__right {
-            width: calc(100% - 260px);
+            width: calc(100% - 235px);
             position: relative;
         }
 
@@ -309,7 +309,7 @@
         }
 
         &__banner {
-            height: 220px;
+            height: 180px;
             width: 100%;
             position: relative;
             overflow: hidden;

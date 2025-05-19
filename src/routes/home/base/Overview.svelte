@@ -1,49 +1,44 @@
+
 <script lang="ts">
     import { goalTracker, habitTracker, themeState } from "$lib/store"
 
-	import { Icon } from "$lib/enums"
     import { getSwatchColors } from "$lib/utils-colors"
 	import { getMonthOverviewData } from "$lib/utils-habits";
 	import { formatDateLong, uptoToday } from "$lib/utils-date"
     import { genMonthCalendar, isSameDay } from "$lib/utils-date"
+    import { GOALS_LIST_MAX, PHOTO_OFFSETS } from "$lib/constants"
 	import { initFloatElemPos, randomArrayElem } from "$lib/utils-general"
 	import { getMonthSessionData, getTotalFocusTimeStr } from "$lib/utils-session"
 	import { getIdxFromMo, getMonthGoalsOverview, getPeriodData, moveGoalDueDate, setViewGoal, setViewGoalNew, toggleGoalStatus } from "$lib/utils-goals"
 
-	import SvgIcon from "$components/SVGIcon.svelte"
 	import ImgModal from "$components/ImgModal.svelte"
-	import TextEntry from "$components/TextEntry.svelte"
 	import DailyGoals from "$components/DailyGoals.svelte"
 	import BounceFade from "$components/BounceFade.svelte"
 	import DailyHabits from "$components/DailyHabits.svelte"
+	import TextEntryElem from "$components/TextEntry.svelte"
 	import DropdownList from "$components/DropdownList.svelte"
+	import ProgressRing from "$components/ProgressRing.svelte"
 	import DailySessions from "$components/DailySessions.svelte"
 	import AccomplishedIcon from "$components/AccomplishedIcon.svelte"
+	import { Icon } from "$lib/enums";
 
     export let timeFrame: GoalViewTimeFrame
     export let options: OverviewOptions
+    export let monthEntry: TextEntry | null
 
     $: isLight = !$themeState.isDarkTheme
 
-    const GOALS_LIST_MAX = 3
-    const PHOTO_OFFSETS = [
-        { x: -8, y: -4, tilt: 4  },
-        { x: -5, y: -15, tilt: 4  },
-        { x: -10, y: -12, tilt: -5  },
-        { x: -6, y: -14, tilt: 3  },
-        { x: -7, y: -9, tilt: -2  },
-        { x: -9, y: -13, tilt: 5  },
-        { x: -5, y: -12, tilt: -3  },
-        { x: -12, y: -8, tilt: -6  }
-    ]
+    const POP_MENU_ID = "overview-pop-menu"
  
     let imgOpen: string | null = null
-    let monthEntry: TextEntryOptions | null = null
     
     let goalClicked: Goal | null = null
+
     let editEntry: EditEntry | null = null
-    let contextMenu = false
     let dayView: "habits" | "goals" | "sessions" | null = null
+    let dayMenu = false
+
+    let contextMenu = false
     
     let contextMenuPos = { left: 0, top: 0 }
     let dayViewPos = { left: 0, top: 0 }
@@ -61,6 +56,8 @@
         initData()
     }
 
+    $: console.log({ dayMenu })
+
     goalTracker.subscribe(() => initData())
     habitTracker.subscribe(() => initData())
 
@@ -69,8 +66,6 @@
         const moIdx = getIdxFromMo(period)
         const month = genMonthCalendar(new Date(year, moIdx, 1))
         const days = month.days
-        const periodData = getPeriodData(timeFrame)
-        monthEntry = periodData.entry
 
         const goals = getMonthGoalsOverview({ year, moIdx })
         const habits = await getMonthOverviewData(year, moIdx)
@@ -149,7 +144,14 @@
     }
 
     /* options */
-    function initEditEntry(entry: DayEntry) {
+    function initEditEntry({ e, entry, contextMenu = false }: { e: Event, entry: DayEntry, contextMenu?: boolean }) {
+        const _data = editEntry?.date
+        if (contextMenu && _data && isSameDay(_data, entry.date)) {
+            dayMenu = false
+            return false
+        }
+        initClientPos(e)
+
         const goals = entry.goals ?? []
         const sessions = entry.sessions ?? []
         const habits = entry.habits ?? { checked: 0, total: 0 }
@@ -177,14 +179,11 @@
                 items: sessions
             } : null
         }
+        return true
     }
     function onContextMenu({ e, entry }: { e: Event, entry: DayEntry }) {
-        const pe = e as PointerEvent
-        pe.preventDefault()
-        initEditEntry(entry)!
-
+        initEditEntry({ e, entry, contextMenu: true })
         const { left, top } = acalRef!.getBoundingClientRect()
-        initClientPos(e)
 
         contextMenuPos = initFloatElemPos({
             dims: { 
@@ -219,7 +218,7 @@
         clientPos = { left: pe.clientX, top: pe.clientY }
     }
     function onViewOption(optn: string) {
-        const { habits, goals, sessions } = editEntry!
+        const { habits, goals, sessions, date } = editEntry!
         let dims = { height: 0, width: 0 }
 
         if (optn === "Daily Habits") {
@@ -243,6 +242,9 @@
                 width: 200 
             }
         }
+        else {
+            addGoal(date)
+        }
 
         const { left, top } = acalRef!.getBoundingClientRect()
         dims.height = Math.min(dims.height, 400)
@@ -255,9 +257,11 @@
             },
             cursorPos: {
                 left: clientPos.left - left - 30,
-                top: clientPos.top - top + 20
+                top: clientPos.top - top + 5
             }
         })
+
+        dayMenu = true
         contextMenu = false
     }
 
@@ -291,19 +295,15 @@
 
 {#if options.textBlock && monthEntry}
     {#key monthEntry}
-        <div style:margin="-2px 0px -18px 0px">
-            <TextEntry 
-                id="month"
-                zIndex={50}
-                entry={monthEntry}
-            />
+        <div style:margin="0px 0px -18px 0px">
+            <TextEntryElem zIndex={50} entry={monthEntry}/>
         </div>
     {/key}
 {/if}
 
 <div 
-    class="acal"
     bind:this={acalRef}
+    class="acal"
     class:acal--light={isLight}
     style:--GRID_WIDTH={`${gridWidth}px`}
 >
@@ -322,10 +322,11 @@
                 <div class="acal__week">
                     {#each week as entry}
                         {@const { date, img, habits, goals, sessions, currMonth } = entry}
+                        {@const { habitsMark, focusTime } = options}
                         {@const day = date.getDate()}
                         {@const dow = date.getDay()}
-                        {@const showHabits = options.habitsMark && currMonth && uptoToday(date)}
-                        {@const showFocus = options.focusTime && currMonth}
+                        {@const showHabits = habits && habitsMark && currMonth && uptoToday(date)}
+                        {@const showFocus = focusTime && currMonth}
             
                         <!-- svelte-ignore a11y-no-static-element-interactions -->
                         <div 
@@ -341,8 +342,16 @@
                             class:acal__day--today={isSameDay(date, new Date())}
                             on:contextmenu={(e) => {
                                 dayView = null
-                                if (currMonth) {
+                                e.preventDefault()
+
+                                if (!currMonth) {
+                                    return
+                                }
+                                else if (!editEntry || !isSameDay(date, editEntry?.date)) {
                                     onContextMenu({ e, entry })
+                                }
+                                else {
+                                    dayMenu = false
                                 }
                             }}
                             on:dragover={(e) => {
@@ -354,29 +363,46 @@
                                 <div class="acal__day-header">
                                     <div class="flx-center">
                                         <span class="acal__day-num">{day}</span>
-                                        {#if showHabits && habits && habits.trueChecked >= habits.total}
-                                            <span class="acal__star" title="All habits compelte.">
-                                                *
-                                            </span>
-                                        {/if}
-                                        {#if currMonth}
-                                            <button class="acal__day-add-btn" on:click={() => addGoal(date)}>
-                                                <SvgIcon 
-                                                    icon={Icon.Add} 
-                                                    options={{ scale: 1.05, strokeWidth: 1.45, opacity: 0.8 }}
-                                                />
-                                            </button>
-                                        {/if}
+                                        <div style:position="relative">
+                                            {#if showHabits}
+                                                {@const { trueChecked, total } = habits}
+                                                {@const progress = total ? trueChecked / total : 0}
+    
+                                                {#if trueChecked >= total}
+                                                    <span class="acal__star" title="All habits completed.">
+                                                        *
+                                                    </span>
+                                                {/if}
+                                                <button 
+                                                    data-dmenu-id={POP_MENU_ID}
+                                                    class="acal__day-ring" 
+                                                    title={total ? `Daily habits: ${trueChecked} / ${total}.` : ""}
+                                                    on:click={(e) => {
+                                                        if (initEditEntry({ e, entry })) {
+                                                            onViewOption("Daily Habits")
+                                                        }
+                                                    }}
+                                                >
+                                                    <ProgressRing
+                                                        {progress}
+                                                        options={{
+                                                            size: 12, strokeWidth: 2.9, style: "default"
+                                                        }}
+                                                    />
+                                                </button>  
+                                            {/if}
+                                        </div>
                                     </div>
                                     {#if showFocus && sessions && sessions.length > 0}
                                         {@const focusTimeStr = getTotalFocusTimeStr(sessions)}
                                         <button 
+                                            data-dmenu-id={POP_MENU_ID}
                                             class="acal__focus hov-underline" 
                                             title="Focus Time"
                                             on:click={(e) => {
-                                                initClientPos(e)
-                                                initEditEntry(entry)
-                                                onViewOption("Focus Time")
+                                                if (initEditEntry({ e, entry })) {
+                                                    onViewOption("Focus Time")
+                                                }
                                             }}
                                         >
                                             {focusTimeStr}
@@ -459,7 +485,6 @@
                             <!-- icon -->
                             {#if img && entry && goals && goals.length > 0 && options.showImgs}
                                 {@const offset = randomArrayElem(PHOTO_OFFSETS)}
-
                                 <div class="acal__img-container">
                                     <button 
                                         class="acal__img-icon"
@@ -481,7 +506,7 @@
     {/if}
 
     <DropdownList 
-        id={"overview"}
+        id={POP_MENU_ID}
         isHidden={!contextMenu}
         options={{
             listItems: [
@@ -491,15 +516,20 @@
                 {  
                     name: editEntry?.h_context ? "Daily Habits" : "",
                     rightIcon: { type: "txt", icon: editEntry?.h_context?.str },
-                },
-                {  
-                    name: "Your Goals",
-                    rightIcon: { type: "txt", icon: editEntry?.g_context?.str },
-                    divider: !!editEntry?.s_context
+                    divider: !editEntry?.s_context
                 },
                 {  
                     name: editEntry?.s_context ? "Focus Time" : "",
-                    rightIcon: { type: "txt", icon: editEntry?.s_context?.str ?? "" }
+                    rightIcon: { type: "txt", icon: editEntry?.s_context?.str ?? "" },
+                    divider: !!editEntry?.h_context
+                },
+                {  
+                    name: "Your Goals",
+                    rightIcon: { type: "txt", icon: editEntry?.g_context?.str }
+                },
+                {  
+                    name: "Add a Goal",
+                    rightIcon: { type: "svg", icon: Icon.Add }
                 }
             ],
             onListItemClicked: ({ name }) => {
@@ -521,8 +551,12 @@
     />
 
     <BounceFade 
-        isHidden={dayView === null}
+        dmenuId={POP_MENU_ID}
+        isHidden={!dayMenu}
         onClickOutside={() => {
+            dayMenu = false
+        }}
+        onDismount={() => {
             dayView = null
             editEntry = null
         }}
@@ -531,7 +565,7 @@
             left: `${dayViewPos.left}px`,
         }}
     >
-        {#if editEntry}
+        {#if editEntry && dayView}
             {@const date = editEntry?.date ?? new Date()}
             {@const { goals, sessions } = editEntry}
 
@@ -594,7 +628,7 @@
 
         &__dow {
             text-align: center;
-            @include text-style(0.35, var(--fw-400-500), 1.25rem);
+            @include text-style(0.35, var(--fw-400-500), 1.1rem);
         }
         &__days {
             display: grid;
@@ -620,10 +654,9 @@
             position: relative;
             height: auto;
             min-height: 100px;
-            cursor: pointer;
 
-            &:hover &-add-btn {
-                opacity: 0.2;
+            &:hover {
+                background-color: rgba(var(--textColor1), 0.01);
             }
             &--not-curr-month &-num {
                 opacity: var(--obscure-cell-opac);
@@ -639,7 +672,7 @@
                 border-bottom: var(--divider-border);
             }
             &--today &-num {
-                background-color: var(--calMarkColor);
+                background-color: #FF5151;
                 color: white;
                 @include circle(20px);
             }
@@ -654,19 +687,19 @@
         &__day--edit {
             background: rgba(var(--textColor1), 0.035) !important;
         }
-        &__day-add-btn {
-            opacity: 0;
+        &__day:hover &__day-ring {
+            @include visible(0.65);
+        }
+        &__day:hover &__star {
+            display: none;
+        }
+        &__day-ring {
+            transition: 0.1s ease-in-out;
+            padding-top: 2px;
+            @include not-visible;
 
             &:hover {
                 opacity: 1 !important;
-            }
-        }
-        &__day-ring {
-            @include abs-top-right(8px, 7px);
-
-            i {
-                color: rgba(var(--textColor1), 0.1); 
-                font-size: 0.9rem;
             }
         }
         &__day-header {
@@ -676,16 +709,16 @@
         }
         &__day-num {
             @include center;
-            @include text-style(1, var(--fw-400-500), 1.2rem);
+            @include text-style(1, var(--fw-400-500), 1.05rem);
             margin: 2px 6px 2px 2px;
         }
         &__star {
-            margin: 0px 5px 0px -5px;
             @include text-style(0.25, var(--fw-300-400), 1.5rem, "Geist Mono");
+            @include abs-top-left(-1px, -3px);
         }
         &__focus {
             margin: 2px 4px 0px 2px;
-            @include text-style(0.145, var(--fw-400-500), 1.25rem);
+            @include text-style(0.145, var(--fw-400-500), 1.1rem);
         }
         /* goal activity */
         &__goal {
@@ -713,7 +746,7 @@
                 margin: 0px 6px 0px 0px;
             }
             span {
-                @include text-style(0.9, var(--fw-400-500), 1.225rem);
+                @include text-style(0.9, var(--fw-400-500), 1.1rem);
                 @include elipses-overflow;
                 color: rgba(var(--tag-color-1), 1);
             }
@@ -765,15 +798,15 @@
             transform: scale(1.5);
         }
         &__img-icon--photo-anim:hover img {
-            border: white 2.5px solid;
+            border: white 2px solid;
         }
         &__img-icon--photo-anim {
             @include abs-bottom-left(var(--photo-y), var(--photo-x));
             transform: rotate(var(--photo-tilt));
         }
         &__img-icon--photo-anim img {
-            @include square(60px, 6px);
-            border: white 3.5px solid;
+            @include square(50px, 6px);
+            border: white 2.5px solid;
         }
         &__day-activity {
             margin-top: 7px;
@@ -785,8 +818,8 @@
             min-width: 165px;
 
             span {
-                @include text-style(0.9, var(--fw-400-500), 1.25rem);
-                margin-bottom: 7px;
+                @include text-style(0.9, var(--fw-400-500), 1.15rem);
+                margin-bottom: 4px;
                 display: block;
             }
         }

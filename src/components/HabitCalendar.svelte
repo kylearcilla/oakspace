@@ -83,11 +83,11 @@
 
         &__days {
             @include flex(center, space-between);
-            @include text-style(0.65, var(--fw-400-500), 1.3rem);
+            @include text-style(0.65, var(--fw-400-500), 1.2rem);
             margin: 0px 4px 10px 0px;
         }
         &__dow {
-            height: 25px;
+            height: 20px;
             margin-left: 2px;
             @include center;
         }
@@ -96,14 +96,14 @@
             width: 100%;
         }
         &__day {
-            height: 35px;
+            height: 30px;
             width: 15px;
         }
         &__day--beyond {
             opacity: var(--obscure-opacity) !important;
         }
         &__day-num {
-            @include text-style(1, var(--fw-400-500), 1.3rem);
+            @include text-style(1, var(--fw-400-500), 1.2rem);
             text-align: center;
         }
     }

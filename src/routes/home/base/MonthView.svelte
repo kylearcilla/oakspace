@@ -4,11 +4,12 @@
 	import { goalTracker, themeState } from "$lib/store"
 
 	import { Icon } from "$lib/enums"
+	import { getTextEntry } from "$lib/utils-entries"
 	import { GoalsViewManager } from "$lib/goals-view-manager"
-    import { getWeekPeriodStr, months } from "$lib/utils-date"
+    import { getIsoDateFromTimeFrame, getWeekPeriodStr, months } from "$lib/utils-date"
 	import { getYearBounds, loadMonthView, saveMonthView } from "$lib/utils-home"
 	import { getElemById, getHozSpace, getMaskedGradientStyle, kebabToNormal, normalToKebab } from "$lib/utils-general"
-	import { getCurrentPeriod, getIdxFromMo, getMoFromIdx, getPeriodDate, getPeriodIdx, getPeriodStr, switchMoQuPeriod } from "$lib/utils-goals"
+	import { getCurrentPeriod, getMoFromIdx, getPeriodDate, getPeriodIdx, getPeriodStr, switchMoQuPeriod } from "$lib/utils-goals"
 
 	import YearView from "./YearView.svelte"
 	import Overview from "./Overview.svelte"
@@ -68,7 +69,7 @@
     let options: MonthDetailsView | null = null
     let headerBtnsRef: HTMLElement | null = null
     let today = new Date()
-    let { minDate, maxDate } = getYearBounds()
+    let { minYear, maxYear } = getYearBounds()
     
     let goalsInit = false
     let goalsViewManager: GoalsViewManager | null = null
@@ -90,6 +91,9 @@
     let timeFrame = getCurrentPeriod("month")
     let currYear = today.getFullYear() // for year view
     let weeksAgoIdx = 0 // for habits
+
+    let monthEntry: TextEntry | null = null 
+    let yearEntry: TextEntry | null = null 
     
     let leftArrow: HTMLButtonElement | null = null
     let rightArrow: HTMLButtonElement | null = null
@@ -143,6 +147,10 @@
         updateGoalData()
         updatePeriodStrs()
     }
+    async function setMonthEntry(dir?: "left" | "right") {
+        const isoDate = getIsoDateFromTimeFrame(timeFrame)
+        monthEntry = await getTextEntry({ isoDate, period: "month", dir })
+    }
     function updatePeriodIdx(dir: "left" | "right") {
         let newIdx = dir === "left" ? periodIdx - 1 : periodIdx + 1
         let periodYr = timeFrame.year
@@ -176,11 +184,16 @@
             }
             timeFrame = { year: periodYr, period: `q${periodIdx + 1}` }
         }
+        if (currView === "goals") {
+            updateGoalData()
+        }
+        if (currView === "overview") {
+            setMonthEntry(dir)
+        }
 
         updatePeriodStrs()
-        updateGoalData()
     }
-    function resetGoalPeriod() {
+    function resetTimeFrame() {
         // switch to current time period when switching to overview / goals view
         if (currView === "goals" && goalsView.period === "quarter") {
             timeFrame = getCurrentPeriod("quarter")
@@ -190,8 +203,9 @@
         }
         updateGoalData()
         updatePeriodStrs()
+        setMonthEntry()
     }
-    function onArrowBtnClicked(dir?: "left" | "right") {
+    async function onArrowBtnClicked(dir?: "left" | "right") {
         if (leftArrow == null || rightArrow == null) return
 
         if (currView === "yr-view") {
@@ -201,6 +215,9 @@
             else if (dir === "right") {
                 currYear++
             }
+            yearEntry = await getTextEntry({ 
+                isoDate: `${currYear}-01-01`, period: "year", dir
+            })
         }
         else if (currView === "habits") {
             if (dir === "left") {
@@ -214,19 +231,20 @@
             updatePeriodIdx(dir!)
         }
         allowArrowHandler(currView)
+
     }
     function allowArrowHandler(context: "overview" | "goals" | "habits" | "yr-view") {
         if (context === "yr-view") {
-            leftArrow!.disabled = currYear <= minDate.getFullYear()
-            rightArrow!.disabled = currYear >= maxDate.getFullYear()
+            leftArrow!.disabled = currYear <= minYear
+            rightArrow!.disabled = currYear >= maxYear
         }
         else if (context === "habits") {
             leftArrow!.disabled = weeksAgoIdx === 5
             rightArrow!.disabled = weeksAgoIdx === 0
         }
         else {
-            leftArrow!.disabled = periodDate <= minDate
-            rightArrow!.disabled = periodDate >= maxDate
+            leftArrow!.disabled = periodDate.getFullYear() <= minYear
+            rightArrow!.disabled = periodDate.getFullYear() >= maxYear
         }
     }
     /* options*/
@@ -320,7 +338,7 @@
     }
 
     /* listeners */
-    function onViewBtnClicked(view: MonthDetailsView) {
+    async function onViewBtnClicked(view: MonthDetailsView) {
         currView = view
         const btnElem = getElemById(`month-view--${view}`)!
         const width = btnElem.clientWidth
@@ -348,8 +366,14 @@
         rightArrow!.disabled = false
 
         if (currView === "overview" || currView === "goals") {
-            resetGoalPeriod()
+            resetTimeFrame()
         }
+        if (currView === "yr-view") {
+            yearEntry = await getTextEntry({ 
+                isoDate: `${currYear}-01-01`, period: "year", dir: "left"
+            })
+        }
+        allowArrowHandler(currView)
     }
     function handleScroll(elem: HTMLElement | null) {
         if (!elem) return
@@ -430,7 +454,7 @@
                         {#if currView === "overview"}
                             <div 
                                 style:margin="4px -1px 0px 12px"
-                                style:font-size="1.4rem"
+                                style:font-size="1.25rem"
                             >   
                                 <span>{periodStr}</span>
                                 <span class:hidden={periodYearCurrent}>
@@ -439,8 +463,8 @@
                             </div>
                         {:else if currView === "habits"}
                             <div 
-                                style:font-size="1.4rem" 
-                                style:margin="3px 0px 0px 0px"
+                                style:font-size="1.25rem" 
+                                style:margin="4px 0px 0px 0px"
                             >
                                 {#if weeksAgoIdx === 0} 
                                     This Week
@@ -453,7 +477,7 @@
                             <div 
                                 class="flx-center"
                                 style:margin="4px -1px 0px 12px"
-                                style:font-size="1.4rem"
+                                style:font-size="1.25rem"
                             >
                                 <div style:margin="1px 12px 0px 0px">
                                     <ProgressBar progress={gm_progress}/>
@@ -467,8 +491,8 @@
                             </div>
                         {:else if currView === "yr-view"}
                             <div 
-                                style:font-size="1.5rem"
-                                style:margin="3px 0px 0px 0px"
+                                style:font-size="1.3rem"
+                                style:margin="5px 0px 0px 0px"
                             >
                                 {currYear}
                             </div>
@@ -561,7 +585,7 @@
                     },
                     styling: { 
                         zIndex: 100,
-                        minWidth: "170px",
+                        minWidth: "160px",
                     },
                     position: { 
                         top: "28px",
@@ -708,7 +732,7 @@
                     },
                     styling:  { 
                         zIndex: 200,
-                        minWidth: "170px",
+                        minWidth: "160px",
                     },
                     position: { 
                         top: "28px",
@@ -768,8 +792,8 @@
         <div class="divider"></div>
         <div class="month-view__details-view">
             {#if currView === "overview" && goalsViewManager}
-                <div style:margin-top="10px">
-                    <Overview {timeFrame} options={overviewView}/>
+                <div style:margin-top="2px">
+                    <Overview {timeFrame} {monthEntry} options={overviewView}/>
                 </div>
             {:else if currView === "habits"}
                 <WeeklyHabits 
@@ -790,6 +814,7 @@
                     year={currYear} 
                     goalsHeatMap={goalsHeatMap}
                     options={yearView}
+                    {yearEntry}
                 />
             {/if}
         </div>
@@ -860,7 +885,7 @@
         }
         &__header-btn {
             padding: 5px 0px 0px 0px;
-            margin: 0px 10px 0px 2px;
+            margin: 0px 6px 0px 2px;
             white-space: nowrap;
             opacity: 0.2;
             transition: 0.1s ease-in-out;
@@ -877,8 +902,8 @@
                 opacity: 1 !important;
             }
             span {
-                @include text-style(0.85, var(--fw-400-500), 1.65rem);
-                margin-right: 3px;
+                @include text-style(0.85, var(--fw-400-500), 1.365rem);
+                margin-right: 2px;
             }
         }
         &__overview-options {
@@ -897,8 +922,8 @@
             opacity: 1 !important;
         }
         &__highlight {
-            @include abs-bottom-left(1px);
-            height: 2px;
+            @include abs-bottom-left(0px);
+            height: 1.5px;
             background-color: rgba(var(--textColor1), 0.9);
             transition: 0.18s cubic-bezier(.4, 0, .2, 1);
         }
@@ -919,7 +944,7 @@
             }
         }
         &__period {
-            @include text-style(0.45, var(--fw-400-500), 1.4rem);
+            @include text-style(0.45, var(--fw-400-500), 1.25rem);
             height: 18px;
 
             span {
@@ -947,20 +972,6 @@
             }
             i {
                 @include text-style(0.9, _, 1.04rem)
-            }
-        }
-
-        /* yr-view */
-        &__add-task-btn {
-            padding: 3px 18px 5px 18px;
-            background-color: var(--lightColor2);
-            border-radius: 50px;
-            margin: 0px -9px 0px 7px;
-            @include text-style(0.9, 500, 1.44rem);
-            transition: 0.04s ease-in-out;
-
-            &:hover {
-                background-color: rgba(var(--textColor1), 0.05);
             }
         }
     }

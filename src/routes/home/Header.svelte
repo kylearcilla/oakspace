@@ -168,21 +168,38 @@
              {#if !session || $sessionManager?.state === "done"}
                  <div 
                      class="header__session header__section"
+                     class:header__session--ambience={hasAmbience}
                      class:ambient-blur={hasAmbience && ambience?.styling === "blur"}
                      class:ambient-solid={hasAmbience && ambience?.styling === "solid"}
                      class:ambient-clear={hasAmbience && ambience?.styling === "clear"}
                  >
-                     <button 
-                         title="Create new session"
-                         class="header__new-session-btn"
-                         on:click={() => openModal(ModalType.NewSession)}
-                     >
-                         <SvgIcon 
-                             icon={Icon.Add}
-                             options={{ scale: 0.9, strokeWidth: 1.75 }}
-                         />
-                     </button>
-                     <div class="header__new-session-btn-divider">
+                    {#if hasAmbience}
+                        <button 
+                            title="Create new session"
+                            class="header__new-session-btn"
+                            on:click={() => openModal(ModalType.NewSession)}
+                        >
+                            <SvgIcon 
+                                icon={Icon.Add}
+                                options={{ scale: 0.95, strokeWidth: 1.75 }}
+                            />
+                        </button>
+                     {:else}
+                        <button 
+                            title="Create new session"
+                            class="header__new-session"
+                            on:click={() => openModal(ModalType.NewSession)}
+                        >
+                            New Session
+                        </button>
+                     {/if}
+                     <div 
+                        class="header__new-session-btn-divider"
+                        class:header__new-session-btn-divider--default={!hasAmbience}
+                    >
+                        {#if !hasAmbience}
+                            /
+                        {/if}
                      </div>
                      <div class="header__session-time" title="Today's total focus time.">
                          {#key session}
@@ -227,9 +244,11 @@
     .header {
         width: 100%;
         height: 21px;
-        padding: 9px 15px 0px 15px;
+        padding: 5px 15px 0px 15px;
         position: relative;
         @include flex(center, space-between);
+
+        --font-size: 1.2rem;
         
         /* light */
         &--light &__session-time span {
@@ -248,7 +267,7 @@
             padding: 0px 15px 0px 13px;
         }
         &--ambient &__now-block-time {
-            @include text-style(_, 400, 1.15rem, "Geist Mono");
+            @include text-style(_, 400, var(--font-size), "Geist Mono");
         }
         &--ambient &__now-block-title {
             font-weight: 400 !important;
@@ -286,7 +305,7 @@
             @include flex(center);
             height: 24px;
             z-index: 100;
-            border-radius: 15px;
+            border-radius: 14px;
         }
         &__main {
             @include flex(center, space-between);
@@ -352,14 +371,14 @@
                 display: none;
             }
             &-title {
-                @include text-style(_, 400, 1.3rem);
+                @include text-style(_, 400, 1.2rem);
                 color: rgba(var(--textColor1), 1);
                 @include elipses-overflow;
                 margin: 0px 11px 0px 0px;
                 max-width: 150px;
             }
             &-time {
-                @include text-style(_, 400, 1.25rem);
+                @include text-style(_, 400, 1.2rem);
                 color: rgba(var(--textColor1), 0.5);
             }
         }
@@ -374,15 +393,28 @@
         }
         &__session {
             @include flex(center);
-            padding: 0px 12px 0px 7px;
+            padding: 0px 6px 0px 7px;
             height: 26px;
-            @include txt-color(0.07, "bg");
+
+            &--ambience {
+                padding: 0px 13px 1px 9px;
+            }
+        }
+        &__new-session {
+            @include text-style(0.65, 400, 1.2rem);
+            opacity: 0.35;
+            margin-right: 4px;
+
+            &:hover {
+                opacity: 0.65;
+            }
         }
         &__new-session-btn {
             @include center;
-            @include circle(16px);
+            @include circle(18px);
             @include txt-color(0.14, "bg");
-            opacity: 0.6;
+            opacity: 0.7;
+            margin-right: 3px;
 
             &:hover {
                 transition: 0.1s ease-in-out;
@@ -394,7 +426,13 @@
         }
         &__new-session-btn-divider {
             @include divider(0.14, 9px, 1px);
-            margin: 0px 9px 0px 10px;
+            @include text-style(0.3, 500, 0.95rem, "system");
+            margin: 0px 12px 0px 8px;
+            
+            &--default {
+                margin: -3px 10px 0px 5px;
+                background: none;
+            }
         }
         &__habit-progress {
             margin: 0px 4px 0px 0px;
@@ -407,7 +445,7 @@
                 @include txt-color(0.1, "bg");
             }
             span {
-                @include text-style(0.65, 600, 1.185rem, "Manrope");
+                @include text-style(0.65, 600, 1.185rem);
                 margin-right: 10px;
                 margin-bottom: 2px;
             }
@@ -419,12 +457,12 @@
         }
         &__session-time {
             @include flex(center);
-            @include text-style(0.7, 400, 1.15rem, "Geist Mono");
+            @include text-style(0.7, 400, 1.2rem);
             white-space: nowrap;
         }
         &__ambient-controls {
             @include flex(center);
-            @include text-style(1, 400, 1.225rem, "Geist Mono");
+            @include text-style(1, 400, var(--font-size), "Geist Mono");
             margin: 0px 10px 0px -10px;
             transition: 0.1s ease-in-out;
             padding: 0px 4px 0px 13px;

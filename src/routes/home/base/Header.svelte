@@ -14,8 +14,7 @@
     export let onOptionUpdate: (options: Partial<BaseView>) => void
 
     let settingsOpen = false
-    let entry = HOME_THOUGHT_ENTRY
-
+    let entry = options.entry
 
     function onViewOptions(optn: string) {
         const { banner, header, leftMargin } = options
@@ -165,8 +164,8 @@
                         }
                     ],
                     styling: {
-                        minWidth: "155px",
-                        fontSize: "1.32rem",
+                        minWidth: "140px",
+                        fontSize: "1.17rem",
                         zIndex: 1000
                     },
                     position: { 
@@ -186,13 +185,13 @@
                 }}
             />
         </div>
-        {#if options.header.showEntry}
+        {#if entry && options.header.showEntry}
             {#key entry}
                 <div style:width="100%" style:margin="0px 0px 0px 0px">
                     <TextEntry 
                         id="header"
                         zIndex={100}
-                        entry={entry}
+                        {entry}
                     />
                 </div>
             {/key}
@@ -223,8 +222,8 @@
             @include flex(flex-start, space-between);
 
             h1 {
-                @include text-style(1, var(--fw-400-500), 2.75rem);
-                margin-bottom: 4px;
+                @include text-style(1, var(--fw-400-500), 2.2rem, "Geist Mono");
+                margin-bottom: 0px;
             }
         }
         &__settings-btn {

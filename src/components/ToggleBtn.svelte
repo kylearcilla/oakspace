@@ -31,7 +31,7 @@
             transition: 0.1s ease-in-out;
             @include circle(13.5px);
             position: absolute;
-            top: 2.5px;
+            top: 2px;
             left: 2.5px;
             background-color: white;
         }

@@ -10,7 +10,7 @@
 
 	import DropdownList from "$components/DropdownList.svelte"
 
-    export let bulletin: BulletinOptions
+    export let bulletin: Bulletin
     export let fullWidth: boolean
     
     const INPUT_ID = "bulletin-input"
@@ -23,9 +23,9 @@
     $: contentsOnHover = light ? true : contentsOnHover
 
     let newNoteTxt = ""
-    let imgLoading = false
     let adding = false
     let edited = false
+    let focused = false
     let contextPos = { left: -1000, top: -1000 }
 
     const editor = new TextEditorManager({ 
@@ -37,6 +37,9 @@
             onInputHandler: (_, val) => {
                 newNoteTxt = val
                 edited = true
+            },
+            onFocusHandler: () => {
+                focused = true
             },
             onBlurHandler: () => onEditComplete()
         }
@@ -50,7 +53,8 @@
         const note = getNote(noteIdx)!
         const same = newNoteTxt == note.text
         const empty = !newNoteTxt.trim()
-
+        focused = false
+        
         // if note is empty, remove it
         if (empty && notes.length > 0) {
             removeNote(noteIdx, adding)
@@ -162,18 +166,11 @@
         bulletin.noteIdx = idx
         editor.updateText(getNote(noteIdx)!.text)
     }
-    function uploadImg(img: string) {
-        imgLoading = true
+    async function onSubmitImg(img: string) {
+        await updateBulletin({ imgSrc: img })
 
-        updateBulletin({ imgSrc: img })
-            .then(() => {
-                imgSrc = img
-                bulletin.imgSrc = imgSrc 
-                imgLoading = false
-            })
-            .finally(() => {
-                imgLoading = false
-            })
+        imgSrc = img
+        bulletin.imgSrc = imgSrc 
     }
     function onContextMenu(e: Event) {
         const pe = e as PointerEvent
@@ -184,12 +181,7 @@
     }
     function openImgPicker() {
         hasContextMenu = false
-
-        imageUpload.init({
-            onSubmitImg: (img: string) => {
-                uploadImg(img)
-            }
-        })
+        imageUpload.init({ onSubmitImg })
     }
 
     onMount(() => {
@@ -198,6 +190,13 @@
         }
     })
 </script>
+
+<svelte:window on:beforeunload={(e) => {
+    if (focused) {
+        e.preventDefault()
+        e.returnValue = false
+    }
+}}/>
 
 
 <div style:position="relative" style:height="100%">
@@ -208,7 +207,7 @@
         class:bulletin--show-on-hover={contentsOnHover && !adding}
         class:bulletin--is-over={isPointerOver}
         class:bulletin--no-notes={!hasNotes}
-        style:--font-size={fullWidth ? "1.35rem" : "1.2rem"}
+        style:--font-size={fullWidth ? "1.1rem" : "1.05rem"}
         on:contextmenu={onContextMenu}
         on:pointerup={onPointerUp}
         on:pointerover={() => isPointerOver = true}

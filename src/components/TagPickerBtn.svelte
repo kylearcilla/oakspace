@@ -11,7 +11,7 @@
     export let onClick: () => void
     export let styling: StylingOptions | undefined = undefined
 
-    let { fontSize = "1.285rem" } = styling || {}
+    let { fontSize = "1.25rem" } = styling || {}
     let pickerOpen = false
 
     $: empty = !tag
@@ -131,6 +131,6 @@
         }
     }
     .dbtn__title {
-        font-size: 1.285rem;
+        font-size: 1.25rem;
     }
 </style>

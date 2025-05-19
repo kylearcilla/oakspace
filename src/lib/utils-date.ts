@@ -1,3 +1,4 @@
+import { date } from 'drizzle-orm/mysql-core'
 import { formatPlural, getBrowserLanguagePreference } from './utils-general'
 
 export const months = [
@@ -1084,10 +1085,183 @@ export function getQuarterIdx(string: string) {
     return (quarter - 1) * 3
 }
 
-export function getQuarterIdxFromMonth(month: number) {
-    return Math.floor(month / 3)
+export function getQuarterIdxFromMonth(moIdx: number) {
+    return Math.floor(moIdx / 3)
+}
+
+export function getQuarterDate(year: number, moIdx: number) {
+    const quarter = getQuarterIdxFromMonth(moIdx)
+    const month = quarter * 3 + 1
+    const moStr = month.toString().padStart(2, '0')
+
+    return `${year}-${moStr}-01`
 }
 
 export function getMoIdxFromQuarter(quarter: number) {
     return (quarter - 1) * 3
+}
+
+export function getMoIdxFromStr(str: string) {
+    return months.findIndex(m => m.toLowerCase().startsWith(str))
+}
+
+export function getIsoDateFromTimeFrame(timeFrame: { year: number, period: string }) {
+	const { year, period } = timeFrame
+	const moIdx = getMoIdxFromStr(period)
+	const isoDate = `${year}-${(moIdx + 1).toString().padStart(2, '0')}-01`
+
+	return isoDate
+}
+
+export function getDateFromIso(iso: string) {
+	const [year, month, day] = iso.split('-')
+	return new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+}
+
+export function getIso(date: Date) {
+	const day = date.getDate()
+
+
+    return date.toISOString().split('T')[0]
+}
+
+/**
+ * Extracts the period dates from the range.
+ * For each month, extracts tha parent time frame also (year, quarter)
+ * 
+ * @param start - start date
+ * @param end - end date
+ * @param catchAll - catch all the parent periods for month entries
+ * @returns 
+ */
+export function extractPeriodDatesFromRange({ start, end, period, catchAll = false }: { 
+	start: string, end: string, period: PeriodType, catchAll?: boolean
+}) {
+    const startDate = getDateFromIso(start)
+    const endDate = getDateFromIso(end)
+    const extracts: string[] = []
+
+	const months: Set<string> = new Set()
+	const quarters: Set<string> = new Set()
+	const years: Set<string> = new Set()
+
+    let currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+
+	const isQuarter = (mo: string, day: string) => {
+		return ['04', '07', '10', '01'].includes(mo) && day === '01'
+	}
+	
+    while (currentDate <= endDate) {
+		extracts.push(getIso(currentDate))
+		currentDate.setMonth(currentDate.getMonth() + 1)
+    }
+	extracts.forEach(date => { 
+		const [year, month, day] = date.split('-')
+		const quarter = isQuarter(month, day)
+
+		if (period === "quarter") {
+			quarter && quarters.add(date)
+		}
+		else if (period === "year") {
+			years.add(`${year}-01-01`)
+		}
+		else if (period === "month" && !catchAll) {
+			months.add(date)
+		}
+		else {
+			months.add(date)
+			years.add(`${year}-01-01`)
+			quarter && quarters.add(date)
+		}
+	})
+
+    return {
+		months: Array.from(months),
+		quarters: Array.from(quarters),
+		years: Array.from(years)
+	}
+}
+
+/**
+ * Get the start and end dates of the next +x or -x months.
+ * Deals with first days of months only.
+ * 
+ * @param param0 
+ * @returns 
+ */
+export function getNextMoRange({ isoDate, dir, l_count = 2, r_count = 2 }: { 
+	isoDate: string
+	dir: "left" | "right"
+	l_count?: number
+	r_count?: number
+}) {
+	const date = getDateFromIso(isoDate)
+	let day = isoDate.split('-')[2]
+
+	if (day !== '01') {
+		day = '01'
+	}
+	
+    let start = date, end = date
+
+	if (dir === "left") {
+		start = new Date(date.getFullYear(), date.getMonth() - l_count, 1)
+	} 
+	else {
+		end = new Date(date.getFullYear(), date.getMonth() + r_count, 1)
+	}
+	return { start: getIso(start), end: getIso(end) }
+}
+
+/**
+ * Get the start and end dates of the next +x or -x months.
+ * Deals with first days of months only.
+ * 
+ * @param param0 
+ * @returns 
+ */
+export function getNextQuarterRange({ isoDate, dir, l_count = 2, r_count = 2 }: { 
+	isoDate: string
+	dir: "left" | "right"
+	l_count?: number
+	r_count?: number
+}) {
+	const day = isoDate.split('-')[2]
+	const month = parseInt(isoDate.split('-')[1], 10)
+	const date = getDateFromIso(isoDate)
+
+	if (day !== '01' || ![1, 4, 7, 10].includes(month)) {
+		throw new Error('Date must be the first day of a quarter')
+	}
+
+	let start = date, end = date
+
+	if (dir === "left") {
+		start = new Date(date.getFullYear(), date.getMonth() - l_count * 3, 1)
+	} 
+	else {
+		end = new Date(date.getFullYear(), date.getMonth() + r_count * 3, 1)
+	}
+
+	return { start: getIso(start), end: getIso(end) }
+}
+
+
+export function getNextYearRange({ isoDate, dir, l_count = 2, r_count = 2 }: { 
+	isoDate: string
+	dir: "left" | "right"
+	l_count?: number
+	r_count?: number
+}) {
+	const year = parseInt(isoDate.split('-')[0], 10)
+	let start = isoDate, end = isoDate
+
+	if (dir === "left") {
+		start = `${year - l_count}-01-01`
+	}
+	else {
+		end = `${year + r_count}-01-01`
+	}
+
+	return { start, end }
 }

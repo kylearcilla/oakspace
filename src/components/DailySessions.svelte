@@ -107,7 +107,7 @@
             }
         }
         &__time {
-            @include text-style(0.2, var(--fw-400-500), 1.2rem);
+            @include text-style(0.2, var(--fw-400-500), 1.15rem);
             margin-right: 15px;
             white-space: nowrap;
         }
@@ -137,11 +137,11 @@
             position: relative;
             min-width: 0px;
             span {
-                @include text-style(0.3, var(--fw-400-500), 1.2rem);
+                @include text-style(0.3, var(--fw-400-500), 1.15rem);
             }
         }
         &__title {
-            @include text-style(0.9, var(--fw-400-500), 1.325rem);
+            @include text-style(0.9, var(--fw-400-500), 1.25rem);
             @include truncate-lines(3);
             margin-bottom: 8px;
             max-width: 110px;

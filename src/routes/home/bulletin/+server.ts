@@ -1,10 +1,12 @@
 import { json } from '@sveltejs/kit'
-import { createNote, deleteNote, updateNote } from '$lib/server/db/bulletin'
 import { err } from '$lib/server/utils'
+import { TEST_USER } from '$lib/mock-data-goals'
+import { createNote, deleteNote, updateNote } from '$lib/server/db/bulletin'
 
 // POST /api/notes - Create a new note
 export async function POST({ request }) {
-    const { idx, text, userId } = await request.json()
+    const userId = TEST_USER.id
+    const { idx, text} = await request.json()
 
     try {
         const newNote = await createNote({ idx, text, userId })

@@ -5,12 +5,12 @@
 	import { Icon } from "$lib/enums"
 	import { hexToRgb } from "$lib/utils-colors"
 	import { inlineStyling } from "$lib/utils-general"
+	import { clickOutside } from "../lib/utils-general"
 	import { getThemeStyling } from "$lib/utils-appearance"
 	import { TasksListManager } from "$lib/tasks-list-manager"
 
 	import SvgIcon from "./SVGIcon.svelte"
 	import TaskElem from "../components/Task.svelte"
-	import { clickOutside } from "../lib/utils-general"
 
     export let options: TasksListOptions
     export let tasks: Task[]
@@ -37,6 +37,7 @@
     $: dragSrc = $manager.dragSrc
     $: numbered = options.settings?.numbered ?? false
     $: contextMenu = $manager.contextMenu
+    $: editMode = $manager.editMode
 
     $: if (newTaskFlag != undefined) {
         createNewTask()
@@ -87,7 +88,17 @@
     })
 </script>
 
-<svelte:window on:keydown={(ke) => $manager.keyboardShortcutHandler(ke)} />
+<svelte:window 
+    on:keydown={(ke) => {
+        $manager.keyboardShortcutHandler(ke)
+    }} 
+    on:beforeunload={(e) => {
+        if (editMode) {
+            e.preventDefault()
+            e.returnValue = false
+        }
+    }}
+/>
 
 <div 
     bind:this={listContainer}
@@ -115,7 +126,7 @@
         class="tasks"
         class:tasks--numbered={settings.numbered}
         bind:this={tasksList}
-        use:clickOutside on:outClick={() => $manager.onClickOutside()}
+        use:clickOutside on:outClick={(e) => $manager.onClickOutside(e)}
     >   
         {#each rootTasks as task, idx (task.id)}
             <li>

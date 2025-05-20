@@ -83,7 +83,7 @@
 </script>
 
 <Modal 
-    options={{ borderRadius: "20px", scaleUp: true }} 
+    options={{ borderRadius: "14px", scaleUp: true }} 
     onClickOutSide={close}
 >
     <div class="settings" class:settings--light={light}>
@@ -296,8 +296,9 @@
 
 
     .settings {
-        padding: 20px 20px 20px 22px;
+        padding: 18px 18px 18px 18px;
         width: 85vw;
+        height: 480px;
         max-width: 570px;
         position: relative;
         @include text-style(0.28, var(--fw-300-500), 1.25rem);
@@ -451,7 +452,6 @@
         }
         &__font-option button {
             background-color: rgba(var(--textColor1), var(--field-opacity));
-            transition: background-color 0.2s ease;
             height: 80px;
             padding-bottom: 4px;
             width: 100px;

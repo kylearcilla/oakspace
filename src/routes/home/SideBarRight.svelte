@@ -6,7 +6,7 @@
 	import { updateUiOptions } from "$lib/api-general"
     import { clamp, clickOutside } from "$lib/utils-general"
     import { globalContext, themeState, timer } from "$lib/store"    
-    import { loadDayViewOptions, saveDayViewOptions, setHotkeyFocus } from "$lib/utils-home"
+    import { loadDayViewOptions, setHotkeyFocus } from "$lib/utils-home"
 	import { formatDatetoStr, formatTimeToHHMM, isNightTime, prefer12HourFormat } from "$lib/utils-date"
     
 	import DayView from "./DayView.svelte"
@@ -15,7 +15,8 @@
     const MAX_DIST_BOTTOM_IMG_CONTAINER = 70
     const DRAG_OFFSET_THRESHOLD = 5
 
-    export let data: RightBar
+    export let options: RightBar
+    export let todos: Task[]
     export let onSetHeaderImg: (img: string) => void
     export let fixed: boolean
 
@@ -23,12 +24,12 @@
     $: ambience = $globalContext.ambience
     $: hasAmbience = ambience?.active ?? false
 
-    let header = data.header
-    let colors = data.routineColors
-    let boxes = data.routineBoxes
+    let header = options.header
+    let colors = options.routineColors
+    let boxes = options.routineBoxes
 
     let dayViewOptions: DayViewOptions = {
-        view: data.view,
+        view: options.view,
         calView: "routines",
         header,
         googleCal: {
@@ -68,8 +69,6 @@
 
     function initOptions() {
         const data = loadDayViewOptions()
-        
-        if (data) options = data
     }
 
     /* header ui img */
@@ -81,8 +80,6 @@
 
         header.img = src
         header.top = 0
-
-        saveDayViewOptions(options)
     }
     function onPointerDown(pe: PointerEvent) {
         if (!headerImg) return
@@ -221,6 +218,7 @@
     <div class="bar__overview">
         <DayView 
             options={dayViewOptions}
+            todos={todos}
             onHeaderOptions={optn => {
                 if (optn == "show") {
                     header.show = !header.show

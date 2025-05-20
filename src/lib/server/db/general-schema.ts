@@ -105,17 +105,7 @@ export const notes = schema.table('notes', {
   userId: fk({ name: 'user_id', refs: users.id })
 })
 
-/* misc */
-
-export const spaces = schema.table('spaces', {
-  id: id(),
-  title: str({ name: 'title' }),
-  subtitle: str({ name: 'subtitle' }),
-  thumbnail: str({ name: 'thumbnail' }),
-  sourceId: str({ name: 'source_id' }),
-  type: str({ name: 'type' }),
-  group: str({ name: 'group' }),
-})
+/* sessions */
 
 export const sessions = schema.table('sessions', {
   id: id(),
@@ -136,7 +126,7 @@ export const sessions = schema.table('sessions', {
   userId: fk({ name: 'user_id', refs: users.id }),
 })
 
-export const todos = schema.table('todos', {
+export const sessionTasks = schema.table('session_tasks', {
   id: id(),
   idx: int({ name: 'idx' }),
   title: str({ name: 'title' }),
@@ -144,8 +134,29 @@ export const todos = schema.table('todos', {
   isChecked: bool({ name: 'is_checked', val: false }),
   parentId: str({ name: 'parent_id', req: false }),
   userId: fk({ name: 'user_id', refs: users.id }),
-  
-  sessionId: fk({ name: 'session_id', refs: sessions.id, req: false }),
+  sessionId: fk({ name: 'session_id', refs: sessions.id })
+})
+
+/* misc */
+
+export const spaces = schema.table('spaces', {
+  id: id(),
+  title: str({ name: 'title' }),
+  subtitle: str({ name: 'subtitle' }),
+  thumbnail: str({ name: 'thumbnail' }),
+  sourceId: str({ name: 'source_id' }),
+  type: str({ name: 'type' }),
+  group: str({ name: 'group' }),
+})
+
+export const todos = schema.table('todos', {
+  id: id(),
+  idx: int({ name: 'idx' }),
+  title: str({ name: 'title' }),
+  description: text({ name: 'description' }),
+  isChecked: bool({ name: 'is_checked', val: false }),
+  parentId: str({ name: 'parent_id', req: false }),
+  userId: fk({ name: 'user_id', refs: users.id })
   // goalId: fk({ name: 'goal_id', refs: goals.id, req: false }),
   // routineId: fk({ name: 'routine_id', refs: routines.id, req: false }),
 })
@@ -197,13 +208,6 @@ export const tagsRelations = relations(tags, ({ one }) => ({
   user: one(users, {
     fields: [tags.userId],
     references: [users.id]
-  })
-}))
-
-export const todosRelations = relations(todos, ({ one }) => ({
-  session: one(sessions, {
-    fields: [todos.sessionId],
-    references: [sessions.id]
   })
 }))
 

@@ -356,7 +356,7 @@
         padding: 11px 19px 12px 17px;
         border-radius: 12px;
         background-color: var(--bg-2);
-        border: 1px solid rgba(var(--textColor1), 0.085);
+        border: 0.5px solid rgba(var(--textColor1), 0.085);
 
         --disabled-opacity: 0.05;
 
@@ -384,7 +384,7 @@
         }
         &--light &__drop-area {
             background-color: rgba(var(--textColor1), 0.025);
-            border: 1.5px dashed rgba(var(--textColor1), 0.15);
+            border: 1px dashed rgba(var(--textColor1), 0.15);
         }
         &--light &__drop-area-text {
             @include text-style(0.25);
@@ -462,7 +462,7 @@
         }
         &__drop-area {
             background-color: rgba(var(--textColor1), 0.012);
-            border: 1.5px dashed rgba(var(--textColor1), 0.08);
+            border: 1px dashed rgba(var(--textColor1), 0.08);
             border-radius: 10px;
             height: 200px;
             position: relative;
@@ -471,7 +471,7 @@
             
             &--hover {
                 background-color: rgba(var(--textColor1), 0.03);
-                border: 1.5px dashed rgba(var(--textColor1), 0.2);
+                border: 1px dashed rgba(var(--textColor1), 0.2);
                 box-shadow: rgba(var(--fgColor2), 0.4) 0px 0px 0px 2px inset, 
                             rgba(var(--fgColor2), 0.1) 0px 0px 0px 2.5px;
             }

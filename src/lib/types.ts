@@ -12,6 +12,9 @@ type InitialDataLoad = {
     appearance: Appearance
     bar: RightBar
     entries: TextEntry[]
+    todos: Todo[
+
+    ]
 }
 
 type UiOptions = {
@@ -118,7 +121,7 @@ type AbsoluteFloatElem = {
     props: any
     component: ComponentType
     position: { top: number, left: number } 
-    onClose: () => void
+    onClose?: () => void
 }
 
 type DatePickerProps = {
@@ -961,18 +964,20 @@ type TasksListOptions = {
     }
 }
 
-type TaskGroup = {
-    title: string,
-    tasks: Task[]
+type TaskReorderPayload = {
+    task: Task,
+    target: { toIdx: number, toPid: string | null }
 }
 
 /* todoist api  */
 
 type TaskUpdateActions = "description" | "name" | "completion" | "reorder" | "new-parent"
 type TaskAddActions = "add" | "duplicate"
+
 type TaskActionPayload = {
     task: Task
     tasks: Task[]
+    target?: TaskReorderPayload["target"]
 }
 
 type TaskListClientHandlerContext = {

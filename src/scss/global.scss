@@ -593,6 +593,14 @@ $bento-box-padding: 8px;
     user-select: none; 
 }
 
+.default-pointer {
+    cursor: default !important;
+
+    * {
+        cursor: default !important;
+    }
+}
+
 .no-pointer-events-all {
     pointer-events: none !important;
     

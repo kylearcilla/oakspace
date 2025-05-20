@@ -72,7 +72,7 @@
         button {
             height: 39px;
             padding: 0px 25px;
-            @include text-style(0.55, var(--fw-400-500), 1.4rem);
+            @include text-style(0.55, var(--fw-400-500), 1.3rem);
             @include center;
         }
         &__cancel {

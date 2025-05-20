@@ -56,8 +56,6 @@
         initData()
     }
 
-    $: console.log({ dayMenu })
-
     goalTracker.subscribe(() => initData())
     habitTracker.subscribe(() => initData())
 

@@ -3,6 +3,7 @@ import { TEST_USER } from "$lib/mock-data-goals"
 import { fetchInitialEntries, fetchTextEntries } from "$lib/utils-entries"
 import { getUiOptions, getUser } from "$lib/api-general"
 import { INITIAL_PERIOD_REACH_ENTRY, QUOTE_DATE_KEY, QUOTE_KEY } from "$lib/constants"
+import { getTodos } from "$lib/api-todos.js"
 
 export const ssr = false
 
@@ -30,8 +31,7 @@ export async function load({ fetch: _fetch }): Promise<InitialDataLoad> {
     const home = await getHomeData()
     const { appearance, bar } = await getUiOptions()
     const entries = await fetchInitialEntries()
-
-    console.log(entries)
+    const todos = await getTodos()
 
     return {
         quote: getQuoteData(),
@@ -39,7 +39,8 @@ export async function load({ fetch: _fetch }): Promise<InitialDataLoad> {
         user,
         appearance,
         bar,
-        entries
+        entries,
+        todos
     }
 }
 

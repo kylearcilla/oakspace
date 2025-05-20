@@ -29,6 +29,34 @@
       "when": 1747349109368,
       "tag": "0003_aspiring_iron_monger",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1747672484044,
+      "tag": "0004_organic_mesmero",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1747672831628,
+      "tag": "0005_watery_nocturne",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1747672916765,
+      "tag": "0006_wooden_gambit",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1747672963178,
+      "tag": "0007_fantastic_triathlon",
+      "breakpoints": true
     }
   ]
 }

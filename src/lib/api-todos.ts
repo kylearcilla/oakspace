@@ -1,5 +1,6 @@
-import { TEST_USER } from "./mock-data-goals"
 import { _fetch } from "./utils-general"
+import { TEST_USER } from "./mock-data-goals"
+import { PUBLIC_BASE_URL } from "$env/static/public"
 
 export async function getTodos(): Promise<Task[]> {
     const userId = TEST_USER.id
@@ -7,25 +8,22 @@ export async function getTodos(): Promise<Task[]> {
     if (!userId) {
         throw new Error("User ID is required")
     }
-    const { response, error } = await _fetch("/todos", {
-        method: "GET",
-        body: JSON.stringify({ userId })
-    })
+    const { response, error } = await _fetch("/home/todos")
 
     if (error) {
         throw new Error(error.message)
     }
-    return response as Task[]
+    return response
 }
 
-export async function updateTodo(id: string, data: Partial<Omit<Task, "id">>): Promise<Task[]> {
+export async function updateTodo(id: string, data: Partial<Omit<Task, "id">>) {
     const _data: any = data
     
     if (_data.id || _data.userId || _data.sessionId || _data.goalId || _data.routineId) {
         throw new Error("Id's cannot be updated")
     }
 
-    const { response, error } = await _fetch(`/todos/${id}`, {
+    const { response, error } = await _fetch(`/home/todos/${id}`, {
         method: "PUT",
         body: JSON.stringify(data)
     })
@@ -34,11 +32,11 @@ export async function updateTodo(id: string, data: Partial<Omit<Task, "id">>): P
         throw new Error(error.message)
     }
 
-    return response as Task[]
+    return response
 }
 
-export async function addTodo(data: Task): Promise<Task> {
-    const { response, error } = await _fetch("/todos", {
+export async function addTodo(data: Task) {
+    const { response, error } = await _fetch("/home/todos", {
         method: "POST",
         body: JSON.stringify(data)
     })
@@ -47,17 +45,30 @@ export async function addTodo(data: Task): Promise<Task> {
         throw new Error(error.message)
     }
 
-    return response as Task
+    return response
 }
 
-export async function deleteTodo(id: string): Promise<Task[]> {
-    const { response, error } = await _fetch(`/todos/${id}`, {
-        method: "DELETE"
+export async function reorderTodo(data: TaskReorderPayload) {
+    const { response, error } = await _fetch(`${PUBLIC_BASE_URL}/home/todos/${data.task.id}/order`, {
+        method: "PUT",
+        body: JSON.stringify(data)
+    })
+
+    if (error) {
+        throw new Error(error.message)
+    }
+    return response
+}
+
+export async function deleteTodo(todo: Task) {
+    const { response, error } = await _fetch(`/home/todos/${todo.id}`, {
+        method: "DELETE",
+        body: JSON.stringify(todo)
     })
 
     if (error) {
         throw new Error(error.message)
     }
 
-    return response as Task[]
+    return response
 }

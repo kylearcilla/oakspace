@@ -4,9 +4,10 @@
 	import { themeState } from "$lib/store"
 	import { Icon, ModalType } from "$lib/enums"
 	import { closeModal } from "$lib/utils-home"
+    import { MAX_SESSION_TITLE } from "$lib/constants"
 	import { TextEditorManager } from "$lib/text-editor"
 	import { SessionManager } from "$lib/session-manager"
-    
+
 	import Modal from "$components/Modal.svelte"
 	import SvgIcon from "$components/SVGIcon.svelte"
 	import TasksList from "$components/TasksList.svelte"
@@ -14,7 +15,6 @@
 
     const SIDE_SPACING = 23
     const TITLE_ID = "session-title"
-    const MAX_SESSION_TITLE = 100
 
     $: light = !$themeState.isDarkTheme
 
@@ -307,8 +307,8 @@
     @use "../../scss/inputs.scss" as *;
 
     .new-session {
-        width: 470px;
-        padding: 9px 0 21px 0;
+        width: 460px;
+        padding: 9px 0 20px 0;
 
         --time-btn-bg-opacity: 0.02;
 
@@ -335,13 +335,13 @@
         }
 
         &__title {
-            @include text-style(_, var(--fw-400-500), 1.6rem);
+            @include text-style(_, var(--fw-400-500), 1.4rem);
             margin: 4px 0px 14px 0px;
             width: 100%;
             padding: 0 var(--side-spacing);
         }
         &__label {
-            @include text-style(0.8, var(--fw-400-500), 1.425rem);
+            @include text-style(0.8, var(--fw-400-500), 1.2rem);
             margin-bottom: 3px;
         }
         &__modes {
@@ -375,10 +375,10 @@
             }
         }
         &__mode-title {
-            @include text-style(0.7, var(--fw-500-600), 1.5rem);
+            @include text-style(0.7, var(--fw-500-600), 1.3rem);
         }
         &__mode-description {
-            @include text-style(0.34, var(--fw-400-500), 1.42rem);
+            @include text-style(0.34, var(--fw-400-500), 1.2rem);
             margin-top: 8px;
         }
         &__options {
@@ -399,13 +399,13 @@
         }
         &__time span {
             padding-left: 3px;
-            font-size: 1.43rem;
+            font-size: 1.25rem;
         }
         &__time-input {
             margin: 11px 0px 0px 0px;
             padding: 7px 8px;
             border-radius: 12px;
-            @include text-style(0.7, var(--fw-400-500), 1.3rem);
+            @include text-style(0.7, var(--fw-400-500), 1.2rem);
             @include flex(center, space-between);
             background-color: rgba(var(--textColor1), var(--time-btn-bg-opacity));
         }
@@ -435,7 +435,7 @@
             padding: 0 calc(var(--side-spacing) + 3px);
 
             span {
-                @include text-style(0.225, var(--fw-400-500), 1.4rem);
+                @include text-style(0.225, var(--fw-400-500), 1.25rem);
                 display: inline-block;
                 margin-top: 2px;
             }
@@ -448,7 +448,7 @@
             margin-left: 15px;
             
             span {
-                @include text-style(0.3, var(--fw-400-500), 1.4rem);
+                @include text-style(0.3, var(--fw-400-500), 1.25rem);
             }
             &--picked span {
                 @include text-style(0.8);
@@ -461,7 +461,7 @@
             }
         }
         &__sfx-btn-check-box {
-            @include circle(14px);
+            @include circle(12px);
             position: relative;
             border: 2px solid rgba(var(--textColor1), 0.2);
             margin-right: 8px;
@@ -470,14 +470,14 @@
                 content: " ";
                 background-color: rgba(var(--fgColor1));
                 display: none;
-                @include circle(6px);
+                @include circle(4px);
                 @include abs-center;
             }
         }
 
         /* tasks */
         &__list span {
-            @include text-style(0.2, var(--fw-400-500), 1.3rem, "Geist Mono");
+            @include text-style(0.2, var(--fw-400-500), 1.25rem);
         }
         &__list-header {
             margin-top: 20px;

@@ -1,0 +1,2 @@
+ALTER TABLE "general"."session_tasks" ADD COLUMN "session_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "general"."session_tasks" ADD CONSTRAINT "session_tasks_session_id_sessions_id_fk" FOREIGN KEY ("session_id") REFERENCES "general"."sessions"("id") ON DELETE cascade ON UPDATE no action;

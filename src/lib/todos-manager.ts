@@ -1,7 +1,6 @@
 import { get, writable, type Writable } from "svelte/store"
 
 import { APIError } from "./errors"
-import { TEST_TASKS } from "$lib/mock-data"
 import { APIErrorCode, LogoIcon } from "./enums"
 
 import { toast } from "./utils-toast"
@@ -12,7 +11,7 @@ import {
         initTodoistAPI, syncTodoistUserItems, updateTodoistTask, 
         updateTodoistTaskCompletion 
 } from "./api-todoist"
-import { updateTodo, getTodos, deleteTodo, addTodo } from "./api-todos"
+import { updateTodo, deleteTodo, addTodo, reorderTodo } from "./api-todos"
 import { TEST_USER } from "./mock-data-goals"
 
 type TaskRemoveContext = {
@@ -62,18 +61,14 @@ export class TodosManager {
     private LOADING_TOAST_DURATION = 15_000
     private AUTO_REFRESH_INTERVAL_MINS = 5
 
-    constructor() {
-       this.init()
-    }
-    async init() {
-        // this.inboxTasks = await getTodos()
-        this.inboxTasks = TEST_TASKS
+    constructor(todos: Task[]) {
+        this.inboxTasks = todos
         this.store = writable(this)
 
         const todoistRedirect = didTodoistAPIRedirect()
 
         if (this.hasTodoistSession()) {
-            this.loadTodoistData()
+            // this.loadTodoistData()
         }
         if (todoistRedirect) {
             this.continueTodoistAPIOAuthFlow()
@@ -401,7 +396,7 @@ export class TodosManager {
     /* client handlers */
 
     onTaskUpdate = async (context: TaskUpdateContext) => {
-        const { action, payload: { task, tasks }, undoFunction, removeOnComplete } = context
+        const { action, payload: { task, tasks, target }, undoFunction, removeOnComplete } = context
         const { title: name, isChecked: complete, idx } = task
 
         const description = "description" in task ? task.description : ""
@@ -415,7 +410,7 @@ export class TodosManager {
             if (action === "completion") {
                 // const couldOccurSameDay = isRecurring && dueDate?.includes("T")
                 if (todoist) {
-                    await updateTodoistTaskCompletion({
+                    updateTodoistTaskCompletion({
                         accessToken: this.todoistAccessToken,
                         taskId: task.id,
                         isRecurring,
@@ -433,7 +428,7 @@ export class TodosManager {
                     this.todoistTasks = tasks
                 }
                 else {
-                    await updateTodo(task.id, { isChecked: complete! })
+                    // updateTodo(task.id, { isChecked: complete! })
                 }
                 if (complete && removeOnComplete) {
                     this.initActionToast({ 
@@ -442,10 +437,9 @@ export class TodosManager {
                         func: undoFunction 
                     })
                 }
-
             }
             else if (todoist) {
-                await updateTodoistTask({
+                updateTodoistTask({
                     accessToken: this.todoistAccessToken,
                     taskId: task.id,
                     action,
@@ -455,22 +449,30 @@ export class TodosManager {
                     ...(action === "reorder" && { idx, parentId: task.parentId })
                 })
             }
+            else if (action === "reorder" && target) {
+                const sameDest = task.parentId === target.toPid && task.idx === target.toIdx
+
+                if (!sameDest) {
+                    // reorderTodo({ task, target })
+                }
+            }
             else {
-                // await updateTodo(task.id, { 
+                // updateTodo(task.id, { 
                 //     ...(action === "name" && { title: name }),
-                //     ...(action === "description" && { description }),
-                //     ...(action === "reorder" && { idx, parentId: task.parentId })
+                //     ...(action === "description" && { description })
                 // })
-            }   
+            }
 
             if (!todoist) {
                 this.inboxTasks = tasks
             }
         }
         catch(error: any) {
-            this.onTodistError(error)
+            if (this.onTodoist) {
+                this.onTodistError(error)
+            }
         }
-    }
+    }    
     
     onAddTask = async (context: TaskAddContext) => {
         const { payload: { task, tasks }  } = context
@@ -489,13 +491,15 @@ export class TodosManager {
             }
             else {
                 this.inboxTasks = tasks
-                id = (await addTodo({ ...task, userId: TEST_USER.id })).id
+                // addTodo({ ...task, id })
             }
 
             this.currTasks = tasks
         }
         catch(error: any) {
-            this.onTodistError(error)
+            if (this.onTodoist) {
+                this.onTodistError(error)
+            }
         }
         finally {
             return { id }
@@ -514,17 +518,17 @@ export class TodosManager {
                 context: this.onTodoist ? "todoist" : "inbox"
             }
             if (this.onTodoist && action === "delete") {
-                await deleteTodoistTask({
+                deleteTodoistTask({
                     accessToken: this.todoistAccessToken,
                     taskId: task!.id
                 })
             } 
-            if (this.onTodoist) {
+            else if (this.onTodoist) {
                 this.todoistTasks = tasks
             }
             else {
                 this.inboxTasks = tasks
-                await deleteTodo(task!.id)
+                // deleteTodo(task!)
             }
 
             this.initActionToast({
@@ -534,10 +538,11 @@ export class TodosManager {
                 func: this.onTodoist && action === "delete" ? undefined : undoFunction
             })
             this.currTasks = tasks
-            this.update({ renderFlag: !this.renderFlag })
         }
         catch(error: any) {
-            this.onTodistError(error)
+            if (this.onTodoist) {
+                this.onTodistError(error)
+            }
         }
     }
 

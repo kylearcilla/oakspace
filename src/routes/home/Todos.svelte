@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { themeState } from "$lib/store"
+	import { MAX_TODOS_DEPTH } from "$lib/constants"
 	import { TodosManager } from "$lib/todos-manager"
 
 	import TasksList from "$components/TasksList.svelte"
@@ -45,7 +46,7 @@
 <div 
     class="tasks" 
     class:tasks--light={isLight}
-    style:--ht-offset={onTodoist ? "68px" : "28px"}
+    style:--ht-offset={onTodoist ? "68px" : "38px"}
 >
     <div 
         class="tasks__todo-list-container"
@@ -70,7 +71,7 @@
                         checkSubtasks: onTodoist,
                         allowDuplicate: !onTodoist,
                         removeOnComplete: false,
-                        maxDepth: 3
+                        maxDepth: MAX_TODOS_DEPTH
                     },
                     ui: { 
                         hasTaskDivider: true

@@ -305,7 +305,7 @@
             @include flex(center);
             height: 24px;
             z-index: 100;
-            border-radius: 14px;
+            border-radius: 30px;
         }
         &__main {
             @include flex(center, space-between);

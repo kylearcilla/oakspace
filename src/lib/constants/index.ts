@@ -9,6 +9,8 @@ export const DEFAUL_EMOJIS = [
 export const MAX_FUTURE_YEAR = 1
 export const MAX_PAST_YEAR = 2
 
+export const MAX_TODOS_DEPTH = 3
+
 /* text entries  */
 export const TEXT_SAVE_DELAY_MS = 800
 export const ENTRY_MAX_LENGTH = 2000
@@ -40,6 +42,10 @@ export const PHOTO_OFFSETS = [
 
 export const MAX_NOTE_LENGTH = 300
 export const MAX_NOTES = 30
+
+/* sessions */
+
+export const MAX_SESSION_TITLE = 100
 
 /* error */
 

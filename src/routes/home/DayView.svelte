@@ -32,6 +32,7 @@
     const DAY_VIEW_SIDE_MARGINS = 11
     const NOW_TIME_THRESHOLD_SECS = 5
 
+    export let todos: Task[]
     export let options: DayViewOptions
     export let onHeaderOptions: (optn: string) => void
 
@@ -44,7 +45,7 @@
     let addBtnFlag = false
 
     /* tasks */
-    let todosManager = new TodosManager()
+    let todosManager = new TodosManager(todos)
     let removeCompleteFlag = false
     let hasCompletedTasks = false
     let t_lastSyncTime: Date | null = null
@@ -539,14 +540,14 @@
                         </div>
                     {:else if routine}
                         <div class="dmenu__toggle-optn">
-                            <span class="dmenu__option-heading">Checkbox</span>
+                            <span class="dmenu__option-heading">Show Checkbox</span>
                             <ToggleBtn 
                                 active={options.routines.checkbox}
                                 onToggle={() => onToggleOption("checkbox")}
                             />
                         </div>
                         <div class="dmenu__toggle-optn" class:hidden={calView === "g-cal"}>
-                            <span class="dmenu__option-heading">Colors</span>
+                            <span class="dmenu__option-heading">Show Colors</span>
                             <ToggleBtn 
                                 active={options.routines.colors}
                                 onToggle={() => onToggleOption("colors")}
@@ -666,12 +667,12 @@
                             }}
                         >
                             <span class="dmenu__option-text">
-                                {optnText}
+                                {optnText} Image
                             </span>
                         </button>
                     </div>
                     <div class="dmenu__toggle-optn  dmenu__option--static">
-                        <span class="dmenu__option-heading">Show</span>
+                        <span class="dmenu__option-heading">Show Image</span>
                         <ToggleBtn 
                             active={show}
                             onToggle={() => onHeaderOptions("show")}

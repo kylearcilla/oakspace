@@ -67,6 +67,8 @@
     class="task"
     class:task--light={!isDark}
     class:task--hover={dragTarget?.id === task.id && dragAction === "child-add"}
+    class:default-pointer={contextMenuOpen}
+    class:not-focus-dmenu={contextMenuOpen && !isFocused}
 
     class:drop-top-border={dragTarget?.id === task.id && dragAction === "nbr-add-top"}
     class:drop-bottom-border={dragTarget?.id === task.id && dragAction === "nbr-add-bottom"}
@@ -88,19 +90,18 @@
             class="task__top-content"
             class:task__top-content--highlight={dragTarget?.id != task.id}
             class:task__top-content--focused={isFocused}
-            on:pointerdown={(e) => {
-                $manager.onPointerDown(e, task)
-            }}
             on:contextmenu|preventDefault={(e) => {
                 onContextMenu(e, task.id, isChild)
             }}
-            on:click={(event) => {
+            on:pointerdown={(e) => {
                 if (!contextMenuOpen) {
-                    $manager.onTaskClicked({ event, id: task.id, isChild, atMaxDepth })
+                    $manager.onPointerDown(e, task)
                 }
             }}
+            on:click={(event) => {
+                $manager.onTaskClicked({ event, id: task.id, isChild, atMaxDepth })
+            }}
         >
-            <!-- checkbox or number -->
             <div class="task__left" bind:clientWidth={leftSideWidth}>
                 <div>
                     {#if numbered}
@@ -111,6 +112,7 @@
                         <button 
                             class="task__checkbox"
                             id={`${idPrefix}--task-checkbox-id--${task.id}`}
+                            style:pointer-events={contextMenuOpen ? "none" : "auto"}
                             on:click={() => { 
                                 if (isChild && onSubtaskCheck) {
                                     onSubtaskCheck(!task.isChecked)
@@ -122,7 +124,6 @@
                         </button>
                     {/if}
                 </div>
-                <!-- Drag Handle -->
                 <div 
                     class="grip"
                     on:pointerdown={() => $manager.toggleDragging(true)}
@@ -132,7 +133,6 @@
                         <SvgIcon icon={Icon.DragDots} options={{ scale: 1.15 }} />
                     </div>
                 </div>
-                <!-- Toggle Arrow -->
                 <button
                     class="toggle-arrow toggle-arrow--section"
                     class:toggle-arrow--closed={!isOpen}
@@ -155,8 +155,14 @@
                         class="task__title"
                         class:strike={doCheck && !numbered}
                         spellcheck="false"
-                        data-placeholder="Title goes here..."
-                        contenteditable={allowEdit}
+                        data-placeholder="Untitled"
+                        contenteditable={allowEdit && !contextMenuOpen}
+                        on:click={() => { 
+                            if (allowEdit) {
+                                // $manager.onTaskTitleClick({ id: task.id, isChild })
+                            }
+                            // $manager.setContextMenu(false)
+                        }}
                     >
                         {task.title}
                     </div>
@@ -176,11 +182,12 @@
                         class:no-pointer-events={!allowEdit}
                         data-placeholder="No description"
                         spellcheck="false"
-                        contenteditable={allowEdit}
+                        contenteditable={allowEdit && !contextMenuOpen}
                         on:click={() => { 
                             if (allowEdit) {
-                                $manager.onTaskDescriptionFocus(task.id, isChild)
+                                // $manager.onTaskDescriptionFocus(task.id, isChild)
                             }
+                            // $manager.setContextMenu(false)
                         }}
                         on:pointerdown={(e) => {
                             if (!allowEdit) {
@@ -207,6 +214,7 @@
                 <li>
                     <svelte:self
                         {idx}
+                        {numbered}
                         level={level + 1}
                         task={subtask}
                         onSubtaskCheck={_onSubtaskCheck}

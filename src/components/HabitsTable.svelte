@@ -766,10 +766,10 @@
         }
         &__box {
             background-color: var(--lightColor2);
-            @include square(16px);
+            @include square(15px);
             border-radius: 0px;
             position: relative;
-            font-size: 1.1rem;
+            font-size: 0.9rem;
             @include center;
             
             &:hover {

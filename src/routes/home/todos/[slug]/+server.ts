@@ -22,15 +22,16 @@ export async function PUT({ params, request }) {
     }
 }
 
-export async function DELETE({ params }) {
+export async function DELETE({ params, request }) {
     try {
         if (!params.slug) {
             return json({ error: 'Todo ID is required' }, { status: 400 })
         }
 
-        const result = await deleteTodo(params.slug)
+        const data = await request.json()
+        const result = await deleteTodo(data)
         
-        if (!result.length) {
+        if (!result) {
             return json({ error: 'Todo not found' }, { status: 404 })
         }
 

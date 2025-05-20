@@ -283,7 +283,7 @@ function AbsoluteFloatElem() {
         dims?: { height: number, width: number }
         props: any
         id: string
-        onClose: () => void
+        onClose?: () => void
     }) {
         if (get(state).find(elem => elem.id === id)) return
 
@@ -317,7 +317,7 @@ function AbsoluteFloatElem() {
             const newElems = elems.map(e => e.id === targetId ? { ...e, isHidden: true } : e )
             const elem = newElems.find(e => e.id === targetId)
 
-            if (elem) {
+            if (elem && elem.onClose) {
                 elem.onClose()
             }
 

@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm'
+import { eq, isNull, sql, type BinaryOperator, type SQLWrapper } from 'drizzle-orm'
 import { integer, uuid, varchar, text as pgText, timestamp, boolean, date as pgDate } from 'drizzle-orm/pg-core'
 
 type IdOptions = {
@@ -161,6 +161,11 @@ function bool({
   return column
 }
 
+
+function nullEq(left: any, right: string | null |SQLWrapper) {
+  return right === null ? isNull(left) : eq(left, right)
+}
+
 /**
  * Creates a SQL COALESCE expression to handle null values
  * @param column The column to check for null
@@ -194,5 +199,6 @@ export {
   date,
   bool,
   coalesce,
-  orderColumns
+  orderColumns,
+  nullEq
 }

@@ -3,8 +3,13 @@ import { getElemById, setCursorPos } from "./utils-general"
 
 /**
  * Manager for editor components with contenteditable attribute.
- * Has a set max height and will disallow additions if it goes over.
- * Custom functionality for redo / undo and copy paste.
+ * Added features: 
+ * 
+ * • custom max length and will disallow additions if it goes over
+ * • handlers for input, blur, focus
+ * • allow formatting
+ * • single line or multi line
+ * 
  */
 export class TextEditorManager {
     oldTitle: string
@@ -183,9 +188,13 @@ export class TextEditorManager {
 
     }
 
-    focus() {
+    focus(force?: boolean) {
         this.inputElem?.focus()
         this.focused = true
+
+        if (this.handlers?.onFocusHandler && force) {
+            this.handlers.onFocusHandler(null, this.value, this.valLength)
+        }
     }
     
     onFocusHandler(event: Event) {
@@ -275,62 +284,6 @@ export class TextEditorManager {
     }
 
     /**
-    * Extracts the actual printable character from a KeyboardEvent.
-    * Uses a temporary input to simulate and capture the character.
-    * @param event
-    */
-    getPrintableCharacter(event: KeyboardEvent) {
-        const { metaKey, ctrlKey } = event
-        if (metaKey || ctrlKey) {
-            return null
-        }
-        if (event.key.length === 1) {
-            return event.key
-        }
-       
-       // HUses a temporary input to simulate and capture the character.
-        try {
-            const tempInput = document.createElement('input')
-            tempInput.type = 'text'
-            
-            const keyboardEvent = new KeyboardEvent('keypress', {
-                key: event.key,
-                bubbles: true,
-                cancelable: true,
-                shiftKey: event.shiftKey,
-                metaKey: event.metaKey,
-                ctrlKey: event.ctrlKey,
-                altKey: event.altKey
-            })
-            
-            tempInput.dispatchEvent(keyboardEvent)
-            tempInput.remove()
-
-            return tempInput.value || null
-        } 
-        catch {
-            return null
-        }
-    }
-
-    manuallySelectText(element: HTMLElement | Text, startOffset: number, endOffset: number) {
-        const range = document.createRange()
-        const selection = window.getSelection()
-
-        if (element.nodeType === Node.TEXT_NODE) {
-            range.setStart(element, startOffset)
-            range.setEnd(element, endOffset)
-        } 
-        else if (element.nodeType === Node.ELEMENT_NODE && element.firstChild?.nodeType === Node.TEXT_NODE) {
-            range.setStart(element.firstChild, startOffset)
-            range.setEnd(element.firstChild, endOffset)
-        } 
-    
-        selection?.removeAllRanges()
-        selection?.addRange(range)
-    }
-
-    /**
      * Initializes the input element with event listeners and other properties.
      * @returns The set input element.
      */
@@ -364,6 +317,12 @@ export class TextEditorManager {
     }
 
     quit() {
+        this.handlers = undefined
+
         this.inputElem!.removeEventListener("keydown", this.keydownHandler)
+        this.inputElem!.removeEventListener("input", this.onInputHandler)
+        this.inputElem!.removeEventListener("blur", this.onBlurHandler)
+        this.inputElem!.removeEventListener("focus", this.onFocusHandler)
+        this.inputElem!.removeEventListener("paste", this.onPaste)
     }
 }

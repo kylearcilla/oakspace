@@ -53,6 +53,12 @@ export class Tasks {
         }
     }
 
+    /**
+     * Duplicate a task and all its subtasks.
+     * 
+     * @param dupId 
+     * @returns 
+     */
     duplicateTask(dupId: string): Task[] {
         const ogTask = this.taskMap.get(dupId)!
         const newTask = structuredClone(ogTask)
@@ -142,7 +148,7 @@ export class Tasks {
         src: Task, 
         target: Task, 
         action: "nbr-top" | "nbr-bottom" | "child"
-    }) {
+    }): TaskReorderPayload {
         const srcIdx = src.idx
         let targetParentId = target.parentId
         let toIdx
@@ -176,7 +182,8 @@ export class Tasks {
         src.idx = toIdx
 
         this._store.set(this)
-        return src
+
+        return { task: src, target: { toIdx, toPid: targetParentId } }
     }
 
     private shiftNeighbors({ parentId, idx, shiftDirection }: {

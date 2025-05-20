@@ -326,7 +326,7 @@
     .bar {
         position: relative;
         border-top: 0px solid;
-        padding: 3px 0px 10px 0px;
+        padding: 0px 0px 10px 0px;
         position: relative;
         height: 100%;
         @include flex-col();
@@ -371,7 +371,7 @@
         &__profile-name {
             @include text-style(0.9, var(--fw-400-500), 1.2rem);
             @include elipses-overflow;
-            max-width: 80%;
+            max-width: 70%;
         }
         &__tab-section {
             @include text-style(0.15, var(--fw-400-500), 1.1rem);

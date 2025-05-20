@@ -1,8 +1,6 @@
 import { json } from "@sveltejs/kit"
-import { getTodos } from "$lib/server/db/todos"
-import { db } from "$lib/server/db/drizzle"
-import { todos } from "$lib/server/db/general-schema"
 import { TEST_USER } from "$lib/mock-data-goals.js"
+import { addTodo, getTodos } from "$lib/server/db/todos"
 
 export async function GET({ request }) {
     try {
@@ -19,17 +17,11 @@ export async function GET({ request }) {
 export async function POST({ request }) {
     try {
         const todo = await request.json()
-        
-        if (!todo.title) {
-            return json({ error: 'Title is required' }, { status: 400 })
-        }
 
-        const [result] = await db
-            .insert(todos)
-            .values(todo)
-            .returning()
+        todo.title ??= "Untitled"
+        await addTodo(todo)
         
-        return json(result, { status: 201 })
+        return json(true)
     } 
     catch (error) {
         console.error(error)

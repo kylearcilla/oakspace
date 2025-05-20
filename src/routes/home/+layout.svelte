@@ -299,7 +299,8 @@
         style:right={`${!rightBarOpen && rightBarFixed ? `-${rightSideBarWidth}px` : ""}`}
       >
         <SideBarRight 
-            data={data.bar}
+            todos={data.todos}
+            options={data.bar}
             fixed={rightBarFixed}
             onSetHeaderImg={(showing) => showHeaderImg = showing}
         /> 

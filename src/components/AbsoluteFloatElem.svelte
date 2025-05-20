@@ -12,7 +12,6 @@
         isHidden={floatElem.isHidden}
         onClickOutside={() => {
             close(floatElem.id)
-            floatElem.onClose()
         }}
         onDismount={() => {
             onDismount(floatElem.bounceId)

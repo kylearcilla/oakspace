@@ -785,14 +785,13 @@ export function looseEqualTo(x: number, y: number, diff = 5) {
  * @param options  - Request options.
  * @returns        - Response and error (if any)
  */
-export async function _fetch(url: string, options: RequestInit): 
+export async function _fetch(url: string, options: RequestInit = { method: "GET" }): 
     Promise<{ response: any, error?: { code: number, message?: string } | null }> 
 {
     try {
         const res = await fetch(url, options)
 
         if (!res.ok) {
-            console.error(res)
             await serverError(res)
             return { response: null, error: { code: res.status } }
         }
@@ -810,7 +809,6 @@ export async function _fetch(url: string, options: RequestInit):
 
 export async function serverError(res: Response) {
   const status = res.status
-  const data = await res.json()
   console.error(`Error ${status}:`, res.statusText)
 
   toast("error", { message: DEFAUL_ERR_MESSAGE })
